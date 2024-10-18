@@ -37,6 +37,9 @@
 #define NCH_WHITE 1
 #define NCH_BLACK 0
 
+const char NCH_PIECES[12] = {'P', 'N', 'B', 'R', 'Q', 'K', 'q', 'n', 'b', 'r', 'q', 'k'};
+const char NCH_COLUMNS[8] = {'h' ,'g', 'f', 'e', 'd', 'c', 'b', 'a'};
+
 #define NCH_CHKFLG(x, flag) ((x & flag) == flag)
 #define NCH_RMVFLG(x, flag) (x &= ~flag)
 #define NCH_SETFLG(x, flag) (x |= flag)

@@ -52,39 +52,78 @@
 const char NCH_PIECES[13] = {'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k', '.'};
 const char NCH_COLUMNS[8] = {'h' ,'g', 'f', 'e', 'd', 'c', 'b', 'a'};
 
-#define NCH_CHKFLG(x, flag) ((x & flag) == flag)
-#define NCH_RMVFLG(x, flag) (x &= ~flag)
-#define NCH_SETFLG(x, flag) (x |= flag)
-#define NCH_CHKUNI(x, flag) ((x & flag) != 0)
+#define NCH_H1 0x1ull        // 2^0
+#define NCH_G1 0x2ull        // 2^1
+#define NCH_F1 0x4ull        // 2^2
+#define NCH_E1 0x8ull        // 2^3
+#define NCH_D1 0x10ull       // 2^4
+#define NCH_C1 0x20ull       // 2^5
+#define NCH_B1 0x40ull       // 2^6
+#define NCH_A1 0x80ull       // 2^7
 
-#define NCH_SQR(idx) (1ull << idx)
-#ifdef __GNUC__
-    #define NCH_SQRIDX(square) NCH_CTZLL(square)
-#else
-    #define NCH_SQRIDX(square) (cuint64)log2((double)square)
-#endif
-#define NCH_GETCOL(square) (NCH_SQRIDX(square) % 8ull)
-#define NCH_GETROW(square) (NCH_SQRIDX(square) / 8ull)
+#define NCH_H2 0x100ull      // 2^8
+#define NCH_G2 0x200ull      // 2^9
+#define NCH_F2 0x400ull      // 2^10
+#define NCH_E2 0x800ull      // 2^11
+#define NCH_D2 0x1000ull     // 2^12
+#define NCH_C2 0x2000ull     // 2^13
+#define NCH_B2 0x4000ull     // 2^14
+#define NCH_A2 0x8000ull     // 2^15
 
-#define NCH_NXTSQR_UP(square) (square << 8)
-#define NCH_NXTSQR_DOWN(square) (square >> 8)
-#define NCH_NXTSQR_RIGHT(square) (square >> 1)
-#define NCH_NXTSQR_LEFT(square) (square << 1)
-#define NCH_NXTSQR_UPRIGHT(square) (square << 7)
-#define NCH_NXTSQR_UPLEFT(square) (square << 9)
-#define NCH_NXTSQR_DOWNRIGHT(square) (square >> 9)
-#define NCH_NXTSQR_DOWNLEFT(square) (square >> 7)
+#define NCH_H3 0x10000ull    // 2^16
+#define NCH_G3 0x20000ull    // 2^17
+#define NCH_F3 0x40000ull    // 2^18
+#define NCH_E3 0x80000ull    // 2^19
+#define NCH_D3 0x100000ull   // 2^20
+#define NCH_C3 0x200000ull   // 2^21
+#define NCH_B3 0x400000ull   // 2^22
+#define NCH_A3 0x800000ull   // 2^23
 
-#define NCH_NXTSQR_K_UPRIGHT(square) (square << 15)
-#define NCH_NXTSQR_K_UPLEFT(square) (square << 17)
-#define NCH_NXTSQR_K_DOWNRIGHT(square) (square >> 17)
-#define NCH_NXTSQR_K_DOWNLEFT(square) (square >> 15)
-#define NCH_NXTSQR_K_RIGHTUP(square) (square << 6)
-#define NCH_NXTSQR_K_RIGHTDOWN(square) (square >> 10)
-#define NCH_NXTSQR_K_LEFTUP(square) (square << 10)
-#define NCH_NXTSQR_K_LEFTDOWN(square) (square >> 6)
+#define NCH_H4 0x1000000ull  // 2^24
+#define NCH_G4 0x2000000ull  // 2^25
+#define NCH_F4 0x4000000ull  // 2^26
+#define NCH_E4 0x8000000ull  // 2^27
+#define NCH_D4 0x10000000ull // 2^28
+#define NCH_C4 0x20000000ull // 2^29
+#define NCH_B4 0x40000000ull // 2^30
+#define NCH_A4 0x80000000ull // 2^31
 
-#define NCH_MKMOVE(map, src_sqr, trg_sqr) NCH_RMVFLG(map, src_sqr); NCH_SETFLG(map, trg_sqr);
+#define NCH_H5 0x100000000ull  // 2^32
+#define NCH_G5 0x200000000ull  // 2^33
+#define NCH_F5 0x400000000ull  // 2^34
+#define NCH_E5 0x800000000ull  // 2^35
+#define NCH_D5 0x1000000000ull // 2^36
+#define NCH_C5 0x2000000000ull // 2^37
+#define NCH_B5 0x4000000000ull // 2^38
+#define NCH_A5 0x8000000000ull // 2^39
+
+#define NCH_H6 0x10000000000ull  // 2^40
+#define NCH_G6 0x20000000000ull  // 2^41
+#define NCH_F6 0x40000000000ull  // 2^42
+#define NCH_E6 0x80000000000ull  // 2^43
+#define NCH_D6 0x100000000000ull // 2^44
+#define NCH_C6 0x200000000000ull // 2^45
+#define NCH_B6 0x400000000000ull // 2^46
+#define NCH_A6 0x800000000000ull // 2^47
+
+#define NCH_H7 0x1000000000000ull  // 2^48
+#define NCH_G7 0x2000000000000ull  // 2^49
+#define NCH_F7 0x4000000000000ull  // 2^50
+#define NCH_E7 0x8000000000000ull  // 2^51
+#define NCH_D7 0x10000000000000ull // 2^52
+#define NCH_C7 0x20000000000000ull // 2^53
+#define NCH_B7 0x40000000000000ull // 2^54
+#define NCH_A7 0x80000000000000ull // 2^55
+
+#define NCH_H8 0x100000000000000ull  // 2^56
+#define NCH_G8 0x200000000000000ull  // 2^57
+#define NCH_F8 0x400000000000000ull  // 2^58
+#define NCH_E8 0x800000000000000ull  // 2^59
+#define NCH_D8 0x1000000000000000ull // 2^60
+#define NCH_C8 0x2000000000000000ull // 2^61
+#define NCH_B8 0x4000000000000000ull // 2^62
+#define NCH_A8 0x8000000000000000ull // 2^63
+
 
 #define NCH_ROW1 0x00000000000000FFull
 #define NCH_ROW2 0x000000000000FF00ull
@@ -127,6 +166,40 @@ const char NCH_COLUMNS[8] = {'h' ,'g', 'f', 'e', 'd', 'c', 'b', 'a'};
 #define NCH_PROMOTION_TO_ROOK 2
 #define NCH_PROMOTION_TO_KNIGHT 4
 #define NCH_PROMOTION_TO_BISHOP 8
+
+#define NCH_CHKFLG(x, flag) ((x & flag) == flag)
+#define NCH_RMVFLG(x, flag) (x &= ~flag)
+#define NCH_SETFLG(x, flag) (x |= flag)
+#define NCH_CHKUNI(x, flag) ((x & flag) != 0)
+
+#define NCH_SQR(idx) (1ull << idx)
+#ifdef __GNUC__
+    #define NCH_SQRIDX(square) NCH_CTZLL(square)
+#else
+    #define NCH_SQRIDX(square) (cuint64)log2((double)square)
+#endif
+#define NCH_GETCOL(square) (NCH_SQRIDX(square) % 8ull)
+#define NCH_GETROW(square) (NCH_SQRIDX(square) / 8ull)
+
+#define NCH_NXTSQR_UP(square) (square << 8)
+#define NCH_NXTSQR_DOWN(square) (square >> 8)
+#define NCH_NXTSQR_RIGHT(square) (square >> 1)
+#define NCH_NXTSQR_LEFT(square) (square << 1)
+#define NCH_NXTSQR_UPRIGHT(square) (square << 7)
+#define NCH_NXTSQR_UPLEFT(square) (square << 9)
+#define NCH_NXTSQR_DOWNRIGHT(square) (square >> 9)
+#define NCH_NXTSQR_DOWNLEFT(square) (square >> 7)
+
+#define NCH_NXTSQR_K_UPRIGHT(square) (square << 15)
+#define NCH_NXTSQR_K_UPLEFT(square) (square << 17)
+#define NCH_NXTSQR_K_DOWNRIGHT(square) (square >> 17)
+#define NCH_NXTSQR_K_DOWNLEFT(square) (square >> 15)
+#define NCH_NXTSQR_K_RIGHTUP(square) (square << 6)
+#define NCH_NXTSQR_K_RIGHTDOWN(square) (square >> 10)
+#define NCH_NXTSQR_K_LEFTUP(square) (square << 10)
+#define NCH_NXTSQR_K_LEFTDOWN(square) (square >> 6)
+
+#define NCH_MKMOVE(map, src_sqr, trg_sqr) NCH_RMVFLG(map, src_sqr); NCH_SETFLG(map, trg_sqr);
 
 typedef struct{
     cuint64 W_Pawns;

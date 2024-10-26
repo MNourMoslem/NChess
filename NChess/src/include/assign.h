@@ -71,13 +71,25 @@ if (!NCH_CHKFLG(block_col, square)){\
 }
 
 
-#define _NCH_POSSIBLEMOVES_PAWN(board, piece_map, turn, idx, sqaure, king_effect_map, updown_func, rightattack_func, leftattack_func, first_row, enpassant_row)\
+#define _NCH_POSSIBLEMOVES_PAWN(board, piece_map, turn, idx, square, king_effect_map, updown_func, rightattack_func, leftattack_func, first_row, enpassant_row)\
 current = updown_func(square);\
 _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, current, all_map, op_map, king_effect_map, piece_map)\
 \
 if (NCH_CHKFLG(first_row, square)){\
     current = updown_func(current);\
     _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, current, all_map, op_map, king_effect_map, piece_map)\
+}\
+if(!NCH_CHKFLG(NCH_COL1, square)){\
+    current = rightattack_func(square);\
+    if (NCH_CHKFLG(op_map, current)){\
+        _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, current, all_map, op_map, king_effect_map, piece_map)\
+    }\
+}\
+if(!NCH_CHKFLG(NCH_COL8, square)){\
+    current = leftattack_func(square);\
+    if (NCH_CHKFLG(op_map, current)){\
+        _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, current, all_map, op_map, king_effect_map, piece_map)\
+    }\
 }\
 \
 if (NCH_CHKFLG(enpassant_row, square) && NCH_B_IS_PAWNMOVED2SQR(board)){\

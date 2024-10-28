@@ -144,12 +144,12 @@ void _CBoard_PiecesMovesAsString_Pawn(CBoard* board, cuint64* piece_map, int* mo
             moves_str[idx][current++] = (move.idx / 8) + '1';
 
             if (NCH_CHKFLG(last_row, move.square)){
-                for (int i = 1, last_idx = idx; i < 5; i++){
-                    memcpy(moves_str[idx] ,moves_str[last_idx], sizeof(char) * 5);
+                for (int i = 1, last_idx = idx, last_current = current; i < 5; i++, last_current = current){
+                    memcpy(moves_str[idx] ,moves_str[last_idx], sizeof(char) * current);
 
-                    moves_str[idx][6] = '=';
-                    moves_str[idx][7] = NCH_PIECES[i];
-                    moves_str[idx][8] = '\0';
+                    moves_str[idx][last_current++] = '=';
+                    moves_str[idx][last_current++] = NCH_PIECES[i];
+                    moves_str[idx][last_current++] = '\0';
                     idx++;
                     n_moves++;
                 }
@@ -242,15 +242,15 @@ int CBoard_NumberPossibleMoves(CBoard* board){
     if (NCH_B_IS_WHITETURN(board)){
         _NCH_MAP_LOOP(board->W_Pawns){
             if (NCH_CHKUNI(NCH_ROW8 ,board->possible_moves[move.idx])){
-                count += NCH_POPCOUNTLL(board->possible_moves[move.idx]) * 4;
+                count += NCH_POPCOUNTLL(board->possible_moves[move.idx]) * 3;
             }
         }
 
-        if (!NCH_CHKFLG(board->castle_flags, NCH_CF_WHITE_OO)){
+        if (NCH_CHKFLG(board->castle_flags, NCH_CF_COULD_WHITE_OO)){
             count += 1;
         }
         
-        if (!NCH_CHKFLG(board->castle_flags, NCH_CF_WHITE_OOO)){
+        if (NCH_CHKFLG(board->castle_flags, NCH_CF_COULD_WHITE_OOO)){
             count += 1;
         }
     }
@@ -261,11 +261,11 @@ int CBoard_NumberPossibleMoves(CBoard* board){
             }
         }
 
-        if (!NCH_CHKFLG(board->castle_flags, NCH_CF_BLACK_OO)){
+        if (NCH_CHKFLG(board->castle_flags, NCH_CF_COULD_BLACK_OO)){
             count += 1;
         }
         
-        if (!NCH_CHKFLG(board->castle_flags, NCH_CF_BLACK_OOO)){
+        if (NCH_CHKFLG(board->castle_flags, NCH_CF_COULD_BLACK_OOO)){
             count += 1;
         }
     }
@@ -521,8 +521,8 @@ void _CBoard_KnightPossibleMoves(CBoard* board, cuint64* piece_map, int turn, in
 void _CBoard_RookPossibleMoves(CBoard* board, cuint64* piece_map, int turn, int idx, cuint64 square, cuint64 king_effect_map, cuint64 ply_map, cuint64 op_map){
     cuint64 current, temp;
 
-    _NCH_POSSIBLEMOVES_WHILE_ASSIGN(board, turn, idx, NCH_NXTSQR_UP, square, current, current, ply_map, op_map, ply_map, king_effect_map, piece_map)
-    _NCH_POSSIBLEMOVES_WHILE_ASSIGN(board, turn, idx, NCH_NXTSQR_DOWN, square, current, current, ply_map, op_map, ply_map, king_effect_map, piece_map)
+    _NCH_POSSIBLEMOVES_WHILE_ASSIGN(board, turn, idx, NCH_NXTSQR_UP, square, current, current, ply_map, op_map, board->All_Map, king_effect_map, piece_map)
+    _NCH_POSSIBLEMOVES_WHILE_ASSIGN(board, turn, idx, NCH_NXTSQR_DOWN, square, current, current, ply_map, op_map, board->All_Map, king_effect_map, piece_map)
 
     _NCH_POSSIBLEMOVES_WHILE_ASSIGN_SIDES(board, turn, idx, NCH_NXTSQR_RIGHT, square, current, current, NCH_COL1, ply_map, temp, op_map, king_effect_map, piece_map)
     _NCH_POSSIBLEMOVES_WHILE_ASSIGN_SIDES(board, turn, idx, NCH_NXTSQR_LEFT, square, current, current, NCH_COL8, ply_map, temp, op_map, king_effect_map, piece_map)
@@ -593,7 +593,7 @@ void _CBoard_SetPossibleMoves(CBoard* board, int turn, int is_check){
     if (turn == NCH_WHITE){
         ply_map = board->White_Map;
         op_map = board->Black_Map;
-        king_effect_map = is_check != 1 ? CBoard_QueenVision(board->W_King, board->All_Map) : NCH_CUINT64_MAX;
+        king_effect_map = is_check != 1 ? CBoard_QueenVision(board->W_King, board->All_Map) | board->W_King : NCH_CUINT64_MAX;
 
         _NCH_SET_POSSIBLEMOVE(_CBoard_PawnPossibleMoves, board, board->W_Pawns, NCH_WHITE, king_effect_map, ply_map, op_map)
         _NCH_SET_POSSIBLEMOVE(_CBoard_RookPossibleMoves, board, board->W_Rooks, NCH_WHITE, king_effect_map, ply_map, op_map)
@@ -605,7 +605,7 @@ void _CBoard_SetPossibleMoves(CBoard* board, int turn, int is_check){
     else{
         ply_map = board->Black_Map;
         op_map = board->White_Map;
-        king_effect_map = is_check != 1 ? CBoard_QueenVision(board->B_King, ply_map | op_map) : NCH_CUINT64_MAX;
+        king_effect_map = is_check != 1 ? CBoard_QueenVision(board->B_King, ply_map | op_map) | board->B_King: NCH_CUINT64_MAX;
 
         _NCH_SET_POSSIBLEMOVE(_CBoard_PawnPossibleMoves, board, board->B_Pawns, NCH_BLACK, king_effect_map, ply_map, op_map)
         _NCH_SET_POSSIBLEMOVE(_CBoard_RookPossibleMoves, board, board->B_Rooks, NCH_BLACK, king_effect_map, ply_map, op_map)
@@ -891,7 +891,7 @@ int CBoard_Step(CBoard* board, cuint64 from_, cuint64 to_, NCH_SMoves special_mo
     return _CBoard_Step(board, turn, piece_map, from_, to_, special_move);
 }
 
-int CBoard_StepAllPossibleMoves(CBoard* board, CBoard result_boards[100]){
+int CBoard_StepAllPossibleMoves(CBoard* board, CBoard result_boards[]){
     int turn = NCH_B_TURN(board);
     int idx;
     int current_idx = 0;
@@ -918,6 +918,20 @@ int CBoard_StepAllPossibleMoves(CBoard* board, CBoard result_boards[100]){
     }
 
     return current_idx;
+}
+
+int CBoard_CountAllPossibleMoves(CBoard* board, int depth){
+    if (depth <= 1){
+        return CBoard_NumberPossibleMoves(board);
+    }
+
+    int count = 0;    
+    CBoard boards[250];
+    int n_moves = CBoard_StepAllPossibleMoves(board, boards);
+    for (int i = 0; i < n_moves; i++){
+        count += CBoard_CountAllPossibleMoves(boards + i, depth - 1);
+    }
+    return count;
 }
 
 CBoard* CBoard_New(){
@@ -1204,9 +1218,15 @@ CBoard* CBoard_FromFEN(char* FEN){
     i += _CBoard_FEN_Board(board, FEN) + 1;
     i += _CBoard_FEN_Turn(board, FEN[i]) + 1;
     i += _CBoard_FEN_CastleFlags(board, FEN + i) + 1;
-    i += _CBoard_FEN_EnPassant(board, FEN + i) + 1;
-    i += _CBoard_FEN_FiftyMoves(board, FEN + i) + 1;
-    _CBoard_FEN_MovesNumber(board, FEN + i);
+    i += _CBoard_FEN_EnPassant(board, FEN + i);
+
+    if (FEN[i++] != '\0'){
+        i += _CBoard_FEN_FiftyMoves(board, FEN + i);
+    }
+
+    if (FEN[i++] != '\0'){
+        _CBoard_FEN_MovesNumber(board, FEN + i);
+    }
 
     _CBoard_Update(board, NCH_B_TURN(board));
 

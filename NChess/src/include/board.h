@@ -797,6 +797,8 @@ int _CBoard_Step(CBoard* board, int turn, cuint64* piece_map, cuint64 from_, cui
         turn = NCH_WHITE;    
     }
 
+    board->move_count += 1;
+
     _CBoard_Update(board, turn);
 
     return 0;

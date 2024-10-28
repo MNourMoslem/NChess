@@ -7,7 +7,7 @@ int main(){
     cuint64 to_[8] = {NCH_E4, NCH_E5, NCH_C4, NCH_C6, NCH_F3, NCH_B4, NCH_NONE};
     cuint64 sm_[8] = {NCH_NoSM, NCH_NoSM, NCH_NoSM, NCH_NoSM, NCH_NoSM, NCH_NoSM, NCH_OO};
 
-    char FEN[] = "2bqkb2/1pppppp1/3rr3/p2N3p/P2nn2P/R2N3R/1PPPPPP1/2BQKB2 w Kk - 28 17";
+    char FEN[] = "r1bqkbnr/ppp2ppp/2np4/3Pp3/8/5N2/PPP1PPPP/RNBQKB1R w KQkq e6 0 4";
 
     CBoard* board = CBoard_FromFEN(FEN);
 

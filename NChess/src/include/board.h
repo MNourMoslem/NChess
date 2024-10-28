@@ -13,6 +13,45 @@ int NCH_GAMEDICT_SIZE = 100;
 
 #define _CBoard_CLEAN_POSSIBLEMOVES(board) memset(board->possible_moves, 0, sizeof(board->possible_moves))
 
+void CBoard_PrintGameState(const CBoard* board){
+    printf("Game State: ");
+    if (NCH_B_IS_GAMEEND(board)){
+        printf("End, Game Result: ");
+        if (NCH_B_IS_DRAW(board)){
+            printf("Draw by ");
+            if (NCH_B_IS_STALEMATE(board)){
+                printf("Stalemate");
+            }
+            else if (NCH_B_IS_THREEFOLD(board)){
+                printf("Threefold Repetion");
+            }
+            else if (NCH_B_IS_FIFTYMOVES(board)){
+                printf("Fifty Moves Rule");
+            }
+        }
+        else{
+            if (NCH_B_IS_WHITEWIN(board)){
+                printf("White ");
+            }
+            else{
+                printf("Black ");
+            }
+            printf("Winning!");
+        }
+    }
+    else{
+        printf("Continuing, ");
+        if (NCH_B_IS_WHITETURN(board)){
+            printf("White ");
+        }
+        else{
+            printf("Black ");
+        }
+        printf("Move");
+    }
+    printf("\n");
+}
+
 cuint64 _CBoard_ToKey(const CBoard *board) {
     cuint64 key = 0;
 
@@ -50,14 +89,14 @@ void _CBoard_PiecesMovesAsString(CBoard* board, cuint64* piece_map, int* move_id
         _NCH_MAP_LOOP(moves[i]) {
             current = 0;
             moves_str[idx][current++] = piece_char;
+            moves_str[idx][current++] = 'h' - (indices[i] % 8);
+            moves_str[idx][current++] = (indices[i] / 8) + '1';
 
             if (NCH_CHKFLG(op_map, move.square)){
                 moves_str[idx][current++] = 'x';
+            }else{
+                moves_str[idx][current++] = '-';
             }
-
-            moves_str[idx][current++] = 'h' - (indices[i] % 8);
-            moves_str[idx][current++] = (indices[i] / 8) + '1';
-            moves_str[idx][current++] = '-';
 
             moves_str[idx][current++] = 'h' - (move.idx % 8);
             moves_str[idx][current++] = (move.idx / 8) + '1';
@@ -75,11 +114,13 @@ void _CBoard_PiecesMovesAsString(CBoard* board, cuint64* piece_map, int* move_id
 void _CBoard_PiecesMovesAsString_Pawn(CBoard* board, cuint64* piece_map, int* move_idx, char moves_str[][8], char piece_char, cuint64 op_map, cuint64 last_row){
     int N = NCH_POPCOUNTLL(*piece_map);
     int* indices = malloc(N * sizeof(int));
+    int* columns = malloc(N * sizeof(int));
     cuint64* moves = malloc(N * sizeof(cuint64));
     int j = 0;
 
     _NCH_MAP_LOOP(*piece_map){
         indices[j] = move.idx;
+        columns[j] = move.idx % 8;
         moves[j] = board->possible_moves[move.idx];
         j++;
     }
@@ -93,7 +134,7 @@ void _CBoard_PiecesMovesAsString_Pawn(CBoard* board, cuint64* piece_map, int* mo
             moves_str[idx][current++] = 'h' - (indices[i] % 8);
             moves_str[idx][current++] = (indices[i] / 8) + '1';
 
-            if (NCH_CHKFLG(op_map, move.square)){
+            if (NCH_GETCOL(move.square) != columns[i]){
                 moves_str[idx][current++] = 'x';
             }else{
                 moves_str[idx][current++] = '-';
@@ -232,8 +273,9 @@ int CBoard_NumberPossibleMoves(CBoard* board){
     return count;
 }
 
-int CBoard_HasAtLeastOnePossibleMove(CBoard* board){
-    return (board->possible_moves[0] == 0ull) && memcmp(board->possible_moves, board->possible_moves + 1, 63) == 0;
+int CBoard_HasNoPossibleMove(CBoard* board) {
+    return (board->possible_moves[0] == 0ull) &&
+           (memcmp(board->possible_moves, board->possible_moves + 1, 63 * sizeof(uint64_t)) == 0);
 }
 
 void CBoard_AsString(CBoard* board, char board_str[NCH_B_STRING_SIZE]){
@@ -300,7 +342,6 @@ cuint64 CBoard_KnightVision(cuint64 square, cuint64 block_map){
         vmap |= NCH_NXTSQR_K_DOWNRIGHT(square);    
     }
 
-    NCH_RMVFLG(vmap, block_map);
     return vmap;
 }
 
@@ -351,25 +392,24 @@ cuint64 CBoard_QueenVision(cuint64 square, cuint64 block_map){
     return CBoard_RookVision(square, block_map) | CBoard_BishopVision(square, block_map);
 }
 
-cuint64 CBoard_PawnAttackVision_White(cuint64 square, cuint64 block_map){
+cuint64 CBoard_PawnAttackVision_White(cuint64 square){
     return (NCH_CHKFLG(NCH_COL1, square) ? 0ull : NCH_NXTSQR_UPRIGHT(square))
-        | (NCH_CHKFLG(NCH_COL8, square) ? 0ull : NCH_NXTSQR_UPLEFT(square))
-        & ~block_map;
+        | (NCH_CHKFLG(NCH_COL8, square) ? 0ull : NCH_NXTSQR_UPLEFT(square));
 }
 
-cuint64 CBoard_PawnAttackVision_Black(cuint64 square, cuint64 block_map){
+cuint64 CBoard_PawnAttackVision_Black(cuint64 square){
     return (NCH_CHKFLG(NCH_COL1, square) ? 0ull : NCH_NXTSQR_DOWNRIGHT(square))
-        | (NCH_CHKFLG(NCH_COL8, square) ? 0ull : NCH_NXTSQR_DOWNLEFT(square))
-        & ~block_map;
+        | (NCH_CHKFLG(NCH_COL8, square) ? 0ull : NCH_NXTSQR_DOWNLEFT(square));
 }
 
 int _CBoard_CheckSquare_IsCheck(CBoard* board, cuint64 square, int turn){
     cuint64 knight_like_map = CBoard_KnightVision(square, board->All_Map);
     cuint64 rook_like_map = CBoard_RookVision(square, board->All_Map);
     cuint64 bishop_like_map = CBoard_BishopVision(square, board->All_Map);
-    cuint64 pawnattack_like_map = CBoard_PawnAttackVision_White(square, board->All_Map);
+    cuint64 pawnattack_like_map;
 
     if (turn == NCH_WHITE){
+        pawnattack_like_map = CBoard_PawnAttackVision_White(square);
         if (NCH_CHKUNI(rook_like_map, board->B_Rooks) || NCH_CHKUNI(rook_like_map, board->B_Queens) ||
             NCH_CHKUNI(bishop_like_map, board->B_Bishops) || NCH_CHKUNI(bishop_like_map, board->B_Queens) ||
             NCH_CHKUNI(knight_like_map, board->B_Knights) || NCH_CHKUNI(pawnattack_like_map, board->B_Pawns) ||
@@ -380,6 +420,7 @@ int _CBoard_CheckSquare_IsCheck(CBoard* board, cuint64 square, int turn){
         return 0;
     }
     else{
+        pawnattack_like_map = CBoard_PawnAttackVision_Black(square);
         if (NCH_CHKUNI(rook_like_map, board->W_Rooks) || NCH_CHKUNI(rook_like_map, board->W_Queens) ||
             NCH_CHKUNI(bishop_like_map, board->W_Bishops) || NCH_CHKUNI(bishop_like_map, board->W_Queens) ||
             NCH_CHKUNI(knight_like_map, board->W_Knights) || NCH_CHKUNI(pawnattack_like_map, board->W_Pawns) ||
@@ -443,10 +484,10 @@ void _CBoard_PawnPossibleMoves(CBoard* board, cuint64* piece_map, int turn, int 
     cuint64 current;
 
     if (turn == NCH_WHITE){
-        _NCH_POSSIBLEMOVES_PAWN(board, turn, idx, square, piece_map, op_map, king_effect_map, NCH_NXTSQR_UP, NCH_NXTSQR_UPRIGHT, NCH_NXTSQR_UPLEFT, NCH_ROW2, NCH_ROW5)
+        _NCH_POSSIBLEMOVES_PAWN(board, turn, idx, square, piece_map, ply_map, op_map, king_effect_map, NCH_NXTSQR_UP, NCH_NXTSQR_UPRIGHT, NCH_NXTSQR_UPLEFT, NCH_ROW2, NCH_ROW5)
     }
     else{
-        _NCH_POSSIBLEMOVES_PAWN(board, turn, idx, square, piece_map, op_map, king_effect_map, NCH_NXTSQR_DOWN, NCH_NXTSQR_DOWNRIGHT, NCH_NXTSQR_DOWNLEFT, NCH_ROW7, NCH_ROW4)
+        _NCH_POSSIBLEMOVES_PAWN(board, turn, idx, square, piece_map, ply_map, op_map, king_effect_map, NCH_NXTSQR_DOWN, NCH_NXTSQR_DOWNRIGHT, NCH_NXTSQR_DOWNLEFT, NCH_ROW7, NCH_ROW4)
     }
 }
 
@@ -594,10 +635,10 @@ int _CBoard_Check_FiftyMoves(CBoard* board){
 }
 
 int _CBoard_Check_CheckMateAndStaleMate(CBoard* board, int is_check){
-    if (CBoard_HasAtLeastOnePossibleMove(board)){
+    if (CBoard_HasNoPossibleMove(board)){
         if (is_check == 1){
             NCH_SETFLG(board->flags, NCH_B_CHECKMATE);
-            if (NCH_B_IS_WHITETURN(board)){
+            if (!NCH_B_IS_WHITETURN(board)){
                 NCH_SETFLG(board->flags, NCH_B_WHITEWIN);
             }
             else{
@@ -1136,7 +1177,7 @@ CBoard* CBoard_FromFEN(char* FEN){
         return NULL;
     }
 
-    board->GameDict = _NCH_Ht_New(100);
+    board->GameDict = _NCH_Ht_New(NCH_GAMEDICT_SIZE);
     if (!board->GameDict){
         free(board);
     }

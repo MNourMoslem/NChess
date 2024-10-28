@@ -73,7 +73,7 @@ if (!NCH_CHKFLG(block_col, square)){\
 }
 
 
-#define _NCH_POSSIBLEMOVES_PAWN(board, turn, idx, square, piece_map, op_map, king_effect_map, updown_func, rightattack_func, leftattack_func, first_row, enpassant_row)\
+#define _NCH_POSSIBLEMOVES_PAWN(board, turn, idx, square, piece_map, ply_map, op_map, king_effect_map, updown_func, rightattack_func, leftattack_func, first_row, enpassant_row)\
 current = updown_func(square);\
 _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, current, board->All_Map, board->All_Map, king_effect_map, piece_map)\
 \
@@ -84,13 +84,13 @@ if (NCH_CHKFLG(first_row, square) && board->possible_moves[idx] != 0ull){\
 if(!NCH_CHKFLG(NCH_COL1, square)){\
     current = rightattack_func(square);\
     if (NCH_CHKFLG(op_map, current)){\
-        _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, current, board->All_Map, op_map, king_effect_map, piece_map)\
+        _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, current, ply_map, op_map, king_effect_map, piece_map)\
     }\
 }\
 if(!NCH_CHKFLG(NCH_COL8, square)){\
     current = leftattack_func(square);\
     if (NCH_CHKFLG(op_map, current)){\
-        _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, current, board->All_Map, op_map, king_effect_map, piece_map)\
+        _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, current, ply_map, op_map, king_effect_map, piece_map)\
     }\
 }\
 \
@@ -99,13 +99,13 @@ if (NCH_CHKFLG(enpassant_row, square) && NCH_B_IS_PAWNMOVED2SQR(board)){\
     int col = NCH_GETCOL(square);\
 \
     if (col == (trg_col - 1)){\
-        current = rightattack_func(square);\
+        current = leftattack_func(square);\
         _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, NCH_NXTSQR_RIGHT(square), board->All_Map, op_map, king_effect_map, piece_map)\
         return;\
     }\
 \
     if (col == (trg_col + 1)){\
-        current = leftattack_func(square);\
+        current = rightattack_func(square);\
         _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, NCH_NXTSQR_LEFT(square), board->All_Map, op_map, king_effect_map, piece_map)\
     }\
 }

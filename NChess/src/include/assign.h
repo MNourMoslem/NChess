@@ -34,8 +34,11 @@ if (!NCH_CHKFLG(block_col, square)){\
 
 #define _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, capture_sqr, block_map, op_map, king_effect_map, piece_map)\
 if (!NCH_CHKFLG(block_map, current)){\
-    if (NCH_CHKFLG(king_effect_map, square) && (_CBoard_MoveAndCheck(board, turn, piece_map, square, current, capture_sqr, op_map) == 1)){\
+    if (NCH_CHKFLG(king_effect_map, square)){\
+        printf("sry square: 0x%llx to current: 0x%llx at %s turn.\n", square, current, turn == NCH_WHITE ? "white" : "black"); \
+        if (_CBoard_MoveAndCheck(board, turn, piece_map, square, current, capture_sqr, op_map) == 1){\
             current = 0ull;\
+        }\
     }\
     board->possible_moves[idx] |= current;\
 }
@@ -71,24 +74,24 @@ if (!NCH_CHKFLG(block_col, square)){\
 }
 
 
-#define _NCH_POSSIBLEMOVES_PAWN(board, piece_map, turn, idx, square, king_effect_map, updown_func, rightattack_func, leftattack_func, first_row, enpassant_row)\
+#define _NCH_POSSIBLEMOVES_PAWN(board, turn, idx, square, piece_map, op_map, king_effect_map, updown_func, rightattack_func, leftattack_func, first_row, enpassant_row)\
 current = updown_func(square);\
-_NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, current, all_map, op_map, king_effect_map, piece_map)\
+_NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, current, board->All_Map, board->All_Map, king_effect_map, piece_map)\
 \
-if (NCH_CHKFLG(first_row, square)){\
+if (NCH_CHKFLG(first_row, square) && board->possible_moves[idx] != 0ull){\
     current = updown_func(current);\
-    _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, current, all_map, op_map, king_effect_map, piece_map)\
+    _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, current, board->All_Map, board->All_Map, king_effect_map, piece_map)\
 }\
 if(!NCH_CHKFLG(NCH_COL1, square)){\
     current = rightattack_func(square);\
     if (NCH_CHKFLG(op_map, current)){\
-        _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, current, all_map, op_map, king_effect_map, piece_map)\
+        _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, current, board->All_Map, op_map, king_effect_map, piece_map)\
     }\
 }\
 if(!NCH_CHKFLG(NCH_COL8, square)){\
     current = leftattack_func(square);\
     if (NCH_CHKFLG(op_map, current)){\
-        _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, current, all_map, op_map, king_effect_map, piece_map)\
+        _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, current, board->All_Map, op_map, king_effect_map, piece_map)\
     }\
 }\
 \
@@ -98,13 +101,13 @@ if (NCH_CHKFLG(enpassant_row, square) && NCH_B_IS_PAWNMOVED2SQR(board)){\
 \
     if (col == (trg_col - 1)){\
         current = rightattack_func(square);\
-        _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, NCH_NXTSQR_RIGHT(square), all_map, op_map, king_effect_map, piece_map)\
+        _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, NCH_NXTSQR_RIGHT(square), board->All_Map, op_map, king_effect_map, piece_map)\
         return;\
     }\
 \
     if (col == (trg_col + 1)){\
         current = leftattack_func(square);\
-        _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, NCH_NXTSQR_LEFT(square), all_map, op_map, king_effect_map, piece_map)\
+        _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, NCH_NXTSQR_LEFT(square), board->All_Map, op_map, king_effect_map, piece_map)\
     }\
 }
 
@@ -121,5 +124,33 @@ if (piece_map != 0){\
 piece_char = NCH_PIECES[piece_char_idx++];\
 _NCH_MAP_LOOP(piece_map) {idx = 63 - move.idx; board_idx = idx + (idx / 8); board_str[board_idx] = piece_char;}\
 
+
+#define _NCH_STEP_ALL_POSSIBLE_MOVES(board, possible_moves, turn, copy_board, map_name, current_idx)\
+_NCH_MAP_LOOP_NAME_SPECEFIC(board->map_name, piece){\
+    _NCH_MAP_LOOP(possible_moves[piece.idx]) {\
+        copy_board = *board;\
+        _CBoard_Step(&copy_board, turn, &copy_board.map_name, piece.square, move.square, NCH_NoSM);\
+        result_boards[current_idx++] = copy_board;\
+    }\
+}
+
+
+#define _NCH_STEP_ALL_POSSIBLE_MOVES_PAWN(board, possible_moves, turn, copy_board, map_name, current_idx, last_row, promotions)\
+_NCH_MAP_LOOP_NAME_SPECEFIC(board->map_name, piece){\
+    _NCH_MAP_LOOP(possible_moves[piece.idx]) {\
+        if (NCH_CHKFLG(last_row, move.square)){\
+            for (int i = 0; i < 4; i++){\
+                copy_board = *board;\
+                _CBoard_Step(&copy_board, turn, &copy_board.map_name, piece.square, move.square, promotions[i]);\
+                result_boards[current_idx++] = copy_board;\
+            }\
+        }\
+        else{\
+            copy_board = *board;\
+            _CBoard_Step(&copy_board, turn, &copy_board.map_name, piece.square, move.square, NCH_NoSM);\
+            result_boards[current_idx++] = copy_board;\
+        }\
+    }\
+}
 
 #endif

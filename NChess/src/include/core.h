@@ -3,15 +3,18 @@
 
 #include <math.h>
 #include "types.h"
+#include "hash.h"
 
 #ifdef __GNUC__
     #define NCH_CLZLL(x) __builtin_clzll(x)
     #define NCH_CTZLL(x) __builtin_ctzll(x)
-    #define NCH_POPCOUNT(x) __builtin_popcountll(x)
+    #define NCH_POPCOUNT(x) __builtin_popcount(x)
+    #define NCH_POPCOUNTLL(x) __builtin_popcountll(x)
 #else
     #define NCH_CLZLL(x) custom_clzll(x)
     #define NCH_CTZLL(x) custom_ctzll(x)
     #define NCH_POPCOUNT(x) custom_popcount(x)
+    #define NCH_POPCOUNTLL(x) custom_popcountll(x)
 
     static inline int custom_clzll(unsigned long long x) {
         int count = 0;
@@ -35,7 +38,17 @@
         return count;
     }
 
-    static inline int custom_popcount(unsigned int x) {
+    static inline int custom_popcountll(unsigned long long x) {
+        int count = 0;
+        
+        while (x) {
+            count += x & 1;  // Check if the least significant bit is 1
+            x >>= 1;         // Shift bits to the right by 1 to check the next bit
+        }
+        return count;
+    }
+
+    static inline int custom_popcount(unsigned long long x) {
         int count = 0;
         
         while (x) {
@@ -51,6 +64,8 @@
 
 const char NCH_PIECES[13] = {'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k', '.'};
 const char NCH_COLUMNS[8] = {'h' ,'g', 'f', 'e', 'd', 'c', 'b', 'a'};
+
+#define NCH_NONE 0x0ull
 
 #define NCH_H1 0x1ull        // 2^0
 #define NCH_G1 0x2ull        // 2^1
@@ -161,11 +176,15 @@ const char NCH_COLUMNS[8] = {'h' ,'g', 'f', 'e', 'd', 'c', 'b', 'a'};
 #define NCH_WHITE_KING_START_POS 0x0000000000000008ull
 #define NCH_BLACK_KING_START_POS 0x0800000000000000ull
 
-#define NCH_PROMOTION_TO_NONE 0
-#define NCH_PROMOTION_TO_QUEEN 1
-#define NCH_PROMOTION_TO_ROOK 2
-#define NCH_PROMOTION_TO_KNIGHT 4
-#define NCH_PROMOTION_TO_BISHOP 8
+typedef enum{
+    NCH_NoSM,
+    NCH_OO,
+    NCH_OOO,
+    NCH_Promote2Queen,
+    NCH_Promote2Rook,
+    NCH_Promote2Knight,
+    NCH_Promote2Bishop,
+}NCH_SMoves;
 
 #define NCH_CHKFLG(x, flag) ((x & flag) == flag)
 #define NCH_RMVFLG(x, flag) (x &= ~flag)
@@ -217,12 +236,34 @@ typedef struct{
 
     cuint64 White_Map;
     cuint64 Black_Map;
+    cuint64 All_Map;
+
+    int flags;
+    cuint8 castle_flags;
 
     cuint64 possible_moves[64];
 
+    _NCH_Ht* GameDict;
+
     int count;
-    int flags;
 }CBoard;
+
+#define NCH_CF_WHITE_OO (cuint8)1
+#define NCH_CF_WHITE_OOO (cuint8)2
+#define NCH_CF_BLACK_OO (cuint8)4
+#define NCH_CF_BLACK_OOO (cuint8)8
+#define NCH_CF_COULD_WHITE_OO (cuint8)16
+#define NCH_CF_COULD_WHITE_OOO  (cuint8)32
+#define NCH_CF_COULD_BLACK_OO (cuint8)64
+#define NCH_CF_COULD_BLACK_OOO (cuint8)128
+
+const cuint8 NCH_CF_COULD_OO = NCH_CF_COULD_WHITE_OO | NCH_CF_COULD_BLACK_OO;
+const cuint8 NCH_CF_COULD_OOO = NCH_CF_COULD_WHITE_OOO | NCH_CF_COULD_BLACK_OOO;
+
+const cuint8 NCH_CF_MASK_COULDCASTLE = NCH_CF_COULD_OO | NCH_CF_COULD_OOO;
+#define NCH_CF_RESET_COULDCASLTE(board) NCH_RMVFLG(board->castle_flags, NCH_CF_MASK_COULDCASTLE)
+
+const cuint64 NCH_KING_CASTLE_SQUARES = NCH_G1 | NCH_C1 | NCH_G8 | NCH_C8 ; 
 
 #define NCH_B_MASKPAWNCOl 0x0000000F
 #define NCH_B_PAWNMOVED 0x00000010
@@ -230,14 +271,14 @@ typedef struct{
 #define NCH_B_ENPASSANT 0x00000040
 #define NCH_B_CAPTURE 0x00000080
 #define NCH_B_CHECK 0x00000100
-#define NCH_B_CHECKMATE 0x00000200
-#define NCH_B_STALEMATE 0x00000400
-#define NCH_B_THREEFOLD 0x00000800
-#define NCH_B_FIFTYMOVES 0x00001000
-#define NCH_B_GAMEEND 0x00002000
-#define NCH_B_DRAW 0x00004000
-#define NCH_B_WHITEWIN 0x00008000
-#define NCH_B_WHITETURN 0x00010000
+#define NCH_B_CHECKMATE 0x00000800
+#define NCH_B_STALEMATE 0x00001000
+#define NCH_B_THREEFOLD 0x00002000
+#define NCH_B_FIFTYMOVES 0x00004000
+#define NCH_B_GAMEEND 0x00008000
+#define NCH_B_DRAW 0x00010000
+#define NCH_B_WHITEWIN 0x00020000
+#define NCH_B_WHITETURN 0x00040000
 
 #define NCH_B_IS_PAWNMOVED(board) NCH_CHKFLG(board->flags, NCH_B_PAWNMOVED)
 #define NCH_B_IS_PAWNMOVED2SQR(board) NCH_CHKFLG(board->flags, NCH_B_PAWNMOVED2SQR)
@@ -267,5 +308,10 @@ typedef struct{
 #define NCH_B_SET_BLACKTURN(board) NCH_RMVFLG(board->flags, NCH_B_WHITETURN)
 
 #define NCH_B_STRING_SIZE 73
+
+const int NCH_B_MASK_GAMEACTIONS = NCH_B_MASKPAWNCOl | NCH_B_PAWNMOVED | NCH_B_PAWNMOVED2SQR
+                                 | NCH_B_ENPASSANT | NCH_B_CAPTURE | NCH_B_CHECK;
+
+#define NCH_B_RESET_GAMEACTIONS(board) NCH_RMVFLG(board->flags, NCH_B_MASK_GAMEACTIONS);
 
 #endif

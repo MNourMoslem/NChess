@@ -191,7 +191,7 @@ typedef enum{
 #define NCH_SETFLG(x, flag) (x |= flag)
 #define NCH_CHKUNI(x, flag) ((x & flag) != 0)
 
-#define NCH_SQR(idx) (1ull << idx)
+#define NCH_SQR(idx) (1ull << (idx))
 #ifdef __GNUC__
     #define NCH_SQRIDX(square) NCH_CTZLL(square)
 #else
@@ -245,7 +245,8 @@ typedef struct{
 
     _NCH_Ht* GameDict;
 
-    int count;
+    int fifty_count;
+    int move_count;
 }CBoard;
 
 #define NCH_CF_WHITE_OO (cuint8)1

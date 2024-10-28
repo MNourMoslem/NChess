@@ -579,11 +579,11 @@ void _CBoard_SetPossibleMoves(CBoard* board, int turn, int is_check){
 
 int _CBoard_Check_FiftyMoves(CBoard* board){
     if (NCH_CHKUNI(board->flags, NCH_B_MASK_GAMEACTIONS)){
-        board->count = 0;
+        board->fifty_count = 0;
     }
     else{
-        board->count += 1;
-        if (board->count >= 50){
+        board->fifty_count += 1;
+        if (board->fifty_count >= 50){
             NCH_SETFLG(board->flags, NCH_B_FIFTYMOVES);
             NCH_SETFLG(board->flags, NCH_B_DRAW);
             NCH_SETFLG(board->flags, NCH_B_GAMEEND);
@@ -909,7 +909,8 @@ CBoard* CBoard_New(){
 
     board->flags = 0;
     board->castle_flags = 0;
-    board->count = 0;
+    board->fifty_count = 0;
+    board->move_count = 0;
 
     NCH_B_SET_WHITETURN(board);
 
@@ -923,6 +924,250 @@ void CBoard_Free(CBoard* board){
         _NCH_Ht_Free(board->GameDict);
         free(board);
     }
+}
+
+void _CBoard_FEN_Object2Map(CBoard* board, char* row_str, int row_len, int row){
+    char current;
+    cuint64 sqr, *piece_map;
+    int idx, col = 7;
+    for (int i = 0; i < row_len; i++){
+        current = row_str[i];
+
+        if (current < '9'){
+            col -= current - '0';
+            continue;
+        }
+
+        idx = row * 8 + col;
+        sqr = NCH_SQR(idx); 
+
+        switch (current)
+        {
+        case 'P':
+            piece_map = &board->W_Pawns;
+            break;
+        
+        case 'N':
+            piece_map = &board->W_Knights;
+            break;
+
+        case 'B':
+            piece_map = &board->W_Bishops;
+            break;
+
+        case 'R':
+            piece_map = &board->W_Rooks;
+            break;
+
+        case 'Q':
+            piece_map = &board->W_Queens;
+            break;
+
+        case 'K':
+            piece_map = &board->W_King;
+            break;
+
+        case 'p':
+            piece_map = &board->B_Pawns;
+            break;
+        
+        case 'n':
+            piece_map = &board->B_Knights;
+            break;
+
+        case 'b':
+            piece_map = &board->B_Bishops;
+            break;
+
+        case 'r':
+            piece_map = &board->B_Rooks;
+            break;
+
+        case 'q':
+            piece_map = &board->B_Queens;
+            break;
+
+        case 'k':
+            piece_map = &board->B_King;
+            break;
+
+        default:
+            piece_map = NULL;
+            break;
+        }
+
+        NCH_SETFLG(*piece_map, sqr);
+        col--;
+    }
+}
+
+int _CBoard_FEN_Board(CBoard* board, char* board_str){
+    int i = 0;
+    char current = board_str[i];
+    int row = 7;
+    int row_len = 0;
+    int start = 0;
+
+    while (current != ' ' && row > -1)
+    {
+        if (current == '/'){
+            _CBoard_FEN_Object2Map(board, board_str + start, row_len, row);
+            row--;
+            start += row_len + 1;
+            row_len = 0;
+        }
+        else{
+            row_len++;
+        }
+        i++;
+        current = board_str[i];
+    }
+    _CBoard_FEN_Object2Map(board, board_str + start, row_len, row);
+
+    return i;
+}
+
+int _CBoard_FEN_Turn(CBoard* board, char turn_str){
+    if (turn_str == 'w'){
+        NCH_B_SET_WHITETURN(board);
+    }
+    else{
+        NCH_B_SET_BLACKTURN(board);
+    }
+    return 1;
+}
+
+int _CBoard_FEN_CastleFlags(CBoard* board, char* flags_str){
+    char current;
+
+    for (int i = 0; i < 4; i++)
+    {
+        current = flags_str[i];
+
+        switch (current)
+        {
+        case 'K':
+            NCH_RMVFLG(board->castle_flags, NCH_CF_WHITE_OO);
+            break;
+
+        case 'Q':
+            NCH_RMVFLG(board->castle_flags, NCH_CF_WHITE_OOO);
+            break;
+
+        case 'k':
+            NCH_RMVFLG(board->castle_flags, NCH_CF_BLACK_OO);
+            break;
+
+        case 'q':
+            NCH_RMVFLG(board->castle_flags, NCH_CF_BLACK_OOO);
+            break;
+        
+        case '-':
+            return 1;
+            break;
+
+        default:
+            return i;
+            break;
+        }
+    }
+
+    return 4;
+}
+
+int _CBoard_FEN_EnPassant(CBoard* board, char* enp_str){
+    if (enp_str[0] == '-'){
+        return 1;
+    }
+
+    int col = ('h' - enp_str[0]);
+
+    if (col < 8){
+        NCH_SETFLG(board->flags, NCH_B_PAWNMOVED);
+        NCH_SETFLG(board->flags, NCH_B_PAWNMOVED2SQR);
+        _NCH_B_SET_PAWNCOL(board, col);
+        return 2;
+    }else{
+        return 1;
+    }
+}
+
+int _CBoard_FEN_FiftyMoves(CBoard* board, char* fif_str){
+    int idx = 0;
+    char current = fif_str[idx];
+
+    while (current != ' ')
+    {
+        idx++;
+        current = fif_str[idx];
+    }
+
+    for (int i = idx - 1, j = 1; i > -1; i--, j *= 10){
+        board->fifty_count += (j * (fif_str[i] - '0'));
+    }
+    board->fifty_count--;
+
+    return idx;
+}
+
+int _CBoard_FEN_MovesNumber(CBoard* board, char* moves_str){
+    int idx = 0;
+    char current = moves_str[idx];
+
+    while (current != '\0')
+    {
+        idx++;
+        current = moves_str[idx];
+    }
+
+    for (int i = idx - 1, j = 1; i > -1; i--, j *= 10){
+        board->move_count += (j * (moves_str[i] - '0'));
+    }
+    board->move_count;
+
+    return idx;
+}
+
+CBoard* CBoard_FromFEN(char* FEN){
+    CBoard* board = malloc(sizeof(CBoard));
+    if (!board){
+        return NULL;
+    }
+
+    board->GameDict = _NCH_Ht_New(100);
+    if (!board->GameDict){
+        free(board);
+    }
+
+    board->W_Pawns = 0ull;
+    board->W_Knights = 0ull;
+    board->W_Bishops = 0ull;
+    board->W_Rooks = 0ull;
+    board->W_Queens = 0ull;
+    board->W_King = 0ull;
+    board->B_Pawns = 0ull;
+    board->B_Knights = 0ull;
+    board->B_Bishops = 0ull;
+    board->B_Rooks = 0ull;
+    board->B_Queens = 0ull;
+    board->B_King = 0ull;
+
+    board->flags = 0;
+    board->fifty_count = 0;
+    board->castle_flags = NCH_CUINT8_MAX;
+    board->move_count = 0;
+
+    int i = 0;
+    i += _CBoard_FEN_Board(board, FEN) + 1;
+    i += _CBoard_FEN_Turn(board, FEN[i]) + 1;
+    i += _CBoard_FEN_CastleFlags(board, FEN + i) + 1;
+    i += _CBoard_FEN_EnPassant(board, FEN + i) + 1;
+    i += _CBoard_FEN_FiftyMoves(board, FEN + i) + 1;
+    _CBoard_FEN_MovesNumber(board, FEN + i);
+
+    _CBoard_Update(board, NCH_B_TURN(board));
+
+    return board;
 }
 
 #endif

@@ -35,7 +35,6 @@ if (!NCH_CHKFLG(block_col, square)){\
 #define _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, capture_sqr, block_map, op_map, king_effect_map, piece_map)\
 if (!NCH_CHKFLG(block_map, current)){\
     if (NCH_CHKFLG(king_effect_map, square)){\
-        printf("sry square: 0x%llx to current: 0x%llx at %s turn.\n", square, current, turn == NCH_WHITE ? "white" : "black"); \
         if (_CBoard_MoveAndCheck(board, turn, piece_map, square, current, capture_sqr, op_map) == 1){\
             current = 0ull;\
         }\

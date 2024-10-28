@@ -7,23 +7,22 @@ int main(){
     cuint64 to_[8] = {NCH_E4, NCH_E5, NCH_C4, NCH_C6, NCH_F3, NCH_B4, NCH_NONE};
     cuint64 sm_[8] = {NCH_NoSM, NCH_NoSM, NCH_NoSM, NCH_NoSM, NCH_NoSM, NCH_NoSM, NCH_OO};
 
-    char FEN[] = "r1bqkbnr/ppp2ppp/2np4/3Pp3/8/5N2/PPP1PPPP/RNBQKB1R w KQkq e6 0 4";
+    char FEN[] = "1r2kb1r/p1p2ppp/2n2n2/1ppPp1q1/4P1b1/2KB1N2/PPQN1PPP/R1B4R b k - 5 11";
 
     CBoard* board = CBoard_FromFEN(FEN);
 
     CBoard_Print(board);
 
-    if (NCH_B_IS_WHITETURN(board)){
-        printf("WHITE TURN");
-    }
-    else{
-        printf("BLACK TURN");
-    }
+    char moves[100][8];
 
-    printf("\n");
-    printf("Castle Flags: 0x%x\n", board->castle_flags);
-    printf("Fifty Count: %i\n", board->fifty_count);
-    printf("Move Count: %i\n", board->move_count);
+    int n_moves = CBoard_PossibleMovesAsString(board, moves);
+
+    for (int i = 0; i < n_moves; i++){
+        printf("%s ", moves[i]);
+    }
+    printf("\nNumber of possible moves: %i\n", n_moves);
+
+    CBoard_PrintGameState(board);
 
     CBoard_Free(board);
 }

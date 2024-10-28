@@ -60,14 +60,14 @@ while(1){\
 
 #define _NCH_POSSIBLEMOVES_WHILE_ASSIGN_SIDES(board, turn, idx, move_func, square, current, capture_sqr, block_col, block_map, block_temp, op_map, king_effect_map, piece_map)\
 if (!NCH_CHKFLG(block_col, square)){\
-    block_temp = block_col | block_map;\
+    block_temp = block_col | board->All_Map;\
     _NCH_POSSIBLEMOVES_WHILE_ASSIGN(board, turn, idx, move_func, square, current, capture_sqr, block_map, op_map, block_temp, king_effect_map, piece_map)\
 }
 
 
 #define _NCH_POSSIBLEMOVES_WHILE_ASSIGN_SIDES_BISHOP(board, turn, idx, move_func_up, move_func_down, square, current, capture_sqr, block_col, block_map, block_temp, op_map, king_effect_map, piece_map)\
 if (!NCH_CHKFLG(block_col, square)){\
-    block_temp = block_col | block_map;\
+    block_temp = block_col | board->All_Map;\
     _NCH_POSSIBLEMOVES_WHILE_ASSIGN(board, turn, idx, move_func_up, square, current, capture_sqr, block_map, op_map, block_temp, king_effect_map, piece_map)\
     _NCH_POSSIBLEMOVES_WHILE_ASSIGN(board, turn, idx, move_func_down, square, current, capture_sqr, block_map, op_map, block_temp, king_effect_map, piece_map)\
 }
@@ -77,7 +77,8 @@ if (!NCH_CHKFLG(block_col, square)){\
 current = updown_func(square);\
 _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, current, board->All_Map, board->All_Map, king_effect_map, piece_map)\
 \
-if (NCH_CHKFLG(first_row, square) && board->possible_moves[idx] != 0ull){\
+current = updown_func(square);\
+if (NCH_CHKFLG(first_row, square) && !NCH_CHKFLG(board->All_Map ,current)){\
     current = updown_func(current);\
     _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, current, board->All_Map, board->All_Map, king_effect_map, piece_map)\
 }\

@@ -1,28 +1,94 @@
 #include "NChess/src/include/nchess.h"
 
-int main(){
-    int N = 8;
-
-    cuint64 from_[8] = {NCH_E2, NCH_E7, NCH_F1, NCH_B8, NCH_G1, NCH_F8, NCH_NONE};
-    cuint64 to_[8] = {NCH_E4, NCH_E5, NCH_C4, NCH_C6, NCH_F3, NCH_B4, NCH_NONE};
-    cuint64 sm_[8] = {NCH_NoSM, NCH_NoSM, NCH_NoSM, NCH_NoSM, NCH_NoSM, NCH_NoSM, NCH_OO};
-
-    char FEN[] = "1r2kb1r/p1p2ppp/2n2n2/1ppPp1q1/4P1b1/2KB1N2/PPQN1PPP/R1B4R b k - 5 11";
-
+void test_1(char FEN[] ,int depth){
     CBoard* board = CBoard_FromFEN(FEN);
-
-    CBoard_Print(board);
-
-    char moves[100][8];
-
-    int n_moves = CBoard_PossibleMovesAsString(board, moves);
-
-    for (int i = 0; i < n_moves; i++){
-        printf("%s ", moves[i]);
+    if (!board){
+        return;
     }
-    printf("\nNumber of possible moves: %i\n", n_moves);
 
-    CBoard_PrintGameState(board);
+    int n_pos = CBoard_Perft(board, depth);
+
+    printf("Possible Number of Possitions: %i, for depth: %i\n", n_pos, depth);
 
     CBoard_Free(board);
+}
+
+void test_2(char FEN[], int print){
+    CBoard* board = CBoard_FromFEN(FEN);
+    if (!board){
+        return;
+    }
+
+    if (print){
+        CBoard_Print(board);
+    }
+
+    char moves[100][8];
+    int n_pos = CBoard_PossibleMovesAsString(board, moves);
+    for (int i = 0; i < n_pos; i++){
+        printf("%s ", moves[i]);
+    }
+    printf("\n");
+
+    printf("Possible Number of Moves: %i\n", n_pos);
+
+    CBoard_Free(board);
+}
+
+void test_3(int depth){
+    CBoard* board = CBoard_New();
+    if (!board){
+        return;
+    }
+
+    int n_pos = CBoard_Perft(board, depth);
+
+    printf("Possible Number of Possitions: %i, for depth: %i\n", n_pos, depth);
+
+    CBoard_Free(board);
+}
+
+void test_4(char FEN[], char* move, int print){
+    CBoard* board = CBoard_FromFEN(FEN);
+    if (!board){
+        return;
+    }
+    CBoard_StepFromString(board, move);
+
+    if (print){
+        CBoard_Print(board);
+    }
+
+    char moves[100][8];
+    int n_pos = CBoard_PossibleMovesAsString(board, moves);
+    for (int i = 0; i < n_pos; i++){
+        printf("%s ", moves[i]);
+    }
+    printf("\n");
+
+    printf("Possible Number of Moves: %i\n", n_pos);
+
+    CBoard_Free(board);
+}
+
+int main(int argc, char* argv[]){
+    int depth = atoi(argv[1]);
+
+    char FEN[] = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
+
+    asm("jmb");
+
+    test_1(FEN, depth);
+    // test_2(FEN, 1);
+    // test_4(FEN, "g2g4", 1);
+    // test_3(5);
+
+    // CBoard* board = CBoard_FromFEN(FEN);
+    // if (!board){
+    //     return -1;
+    // }
+
+    // CBoard_Print(board);
+    // CBoard_Free(board);
+    // return 0;
 }

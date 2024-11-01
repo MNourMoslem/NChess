@@ -35,11 +35,13 @@ if (!NCH_CHKFLG(block_col, square)){\
 #define _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, capture_sqr, block_map, op_map, king_effect_map, piece_map)\
 if (!NCH_CHKFLG(block_map, current)){\
     if (NCH_CHKFLG(king_effect_map, square)){\
-        if (_CBoard_MoveAndCheck(board, turn, piece_map, square, current, capture_sqr, op_map) == 1){\
-            current = 0ull;\
+        if (_CBoard_MoveAndCheck(board, turn, piece_map, square, current, capture_sqr, op_map) != 1){\
+            board->possible_moves[idx] |= current;\
         }\
     }\
-    board->possible_moves[idx] |= current;\
+    else{\
+        board->possible_moves[idx] |= current;\
+    }\
 }
 
 
@@ -101,13 +103,11 @@ if (NCH_CHKFLG(enpassant_row, square) && NCH_B_IS_PAWNMOVED2SQR(board)){\
 \
     if (col == (trg_col - 1)){\
         current = leftattack_func(square);\
-        _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, NCH_NXTSQR_RIGHT(square), board->All_Map, op_map, king_effect_map, piece_map)\
-        return;\
+        _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, NCH_NXTSQR_LEFT(square), board->All_Map, op_map, NCH_CUINT64_MAX, piece_map)\
     }\
-\
-    if (col == (trg_col + 1)){\
+    else if (col == (trg_col + 1)){\
         current = rightattack_func(square);\
-        _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, NCH_NXTSQR_LEFT(square), board->All_Map, op_map, king_effect_map, piece_map)\
+        _NCH_POSSIBLEMOVES_ASSIGN(board, turn, idx, square, current, NCH_NXTSQR_RIGHT(square), board->All_Map, op_map, NCH_CUINT64_MAX, piece_map)\
     }\
 }
 

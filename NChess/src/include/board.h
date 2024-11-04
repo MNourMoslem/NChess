@@ -4,6 +4,7 @@
 #include "assign.h"
 #include "types.h"
 #include "core.h"
+#include "scan.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -12,6 +13,30 @@
 int NCH_GAMEDICT_SIZE = 100;
 
 #define _CBoard_CLEAN_POSSIBLEMOVES(board) memset(board->possible_moves, 0, sizeof(board->possible_moves))
+
+#define _NCH_WHITE_KING_ATTACKERS(board, sqr, idx)  ((NCH_SCAN_ROOK_LIKE(board->All_Map, king, king_idx)\
+                                                    & (board->B_Rooks | board->B_Queens))\
+                                                    |\
+                                                    (NCH_SCAN_BISHOP_LIKE(board->All_Map, king, king_idx)\
+                                                    & (board->B_Bishops | board->B_Queens))\
+                                                    |\
+                                                    (NCH_SCAN_KNIGHT_LIKE(king)\
+                                                    & board->B_Knights)\
+                                                    |\
+                                                    (NCH_SCAN_PAWNATTACK_LIKE_W(king)\
+                                                    & board->B_Pawns))
+
+#define _NCH_BLACK_KING_ATTACKERS(board, sqr, idx)  ((NCH_SCAN_ROOK_LIKE(board->All_Map, king, king_idx)\
+                                                    & (board->W_Rooks | board->W_Queens))\
+                                                    |\
+                                                    (NCH_SCAN_BISHOP_LIKE(board->All_Map, king, king_idx)\
+                                                    & (board->W_Bishops | board->W_Queens))\
+                                                    |\
+                                                    (NCH_SCAN_KNIGHT_LIKE(king)\
+                                                    & board->W_Knights)\
+                                                    |\
+                                                    (NCH_SCAN_PAWNATTACK_LIKE_B(king)\
+                                                    & board->W_Pawns))
 
 void CBoard_PrintGameState(const CBoard* board){
     printf("Game State: ");
@@ -260,6 +285,178 @@ int CBoard_HasNoPossibleMove(CBoard* board) {
            (memcmp(board->possible_moves, board->possible_moves + 1, 63 * sizeof(uint64_t)) == 0);
 }
 
+int _CBoard_MakeMove(CBoard* board, int turn, cuint64* piece_map, cuint64 from_, cuint64 to_, cuint64 cap_sqr){
+    NCH_CNGFLG(*piece_map, from_, to_);
+    int is_cap = 0;
+
+    if (NCH_B_IS_WHITETURN(board)){
+        if (NCH_CHKFLG(board->Black_Map, to_)){
+            board->B_Pawns &= ~to_;
+            board->B_Knights &= ~to_;
+            board->B_Bishops &= ~to_;
+            board->B_Rooks &= ~to_;
+            board->B_Queens &= ~to_;
+            is_cap = 1;
+        }
+    }
+    else{
+        if (NCH_CHKFLG(board->White_Map, to_)){
+            board->W_Pawns &= ~to_;
+            board->W_Knights &= ~to_;
+            board->W_Bishops &= ~to_;
+            board->W_Rooks &= ~to_;
+            board->W_Queens &= ~to_;
+            is_cap = 1;
+        }
+    }
+
+    _NCH_ASSAIGN_BOARD_MAPS(board)
+    return is_cap;
+}
+
+int _CBoard_SetAvaiableMoves(CBoard* board){
+    cuint64* pmoves = board->possible_moves;
+    cuint64 ply_map, op_map, pmap;
+    cuint64 all_map = board->All_Map;
+    cuint64 ball_map = all_map | NCH_BOARDER;
+    cuint64 temp, king, queens, rooks, bishops, knights;
+
+    int turn = NCH_B_IS_WHITETURN(board) ? NCH_WHITE : NCH_BLACK;
+
+    if (turn == NCH_WHITE){
+        ply_map = board->White_Map;
+        op_map = board->Black_Map;
+
+        king = board->W_King;
+        queens = board->W_Queens;
+        rooks = board->W_Rooks;
+        bishops = board->W_Bishops;
+        knights = board->W_Knights;
+    }
+    else{
+        ply_map = board->Black_Map;
+        op_map = board->White_Map;
+        
+        king = board->B_King;
+        queens = board->B_Queens;
+        rooks = board->B_Rooks;
+        bishops = board->B_Bishops;
+        knights = board->B_Knights;
+    }
+
+    int king_idx = NCH_SQRIDX(king);
+    cuint64 king_vision = NCH_SCAN_QUEEN_LIKE(temp, king, king_idx); 
+
+    cuint64 psqrs;
+    if (NCH_B_IS_CHECK(board)){
+        psqrs = 0ull;
+        if (!NCH_B_IS_MANYCHECKS(board)){
+            _NCH_MAP_LOOP(board->king_attackers){
+                psqrs |= king_vision & pmoves[move.idx];
+            }
+        }
+    }
+    else{
+        psqrs = NCH_CUINT64_MAX;
+    }
+
+    _CBoard_CLEAN_POSSIBLEMOVES(board);
+    
+    if (psqrs != 0ull){
+        pmap = ~ply_map & psqrs;
+        if (turn == NCH_WHITE){
+            _NCH_SET_POSSIBLE_MOVES_FOR_PAWN(board->W_Pawns, pmoves, all_map, op_map, NCH_NXTSQR_UP, NCH_NXTSQR_UP2, NCH_NXTSQR_UPRIGHT, NCH_NXTSQR_UPLEFT, NCH_ROW2, NCH_ROW5)
+        }
+        else{
+            _NCH_SET_POSSIBLE_MOVES_FOR_PAWN(board->B_Pawns, pmoves, all_map, op_map, NCH_NXTSQR_DOWN, NCH_NXTSQR_DOWN2, NCH_NXTSQR_DOWNRIGHT, NCH_NXTSQR_DOWNLEFT, NCH_ROW7, NCH_ROW4)
+        }
+
+        _NCH_MAP_LOOP_NOIDX(knights){
+            pmoves[NCH_SQRIDX(move.square)] =  NCH_SCAN_KNIGHT_LIKE(move.square)
+                                                & pmap;
+        }
+
+        _NCH_MAP_LOOP(rooks){
+            temp = all_map &~ move.square | NCH_BOARDER;
+            pmoves[move.idx] =  NCH_SCAN_ROOK_LIKE(temp, move.square, move.idx) 
+                                & pmap;
+        }
+
+        _NCH_MAP_LOOP(bishops){
+            temp = all_map &~ move.square | NCH_BOARDER;
+            pmoves[move.idx] =  NCH_SCAN_BISHOP_LIKE(temp, move.square, move.idx)
+                                & pmap;
+        }
+
+        _NCH_MAP_LOOP(queens){
+            temp = all_map &~ move.square | NCH_BOARDER;
+            pmoves[move.idx] =  NCH_SCAN_QUEEN_LIKE(temp, move.square, move.idx)
+                                & pmap;
+        }
+    }
+    pmap = ~ply_map & ~psqrs;
+    pmoves[king_idx] = NCH_SCAN_KING_LIKE(king)
+                       & pmap;
+
+    temp = (ply_map &~ king_vision | op_map);
+
+}
+
+int _CBoard_Update(CBoard* board){
+
+    cuint64 king = NCH_B_IS_WHITETURN(board) ? board->W_King : board->B_King;
+    int king_idx = NCH_SQRIDX(king);
+    if (NCH_B_IS_WHITETURN(board)){
+        board->king_attackers = _NCH_WHITE_KING_ATTACKERS(board, king, king_idx);
+    }    
+    else{
+        board->king_attackers = _NCH_BLACK_KING_ATTACKERS(board, king, king_idx);
+    }
+    if (board->king_attackers != 0ull){
+        NCH_SETFLG(board->flags, NCH_B_CHECK);
+        if (NCH_POPCOUNTLL(board->king_attackers) > 1){
+            NCH_SETFLG(board->flags, NCH_B_MANYCHECKS);
+        }
+    }
+
+    _CBoard_SetAvaiableMoves(board);
+    return 0;
+}
+
+int _CBoard_Step(CBoard* board, cuint64* piece_map, cuint64 from_, cuint64 to_){
+    if (!NCH_CHKFLG(board->possible_moves[NCH_SQRIDX(from_)], to_)){
+        return -1;
+    }
+
+    NCH_CNGFLG(*piece_map, from_, to_)
+
+    if (NCH_B_IS_WHITETURN(board)){
+        if (NCH_CHKFLG(board->Black_Map, to_)){
+            board->B_Pawns &= ~to_;
+            board->B_Knights &= ~to_;
+            board->B_Bishops &= ~to_;
+            board->B_Rooks &= ~to_;
+            board->B_Queens &= ~to_;
+        }
+    }
+    else{
+        if (NCH_CHKFLG(board->White_Map, to_)){
+            board->W_Pawns &= ~to_;
+            board->W_Knights &= ~to_;
+            board->W_Bishops &= ~to_;
+            board->W_Rooks &= ~to_;
+            board->W_Queens &= ~to_;
+        }
+    }
+
+    _NCH_ASSAIGN_BOARD_MAPS(board)
+    NCH_FLPFLG(board->flags, NCH_B_TURN);
+
+    _CBoard_Update(board);
+
+    return 0;
+}
+
 void CBoard_AsString(CBoard* board, char board_str[NCH_B_STRING_SIZE]){
     int board_idx = 0, idx;
     
@@ -298,735 +495,6 @@ void CBoard_Print(CBoard* board){
     printf(board_str);
 }
 
-cuint64 CBoard_KnightVision(cuint64 square, cuint64 block_map){
-    cuint64 vmap = 0ull;
-    int col = NCH_GETCOL(square);
-
-    if (col < 6){
-        vmap |= NCH_NXTSQR_K_UPLEFT(square);
-        vmap |= NCH_NXTSQR_K_DOWNLEFT(square);
-        vmap |= NCH_NXTSQR_K_LEFTUP(square);
-        vmap |= NCH_NXTSQR_K_LEFTDOWN(square);
-    }
-    else if (col < 7){
-        vmap |= NCH_NXTSQR_K_UPLEFT(square);
-        vmap |= NCH_NXTSQR_K_DOWNLEFT(square);    
-    }
-    
-    if (col > 1){
-        vmap |= NCH_NXTSQR_K_UPRIGHT(square);
-        vmap |= NCH_NXTSQR_K_DOWNRIGHT(square);
-        vmap |= NCH_NXTSQR_K_RIGHTUP(square);
-        vmap |= NCH_NXTSQR_K_RIGHTDOWN(square);
-    }
-    else if (col > 0){
-        vmap |= NCH_NXTSQR_K_UPRIGHT(square);
-        vmap |= NCH_NXTSQR_K_DOWNRIGHT(square);    
-    }
-
-    return vmap;
-}
-
-cuint64 CBoard_RookVision(cuint64 square, cuint64 block_map){
-    cuint64 vmap = 0ull;
-    cuint64 current, temp;
-
-    _NCH_VISION_WHILEASSIGN(current, square, NCH_NXTSQR_UP, vmap, block_map)
-    _NCH_VISION_WHILEASSIGN(current, square, NCH_NXTSQR_DOWN, vmap, block_map)
-    _NCH_VISION_WHILEASSIGN_SIDES(current, square, NCH_NXTSQR_RIGHT, vmap, block_map, NCH_COL1, temp)    
-    _NCH_VISION_WHILEASSIGN_SIDES(current, square, NCH_NXTSQR_LEFT, vmap, block_map, NCH_COL8, temp)    
-
-    return vmap;
-}
-
-cuint64 CBoard_BishopVision(cuint64 square, cuint64 block_map){
-    cuint64 vmap = 0ull;
-    cuint64 current, temp;
-
-    _NCH_VISION_WHILEASSIGN_SIDES_BISHOP(current, square, NCH_NXTSQR_UPRIGHT, NCH_NXTSQR_DOWNRIGHT, vmap, block_map, NCH_COL1, temp)
-    _NCH_VISION_WHILEASSIGN_SIDES_BISHOP(current, square, NCH_NXTSQR_UPLEFT, NCH_NXTSQR_DOWNLEFT, vmap, block_map, NCH_COL8, temp)
-
-    return vmap;
-}
-
-cuint64 CBoard_KingVision(cuint64 square){
-    cuint64 vmap = 0ull;
-
-    if (!NCH_CHKFLG(NCH_COL1, square)){
-        vmap |= NCH_NXTSQR_UPRIGHT(square);
-        vmap |= NCH_NXTSQR_RIGHT(square);
-        vmap |= NCH_NXTSQR_DOWNRIGHT(square);
-    }    
-    if (!NCH_CHKFLG(NCH_COL8, square)){
-        vmap |= NCH_NXTSQR_UPLEFT(square);
-        vmap |= NCH_NXTSQR_LEFT(square);
-        vmap |= NCH_NXTSQR_DOWNLEFT(square);
-    }
-
-    vmap |= NCH_NXTSQR_UP(square);
-    vmap |= NCH_NXTSQR_DOWN(square);
-    
-    return vmap;
-}
-
-cuint64 CBoard_QueenVision(cuint64 square, cuint64 block_map){
-    return CBoard_RookVision(square, block_map) | CBoard_BishopVision(square, block_map);
-}
-
-cuint64 CBoard_PawnAttackVision_White(cuint64 square){
-    return (NCH_CHKFLG(NCH_COL1, square) ? 0ull : NCH_NXTSQR_UPRIGHT(square))
-        | (NCH_CHKFLG(NCH_COL8, square) ? 0ull : NCH_NXTSQR_UPLEFT(square));
-}
-
-cuint64 CBoard_PawnAttackVision_Black(cuint64 square){
-    return (NCH_CHKFLG(NCH_COL1, square) ? 0ull : NCH_NXTSQR_DOWNRIGHT(square))
-        | (NCH_CHKFLG(NCH_COL8, square) ? 0ull : NCH_NXTSQR_DOWNLEFT(square));
-}
-
-int _CBoard_CheckSquare_IsCheck(CBoard* board, cuint64 square, int turn){
-    cuint64 knight_like_map = CBoard_KnightVision(square, board->All_Map);
-    cuint64 rook_like_map = CBoard_RookVision(square, board->All_Map);
-    cuint64 bishop_like_map = CBoard_BishopVision(square, board->All_Map);
-    cuint64 king_like_map = CBoard_KingVision(square);
-    cuint64 pawnattack_like_map;
-
-    if (turn == NCH_WHITE){
-        pawnattack_like_map = CBoard_PawnAttackVision_White(square);
-        if (NCH_CHKUNI(rook_like_map, board->B_Rooks) || NCH_CHKUNI(rook_like_map, board->B_Queens) ||
-            NCH_CHKUNI(bishop_like_map, board->B_Bishops) || NCH_CHKUNI(bishop_like_map, board->B_Queens) ||
-            NCH_CHKUNI(knight_like_map, board->B_Knights) || NCH_CHKUNI(pawnattack_like_map, board->B_Pawns) ||
-            NCH_CHKUNI(king_like_map, board->B_King))
-            {
-                return 1;
-            }
-        return 0;
-    }
-    else{
-        pawnattack_like_map = CBoard_PawnAttackVision_Black(square);
-        if (NCH_CHKUNI(rook_like_map, board->W_Rooks) || NCH_CHKUNI(rook_like_map, board->W_Queens) ||
-            NCH_CHKUNI(bishop_like_map, board->W_Bishops) || NCH_CHKUNI(bishop_like_map, board->W_Queens) ||
-            NCH_CHKUNI(knight_like_map, board->W_Knights) || NCH_CHKUNI(pawnattack_like_map, board->W_Pawns) ||
-            NCH_CHKUNI(king_like_map, board->W_King))
-            {
-                return 1;
-            }
-        return 0;    
-    }
-}
-
-int _CBoard_Check_IsCheck(CBoard* board, int turn){
-    cuint64 king_square = turn == NCH_WHITE ? board->W_King : board->B_King;
-    return _CBoard_CheckSquare_IsCheck(board, king_square, turn);
-}
-
-int _CBoard_CaptureIfValid(CBoard* board, int turn, cuint64 capture_sqr, cuint64 op_map){
-    if (NCH_CHKFLG(op_map, capture_sqr)){
-        cuint64 temp = ~capture_sqr;
-        if (turn == NCH_WHITE){
-            board->B_Pawns &= temp;
-            board->B_Knights &= temp;
-            board->B_Bishops &= temp;
-            board->B_Rooks &= temp;
-            board->B_Queens &= temp;
-        }
-        else{
-            board->W_Pawns &= temp;
-            board->W_Knights &= temp;
-            board->W_Bishops &= temp;
-            board->W_Rooks &= temp;
-            board->W_Queens &= temp;
-        }
-        return 0;
-    }
-
-    return -1;
-}
-
-int _CBoard_MkMove(CBoard* board, cuint64* piece_map, int turn, cuint64 from_, cuint64 to_, cuint64 catpure_sqr, cuint64 op_map){
-    NCH_MKMOVE(*piece_map, from_, to_)
-    int is_capture = _CBoard_CaptureIfValid(board, turn, catpure_sqr, op_map);
-
-    board->White_Map = NCH_B_GET_WHITEMAP(board);
-    board->Black_Map = NCH_B_GET_BLACKMAP(board);
-    board->All_Map = board->Black_Map | board->White_Map;
-
-    return is_capture;
-}
-
-int _CBoard_MoveAndCheck(CBoard* board, int turn, cuint64* piece_map, cuint64 square, cuint64 current, cuint64 capture_sqr, cuint64 op_map){
-    CBoard temp_board = *board;
-
-    _CBoard_MkMove(board, piece_map, turn, square, current, capture_sqr, op_map);
-
-    int is_check = _CBoard_Check_IsCheck(board, turn);
-
-    *board = temp_board;
-
-    return is_check;
-}
-
-void _CBoard_PawnPossibleMoves(CBoard* board, cuint64* piece_map, int turn, int idx, cuint64 square, cuint64 king_effect_map, cuint64 ply_map, cuint64 op_map){
-    cuint64 current;
-
-    if (turn == NCH_WHITE){
-        _NCH_POSSIBLEMOVES_PAWN(board, turn, idx, square, piece_map, ply_map, op_map, king_effect_map, NCH_NXTSQR_UP, NCH_NXTSQR_UPRIGHT, NCH_NXTSQR_UPLEFT, NCH_ROW2, NCH_ROW5)
-    }
-    else{
-        _NCH_POSSIBLEMOVES_PAWN(board, turn, idx, square, piece_map, ply_map, op_map, king_effect_map, NCH_NXTSQR_DOWN, NCH_NXTSQR_DOWNRIGHT, NCH_NXTSQR_DOWNLEFT, NCH_ROW7, NCH_ROW4)
-    }
-}
-
-void _CBoard_KnightPossibleMoves(CBoard* board, cuint64* piece_map, int turn, int idx, cuint64 square, cuint64 king_effect_map, cuint64 ply_map, cuint64 op_map){
-    cuint64 current;
-    int col = NCH_GETCOL(square);
-    
-    if (col < 6){
-        _NCH_POSSIBLEMOVES_MOVE_THEN_ASSIGN(board, turn, idx, NCH_NXTSQR_K_UPLEFT, square, square, current, current, ply_map, op_map, king_effect_map, piece_map)
-        _NCH_POSSIBLEMOVES_MOVE_THEN_ASSIGN(board, turn, idx, NCH_NXTSQR_K_DOWNLEFT, square, square, current, current, ply_map, op_map, king_effect_map, piece_map)
-        _NCH_POSSIBLEMOVES_MOVE_THEN_ASSIGN(board, turn, idx, NCH_NXTSQR_K_LEFTUP, square, square, current, current, ply_map, op_map, king_effect_map, piece_map)
-        _NCH_POSSIBLEMOVES_MOVE_THEN_ASSIGN(board, turn, idx, NCH_NXTSQR_K_LEFTDOWN, square, square, current, current, ply_map, op_map, king_effect_map, piece_map)
-    }
-    else if (col < 7){
-        _NCH_POSSIBLEMOVES_MOVE_THEN_ASSIGN(board, turn, idx, NCH_NXTSQR_K_UPLEFT, square, square, current, current, ply_map, op_map, king_effect_map, piece_map)
-        _NCH_POSSIBLEMOVES_MOVE_THEN_ASSIGN(board, turn, idx, NCH_NXTSQR_K_DOWNLEFT, square, square, current, current, ply_map, op_map, king_effect_map, piece_map)
-    }
-
-    if (col > 1){
-        _NCH_POSSIBLEMOVES_MOVE_THEN_ASSIGN(board, turn, idx, NCH_NXTSQR_K_UPRIGHT, square, square, current, current, ply_map, op_map, king_effect_map, piece_map)
-        _NCH_POSSIBLEMOVES_MOVE_THEN_ASSIGN(board, turn, idx, NCH_NXTSQR_K_DOWNRIGHT, square, square, current, current, ply_map, op_map, king_effect_map, piece_map)
-        _NCH_POSSIBLEMOVES_MOVE_THEN_ASSIGN(board, turn, idx, NCH_NXTSQR_K_RIGHTUP, square, square, current, current, ply_map, op_map, king_effect_map, piece_map)
-        _NCH_POSSIBLEMOVES_MOVE_THEN_ASSIGN(board, turn, idx, NCH_NXTSQR_K_RIGHTDOWN, square, square, current, current, ply_map, op_map, king_effect_map, piece_map)
-    }
-    else if (col > 0){
-        _NCH_POSSIBLEMOVES_MOVE_THEN_ASSIGN(board, turn, idx, NCH_NXTSQR_K_UPRIGHT, square, square, current, current, ply_map, op_map, king_effect_map, piece_map)
-        _NCH_POSSIBLEMOVES_MOVE_THEN_ASSIGN(board, turn, idx, NCH_NXTSQR_K_DOWNRIGHT, square, square, current, current, ply_map, op_map, king_effect_map, piece_map)
-    }
-}
-
-void _CBoard_RookPossibleMoves(CBoard* board, cuint64* piece_map, int turn, int idx, cuint64 square, cuint64 king_effect_map, cuint64 ply_map, cuint64 op_map){
-    cuint64 current, temp;
-
-    _NCH_POSSIBLEMOVES_WHILE_ASSIGN(board, turn, idx, NCH_NXTSQR_UP, square, current, current, ply_map, op_map, board->All_Map, king_effect_map, piece_map)
-    _NCH_POSSIBLEMOVES_WHILE_ASSIGN(board, turn, idx, NCH_NXTSQR_DOWN, square, current, current, ply_map, op_map, board->All_Map, king_effect_map, piece_map)
-
-    _NCH_POSSIBLEMOVES_WHILE_ASSIGN_SIDES(board, turn, idx, NCH_NXTSQR_RIGHT, square, current, current, NCH_COL1, ply_map, temp, op_map, king_effect_map, piece_map)
-    _NCH_POSSIBLEMOVES_WHILE_ASSIGN_SIDES(board, turn, idx, NCH_NXTSQR_LEFT, square, current, current, NCH_COL8, ply_map, temp, op_map, king_effect_map, piece_map)
-}
-
-void _CBoard_BishopPossibleMoves(CBoard* board, cuint64* piece_map, int turn, int idx, cuint64 square, cuint64 king_effect_map, cuint64 ply_map, cuint64 op_map){
-    cuint64 current, temp;
-
-    _NCH_POSSIBLEMOVES_WHILE_ASSIGN_SIDES_BISHOP(board, turn, idx, NCH_NXTSQR_UPRIGHT, NCH_NXTSQR_DOWNRIGHT, square, current, current, NCH_COL1, ply_map, temp, op_map, king_effect_map, piece_map)
-    _NCH_POSSIBLEMOVES_WHILE_ASSIGN_SIDES_BISHOP(board, turn, idx, NCH_NXTSQR_UPLEFT, NCH_NXTSQR_DOWNLEFT, square, current, current, NCH_COL8, ply_map, temp, op_map, king_effect_map, piece_map)
-}
-
-void _CBoard_QueenPossibleMoves(CBoard* board, cuint64* piece_map, int turn, int idx, cuint64 square, cuint64 king_effect_map, cuint64 ply_map, cuint64 op_map){
-    _CBoard_RookPossibleMoves(board, piece_map, turn, idx, square, king_effect_map, ply_map, op_map);
-    _CBoard_BishopPossibleMoves(board, piece_map, turn, idx, square, king_effect_map, ply_map, op_map);
-}
-
-void _CBoard_KingPossibleMoves(CBoard* board, cuint64* piece_map, int turn, int idx, cuint64 square, cuint64 king_effect_map, cuint64 ply_map, cuint64 op_map){
-    cuint64 current;
-
-    _NCH_POSSIBLEMOVES_MOVE_THEN_ASSIGN(board, turn, idx, NCH_NXTSQR_UP, square, square, current, current, ply_map, op_map, king_effect_map, piece_map);
-    _NCH_POSSIBLEMOVES_MOVE_THEN_ASSIGN(board, turn, idx, NCH_NXTSQR_DOWN, square, square, current, current, ply_map, op_map, king_effect_map, piece_map);
-
-    if (!NCH_CHKFLG(NCH_COL1, square)){
-        _NCH_POSSIBLEMOVES_MOVE_THEN_ASSIGN(board, turn, idx, NCH_NXTSQR_UPRIGHT, square, square, current, current, ply_map, op_map, king_effect_map, piece_map);
-        _NCH_POSSIBLEMOVES_MOVE_THEN_ASSIGN(board, turn, idx, NCH_NXTSQR_RIGHT, square, square, current, current, ply_map, op_map, king_effect_map, piece_map);
-        _NCH_POSSIBLEMOVES_MOVE_THEN_ASSIGN(board, turn, idx, NCH_NXTSQR_DOWNRIGHT, square, square, current, current, ply_map, op_map, king_effect_map, piece_map);
-    }
-
-    if (!NCH_CHKFLG(NCH_COL8, square)){
-        _NCH_POSSIBLEMOVES_MOVE_THEN_ASSIGN(board, turn, idx, NCH_NXTSQR_UPLEFT, square, square, current, current, ply_map, op_map, king_effect_map, piece_map);
-        _NCH_POSSIBLEMOVES_MOVE_THEN_ASSIGN(board, turn, idx, NCH_NXTSQR_LEFT, square, square, current, current, ply_map, op_map, king_effect_map, piece_map);
-        _NCH_POSSIBLEMOVES_MOVE_THEN_ASSIGN(board, turn, idx, NCH_NXTSQR_DOWNLEFT, square, square, current, current, ply_map, op_map, king_effect_map, piece_map);
-    }
-
-}
-
-void _CBoard_CastlePossibleMoves(CBoard* board, int turn){
-    if (NCH_B_IS_CHECK(board)){
-        return;
-    }
-
-    if (turn == NCH_WHITE){
-        if (!NCH_CHKFLG(board->castle_flags, NCH_CF_WHITE_OO) && !NCH_CHKUNI(board->All_Map, 6ull)
-            && _CBoard_CheckSquare_IsCheck(board, NCH_F1, turn) != 1 && _CBoard_CheckSquare_IsCheck(board, NCH_G1, turn) != 1){
-            NCH_SETFLG(board->castle_flags, NCH_CF_COULD_WHITE_OO);
-        }
-        if (!NCH_CHKFLG(board->castle_flags, NCH_CF_WHITE_OOO) && !NCH_CHKUNI(board->All_Map, 112ull)
-            && _CBoard_CheckSquare_IsCheck(board, NCH_D1, turn) != 1 && _CBoard_CheckSquare_IsCheck(board, NCH_C1, turn) != 1){            
-            NCH_SETFLG(board->castle_flags, NCH_CF_COULD_WHITE_OOO);
-        }
-    }
-    else{
-        if (!NCH_CHKFLG(board->castle_flags, NCH_CF_BLACK_OO) && !NCH_CHKUNI(board->All_Map, 0x0600000000000000ull)
-            && _CBoard_CheckSquare_IsCheck(board, NCH_F8, turn) != 1 && _CBoard_CheckSquare_IsCheck(board, NCH_G8, turn) != 1){                
-            NCH_SETFLG(board->castle_flags, NCH_CF_COULD_BLACK_OO);
-        }
-        if (!NCH_CHKFLG(board->castle_flags, NCH_CF_BLACK_OOO) && !NCH_CHKUNI(board->All_Map, 0x7000000000000000ull)
-            && _CBoard_CheckSquare_IsCheck(board, NCH_D8, turn) != 1 && _CBoard_CheckSquare_IsCheck(board, NCH_C8, turn) != 1){            
-            NCH_SETFLG(board->castle_flags, NCH_CF_COULD_BLACK_OOO);
-        }
-    }
-}
-
-void _CBoard_SetPossibleMoves(CBoard* board, int turn, int is_check){
-    cuint64 ply_map, op_map, king_effect_map;
-
-    if (turn == NCH_WHITE){
-        ply_map = board->White_Map;
-        op_map = board->Black_Map;
-        king_effect_map = is_check != 1 ? CBoard_QueenVision(board->W_King, board->All_Map) | board->W_King : NCH_CUINT64_MAX;
-
-        _NCH_SET_POSSIBLEMOVE(_CBoard_PawnPossibleMoves, board, board->W_Pawns, NCH_WHITE, king_effect_map, ply_map, op_map)
-        _NCH_SET_POSSIBLEMOVE(_CBoard_KnightPossibleMoves, board, board->W_Knights, NCH_WHITE, king_effect_map, ply_map, op_map)
-        _NCH_SET_POSSIBLEMOVE(_CBoard_BishopPossibleMoves, board, board->W_Bishops, NCH_WHITE, king_effect_map, ply_map, op_map)
-        _NCH_SET_POSSIBLEMOVE(_CBoard_RookPossibleMoves, board, board->W_Rooks, NCH_WHITE, king_effect_map, ply_map, op_map)
-        _NCH_SET_POSSIBLEMOVE(_CBoard_QueenPossibleMoves, board, board->W_Queens, NCH_WHITE, king_effect_map, ply_map, op_map)
-        _NCH_SET_POSSIBLEMOVE(_CBoard_KingPossibleMoves, board, board->W_King, NCH_WHITE, king_effect_map, ply_map, op_map)
-    }
-    else{
-        ply_map = board->Black_Map;
-        op_map = board->White_Map;
-        king_effect_map = is_check != 1 ? CBoard_QueenVision(board->B_King, ply_map | op_map) | board->B_King: NCH_CUINT64_MAX;
-
-        _NCH_SET_POSSIBLEMOVE(_CBoard_PawnPossibleMoves, board, board->B_Pawns, NCH_BLACK, king_effect_map, ply_map, op_map)
-        _NCH_SET_POSSIBLEMOVE(_CBoard_KnightPossibleMoves, board, board->B_Knights, NCH_BLACK, king_effect_map, ply_map, op_map)
-        _NCH_SET_POSSIBLEMOVE(_CBoard_BishopPossibleMoves, board, board->B_Bishops, NCH_BLACK, king_effect_map, ply_map, op_map)
-        _NCH_SET_POSSIBLEMOVE(_CBoard_RookPossibleMoves, board, board->B_Rooks, NCH_BLACK, king_effect_map, ply_map, op_map)
-        _NCH_SET_POSSIBLEMOVE(_CBoard_QueenPossibleMoves, board, board->B_Queens, NCH_BLACK, king_effect_map, ply_map, op_map)
-        _NCH_SET_POSSIBLEMOVE(_CBoard_KingPossibleMoves, board, board->B_King, NCH_BLACK, king_effect_map, ply_map, op_map)
-    }
-
-    _CBoard_CastlePossibleMoves(board, turn);
-}
-
-int _CBoard_Check_FiftyMoves(CBoard* board){
-    if (NCH_CHKUNI(board->flags, NCH_B_MASK_GAMEACTIONS)){
-        board->fifty_count = 0;
-    }
-    else{
-        board->fifty_count += 1;
-        if (board->fifty_count >= 50){
-            NCH_SETFLG(board->flags, NCH_B_FIFTYMOVES);
-            NCH_SETFLG(board->flags, NCH_B_DRAW);
-            NCH_SETFLG(board->flags, NCH_B_GAMEEND);
-            return 1;
-        }
-    }
-    return 0;
-}
-
-int _CBoard_Check_CheckMateAndStaleMate(CBoard* board, int is_check){
-    if (CBoard_HasNoPossibleMove(board)){
-        if (is_check == 1){
-            NCH_SETFLG(board->flags, NCH_B_CHECKMATE);
-            if (!NCH_B_IS_WHITETURN(board)){
-                NCH_SETFLG(board->flags, NCH_B_WHITEWIN);
-            }
-            else{
-                // if the flag is off black is considered the winner.
-            }
-        }
-        else{
-            NCH_SETFLG(board->flags, NCH_B_STALEMATE);
-            NCH_SETFLG(board->flags, NCH_B_DRAW);
-        }
-        NCH_SETFLG(board->flags, NCH_B_GAMEEND);
-        return 1;
-    }
-    return 0;
-}
-
-void _CBoard_Check_Castle(CBoard* board, int turn){
-    if (turn == NCH_BLACK){
-        if (!NCH_CHKFLG(board->Black_Map, 0x0900000000000000)){
-            NCH_SETFLG(board->castle_flags, NCH_CF_BLACK_OO);
-        }
-        if (!NCH_CHKFLG(board->Black_Map, 0x8800000000000000)){
-            NCH_SETFLG(board->castle_flags, NCH_CF_BLACK_OOO);
-        }
-    }
-    else{
-        if (!NCH_CHKFLG(board->White_Map, 0x0000000000000009)){
-            NCH_SETFLG(board->castle_flags, NCH_CF_WHITE_OO);
-        }
-        if (!NCH_CHKFLG(board->White_Map, 0x0000000000000088)){
-            NCH_SETFLG(board->castle_flags, NCH_CF_WHITE_OOO);
-        }
-    }
-}
-
-void _CBoard_Update(CBoard* board, int turn){
-    _CBoard_Check_Castle(board, turn);
-    _CBoard_CLEAN_POSSIBLEMOVES(board);
-    NCH_CF_RESET_COULDCASLTE(board);
-
-    int three = _NCH_Ht_AddValueToItem(board->GameDict, _CBoard_ToKey(board), 1);
-    if (three >= 3){
-        NCH_SETFLG(board->flags, NCH_B_THREEFOLD);
-        NCH_SETFLG(board->flags, NCH_B_DRAW);
-        NCH_SETFLG(board->flags, NCH_B_GAMEEND);
-        return;  
-    }    
-
-    int is_check = _CBoard_Check_IsCheck(board, turn);
-    if (is_check == 1){
-        NCH_SETFLG(board->flags, NCH_B_CHECK);
-    }
-
-    if (_CBoard_Check_FiftyMoves(board) != 0){
-        return;
-    }
-
-    _CBoard_SetPossibleMoves(board, turn, is_check);
-    _CBoard_Check_CheckMateAndStaleMate(board, is_check);
-}
-
-void _CBoard_Promote(CBoard* board, int turn, cuint64 square, NCH_SMoves smove){
-    cuint64* piece_map;
-    if (turn == NCH_WHITE){
-        NCH_RMVFLG(board->W_Pawns, square);
-        switch (smove)
-        {
-        case NCH_Promote2Queen:
-            piece_map = &board->W_Queens;
-            break;
-        
-        case NCH_Promote2Rook:
-            piece_map = &board->W_Rooks;
-            break;
-
-        case NCH_Promote2Knight:
-            piece_map = &board->W_Knights;
-            break;
-
-        case NCH_Promote2Bishop:
-            piece_map = &board->W_Bishops;
-            break;
-
-        default:
-            piece_map = &board->W_Queens;
-            break;
-        }
-    }
-    else{
-        NCH_RMVFLG(board->B_Pawns, square);
-        switch (smove)
-        {
-        case NCH_Promote2Queen:
-            piece_map = &board->B_Queens;
-            break;
-        
-        case NCH_Promote2Rook:
-            piece_map = &board->B_Rooks;
-            break;
-
-        case NCH_Promote2Knight:
-            piece_map = &board->B_Knights;
-            break;
-
-        case NCH_Promote2Bishop:
-            piece_map = &board->B_Bishops;
-            break;
-
-        default:
-            piece_map = &board->B_Queens;
-            break;
-        }
-    }
-
-    NCH_SETFLG(*piece_map, square);
-
-    board->White_Map = NCH_B_GET_WHITEMAP(board);
-    board->Black_Map = NCH_B_GET_BLACKMAP(board);
-    board->All_Map = board->Black_Map | board->White_Map;
-}
-
-int _CBoard_StepPawn(CBoard* board, int turn, cuint64* piece_map, cuint64 from_, cuint64 to_, cuint64 op_map, NCH_SMoves special_move){
-    int from_col = NCH_GETCOL(from_);
-    cuint64 capture_sqr = to_;
-    int is_catpure;
-
-    if (from_col != NCH_GETCOL(to_) && !NCH_CHKFLG(op_map, to_)){
-        NCH_SETFLG(board->flags, NCH_B_ENPASSANT);
-        capture_sqr = (turn == NCH_WHITE ? NCH_NXTSQR_DOWN(to_) : NCH_NXTSQR_UP(to_));
-    }
-    else if (NCH_CHKFLG(NCH_ROW_START, from_) && NCH_CHKFLG(NCH_ROW_MID, to_)){
-        NCH_SETFLG(board->flags, NCH_B_PAWNMOVED2SQR);
-        _NCH_B_SET_PAWNCOL(board, from_col);
-    }
-
-    is_catpure = _CBoard_MkMove(board, piece_map, turn, from_, to_, capture_sqr, op_map);
-    if (NCH_CHKFLG(NCH_ROW_LAST, to_)){
-        _CBoard_Promote(board, turn, to_, special_move);
-    }
-
-    return is_catpure;
-}
-
-int _CBoard_StepCastle(CBoard* board, int turn, NCH_SMoves special_move){
-    if (special_move != NCH_OO && special_move != NCH_OOO){
-        return -1;
-    }
-
-    if (turn == NCH_WHITE){
-        if (special_move == NCH_OO && NCH_CHKFLG(board->castle_flags, NCH_CF_COULD_WHITE_OO)){
-            NCH_MKMOVE(board->W_Rooks, NCH_H1, NCH_F1)
-            NCH_MKMOVE(board->W_King, NCH_E1, NCH_G1)
-        }
-        else if (special_move == NCH_OOO && NCH_CHKFLG(board->castle_flags, NCH_CF_COULD_WHITE_OOO)){
-            NCH_MKMOVE(board->W_Rooks, NCH_A1, NCH_D1)
-            NCH_MKMOVE(board->W_King, NCH_E1, NCH_C1)
-        }
-        else{
-            return -1;
-        }
-    }else{
-        if (special_move == NCH_OO && NCH_CHKFLG(board->castle_flags, NCH_CF_COULD_BLACK_OO)){
-            NCH_MKMOVE(board->B_Rooks, NCH_H8, NCH_F8)
-            NCH_MKMOVE(board->B_King, NCH_E8, NCH_G8)
-        }
-        else if (special_move == NCH_OOO && NCH_CHKFLG(board->castle_flags, NCH_CF_COULD_BLACK_OOO)){
-            NCH_MKMOVE(board->B_Rooks, NCH_A8, NCH_D8)
-            NCH_MKMOVE(board->B_King, NCH_E8, NCH_C8)
-        }
-        else{
-            return -1;
-        }
-    }
-
-    board->White_Map = NCH_B_GET_WHITEMAP(board);
-    board->Black_Map = NCH_B_GET_BLACKMAP(board);
-    board->All_Map = board->White_Map | board->Black_Map;
-
-    return 0;
-}
-
-int _CBoard_Step(CBoard* board, int turn, cuint64* piece_map, cuint64 from_, cuint64 to_, NCH_SMoves special_move){
-    if (NCH_CHKFLG(board->flags, NCH_B_GAMEEND)){
-        return -1;
-    }
-    
-    NCH_B_RESET_GAMEACTIONS(board);
-
-    if (from_ == 0ull || to_ == 0ull){
-        if (_CBoard_StepCastle(board, turn, special_move) == -1){
-            return -1;
-        }
-    }
-    else{
-        if (!NCH_CHKFLG(board->possible_moves[NCH_SQRIDX(from_)], to_)){
-            return -1;
-        }
-
-        int is_capture;
-        cuint64 op_map = turn == NCH_WHITE ? board->Black_Map : board->White_Map;
-
-        if (NCH_CHKUNI((board->W_Pawns | board->B_Pawns), *piece_map)){
-            is_capture = _CBoard_StepPawn(board, turn, piece_map, from_, to_, op_map, special_move);
-        }
-        else{
-            is_capture = _CBoard_MkMove(board, piece_map, turn, from_, to_, to_, op_map);
-        }
-
-        if (is_capture == 1){
-            NCH_SETFLG(board->flags, NCH_B_CAPTURE);
-        }
-    }
-
-    if (turn == NCH_WHITE){
-        NCH_B_SET_BLACKTURN(board);
-        turn = NCH_BLACK;
-    }
-    else{
-        NCH_B_SET_WHITETURN(board);
-        turn = NCH_WHITE;    
-    }
-
-    board->move_count += 1;
-
-    _CBoard_Update(board, turn);
-
-    return 0;
-}
-
-int CBoard_Step(CBoard* board, cuint64 from_, cuint64 to_, NCH_SMoves special_move){
-    int turn = NCH_B_TURN(board);
-    cuint64* piece_map;
-
-    if (from_ == 0ull || to_ == 0ull){
-        return _CBoard_Step(board, turn, 0ull, 0ull, 0ull, special_move); 
-    }
-
-    if (turn == NCH_WHITE){
-        if (NCH_CHKFLG(board->W_Pawns, from_)){
-            piece_map = &board->W_Pawns;
-        }else if (NCH_CHKFLG(board->W_Knights, from_)){
-            piece_map = &board->W_Knights;
-        }else if (NCH_CHKFLG(board->W_Bishops, from_)){
-            piece_map = &board->W_Bishops;
-        }else if (NCH_CHKFLG(board->W_Rooks, from_)){
-            piece_map = &board->W_Rooks;
-        }else if (NCH_CHKFLG(board->W_Queens, from_)){
-            piece_map = &board->W_Queens;
-        }else if (NCH_CHKFLG(board->W_King, from_)){
-            piece_map = &board->W_King;
-        }else{
-            return -1;
-        }
-    }
-    else{
-        if (NCH_CHKFLG(board->B_Pawns, from_)){
-            piece_map = &board->B_Pawns;
-        }else if (NCH_CHKFLG(board->B_Knights, from_)){
-            piece_map = &board->B_Knights;
-        }else if (NCH_CHKFLG(board->B_Bishops, from_)){
-            piece_map = &board->B_Bishops;
-        }else if (NCH_CHKFLG(board->B_Rooks, from_)){
-            piece_map = &board->B_Rooks;
-        }else if (NCH_CHKFLG(board->B_Queens, from_)){
-            piece_map = &board->B_Queens;
-        }else if (NCH_CHKFLG(board->B_King, from_)){
-            piece_map = &board->B_King;
-        }else{
-            return -1;
-        }
-    }
-
-
-    return _CBoard_Step(board, turn, piece_map, from_, to_, special_move);
-}
-
-int CBoard_StepFromString(CBoard* board, char move[]){
-    int turn = NCH_B_TURN(board);
-    if (strcmp(move, "O-O") == 0){
-        return _CBoard_Step(board, turn, NULL, 0ull, 0ull, NCH_OO);
-    }
-    else if (strcmp(move, "O-O-O") == 0){
-        return _CBoard_Step(board, turn, NULL, 0ull, 0ull, NCH_OOO);
-    }
-
-    int len = strlen(move);
-    if (len < 4){
-        return -1;
-    }
-
-    cuint64 from_ = NCH_SQR(('h' - move[0]) + (move[1] - '1') * 8); 
-    cuint64 to_ = NCH_SQR(('h' - move[2]) + (move[3] - '1') * 8);
-    NCH_SMoves smove;
-
-    if (len > 4){
-        switch (move[4])
-        {
-        case 'q':
-            smove = NCH_Promote2Queen;
-            break;
-        
-        case 'r':
-            smove = NCH_Promote2Rook;
-            break;
-
-        case 'n':
-            smove = NCH_Promote2Knight;
-            break;
-
-        case 'b':
-            smove = NCH_Promote2Bishop;
-            break;
-
-        default:
-            smove = NCH_Promote2Queen;
-            break;
-        }
-    }
-
-    return CBoard_Step(board, from_, to_, smove);
-}
-
-int CBoard_StepAllPossibleMoves(CBoard* board, CBoard result_boards[]){
-    int turn = NCH_B_TURN(board);
-    int idx;
-    int current_idx = 0;
-    NCH_SMoves promotions[4] = {NCH_Promote2Queen, NCH_Promote2Rook, NCH_Promote2Knight, NCH_Promote2Bishop};
-
-    cuint64* possible_moves = board->possible_moves;
-    CBoard copy_board;
-
-    if (turn == NCH_WHITE) {
-        _NCH_STEP_ALL_POSSIBLE_MOVES_PAWN(board, possible_moves, turn, copy_board, W_Pawns, current_idx, NCH_ROW8, promotions)
-        _NCH_STEP_ALL_POSSIBLE_MOVES(board, possible_moves, turn, copy_board, W_Knights, current_idx)    
-        _NCH_STEP_ALL_POSSIBLE_MOVES(board, possible_moves, turn, copy_board, W_Bishops, current_idx)    
-        _NCH_STEP_ALL_POSSIBLE_MOVES(board, possible_moves, turn, copy_board, W_Rooks, current_idx)    
-        _NCH_STEP_ALL_POSSIBLE_MOVES(board, possible_moves, turn, copy_board, W_Queens, current_idx)    
-        _NCH_STEP_ALL_POSSIBLE_MOVES(board, possible_moves, turn, copy_board, W_King, current_idx)    
-    } 
-    else {
-        _NCH_STEP_ALL_POSSIBLE_MOVES_PAWN(board, possible_moves, turn, copy_board, B_Pawns, current_idx, NCH_ROW1, promotions)
-        _NCH_STEP_ALL_POSSIBLE_MOVES(board, possible_moves, turn, copy_board, B_Knights, current_idx)    
-        _NCH_STEP_ALL_POSSIBLE_MOVES(board, possible_moves, turn, copy_board, B_Bishops, current_idx)    
-        _NCH_STEP_ALL_POSSIBLE_MOVES(board, possible_moves, turn, copy_board, B_Rooks, current_idx)    
-        _NCH_STEP_ALL_POSSIBLE_MOVES(board, possible_moves, turn, copy_board, B_Queens, current_idx)    
-        _NCH_STEP_ALL_POSSIBLE_MOVES(board, possible_moves, turn, copy_board, B_King, current_idx)    
-    }
-    copy_board = *board;
-    if (_CBoard_Step(&copy_board, turn, NULL, 0ull, 0ull, NCH_OO) == 0){
-        result_boards[current_idx++] = copy_board;
-    }
-    copy_board = *board;
-    if (_CBoard_Step(&copy_board, turn, NULL, 0ull, 0ull, NCH_OOO) == 0){
-        result_boards[current_idx++] = copy_board;
-    }
-
-    return current_idx;
-}
-
-int _CBoard_PerftRecursive(CBoard* board, int depth){
-    if (depth <= 1){
-        return CBoard_NumberPossibleMoves(board);
-    }
-
-    int count = 0;    
-    CBoard boards[250];
-    int n_moves = CBoard_StepAllPossibleMoves(board, boards);
-    for (int i = 0; i < n_moves; i++){
-        count += _CBoard_PerftRecursive(boards + i, depth - 1);
-    }
-    return count;
-}
-
-int CBoard_Perft(CBoard* board, int depth){
-    char moves[256][8];
-    CBoard current;
-
-    int n_moves = CBoard_PossibleMovesAsString(board, moves);
-    int n_moves_2 = CBoard_NumberPossibleMoves(board);
-
-    int total = 0;
-    int count;
-    int state;
-
-    if (depth > 1){
-        for (int i = 0; i < n_moves; i++){
-            current = *board;
-            state = CBoard_StepFromString(&current, moves[i]);
-            count = _CBoard_PerftRecursive(&current, depth - 1);
-            total += count;
-            printf("%s: %i, state: %i\n", moves[i], count, state); 
-        }
-    }
-    else{
-        for (int i = 0; i < n_moves; i++){
-            printf("%s: %i, state: %i\n", moves[i], 1, 0); 
-        }
-        total = n_moves;
-    }
-
-    return total;
-}
-
 CBoard* CBoard_New(){
     CBoard* board = malloc(sizeof(CBoard));
     if (!board){
@@ -1061,6 +529,7 @@ CBoard* CBoard_New(){
     board->castle_flags = 0;
     board->fifty_count = 0;
     board->move_count = 0;
+    board->enpassant_sqr = 0ull;
 
     board->White_Map = NCH_B_GET_WHITEMAP(board);
     board->Black_Map = NCH_B_GET_BLACKMAP(board);
@@ -1068,7 +537,7 @@ CBoard* CBoard_New(){
 
     NCH_B_SET_WHITETURN(board);
 
-    _CBoard_Update(board, NCH_WHITE);
+    _CBoard_Update(board);
 
     return board;
 }
@@ -1329,7 +798,7 @@ CBoard* CBoard_FromFEN(char* FEN){
     board->Black_Map = NCH_B_GET_BLACKMAP(board);
     board->All_Map = board->Black_Map | board->White_Map;
 
-    _CBoard_Update(board, NCH_B_TURN(board));
+    _CBoard_Update(board);
 
     return board;
 }

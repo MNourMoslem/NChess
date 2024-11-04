@@ -76,8 +76,6 @@ int main(int argc, char* argv[]){
 
     char FEN[] = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
 
-    asm("jmb");
-
     test_1(FEN, depth);
     // test_2(FEN, 1);
     // test_4(FEN, "g2g4", 1);

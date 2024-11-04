@@ -5,59 +5,10 @@
 #include "types.h"
 #include "hash.h"
 
-#ifdef __GNUC__
-    #define NCH_CLZLL(x) __builtin_clzll(x)
-    #define NCH_CTZLL(x) __builtin_ctzll(x)
-    #define NCH_POPCOUNT(x) __builtin_popcount(x)
-    #define NCH_POPCOUNTLL(x) __builtin_popcountll(x)
-#else
-    #define NCH_CLZLL(x) custom_clzll(x)
-    #define NCH_CTZLL(x) custom_ctzll(x)
-    #define NCH_POPCOUNT(x) custom_popcount(x)
-    #define NCH_POPCOUNTLL(x) custom_popcountll(x)
-
-    static inline int custom_clzll(unsigned long long x) {
-        int count = 0;
-        while (x) {
-            if (x & (1ULL << 63)) {
-                break;
-            }
-            count++;
-            x <<= 1;
-        }
-        return 64 - count;
-    }
-
-    static inline int custom_ctzll(unsigned long long x) {
-        if (x == 0) return 64;
-        int count = 0;
-        while (!(x & 1)) {
-            count++;
-            x >>= 1;
-        }
-        return count;
-    }
-
-    static inline int custom_popcountll(unsigned long long x) {
-        int count = 0;
-        
-        while (x) {
-            count += x & 1;  // Check if the least significant bit is 1
-            x >>= 1;         // Shift bits to the right by 1 to check the next bit
-        }
-        return count;
-    }
-
-    static inline int custom_popcount(unsigned long long x) {
-        int count = 0;
-        
-        while (x) {
-            count += x & 1;  // Check if the least significant bit is 1
-            x >>= 1;         // Shift bits to the right by 1 to check the next bit
-        }
-        return count;
-    }
-#endif
+#define NCH_CLZLL(x) __builtin_clzll(x)
+#define NCH_CTZLL(x) __builtin_ctzll(x)
+#define NCH_POPCOUNT(x) __builtin_popcount(x)
+#define NCH_POPCOUNTLL(x) __builtin_popcountll(x)
 
 #define NCH_WHITE 1
 #define NCH_BLACK 0
@@ -161,6 +112,68 @@ const char NCH_COLUMNS[8] = {'h' ,'g', 'f', 'e', 'd', 'c', 'b', 'a'};
 #define NCH_COL7 0x4040404040404040ull
 #define NCH_COL8 0x8080808080808080ull
 
+const cuint64 NCH_DIAGONAL_MAIN[15] = {
+    0x0000000000000001ull,
+    0x0000000000000101ull,
+    0x0000000000010204ull,
+    0x0000000001020408ull,
+    0x0000000102040810ull,
+    0x0000010204081020ull,
+    0x0001020408102040ull,
+    0x0102040810204080ull,
+    0x0204081020408000ull,
+    0x0408102040800000ull,
+    0x0810204080000000ull,
+    0x1020408000000000ull,
+    0x2040800000000000ull,
+    0x4080000000000000ull,
+    0x8000000000000000ull,
+};
+
+const int NCH_DIAGONAL_MAIN_IDX[64] = {
+    0, 1, 2, 3, 4, 5, 6, 7,
+    1, 2, 3, 4, 5, 6, 7, 8,
+    2, 3, 4, 5, 6, 7, 8, 9,
+    3, 4, 5, 6, 7, 8, 9, 10,
+    4, 5, 6, 7, 8, 9, 10, 11,
+    5, 6, 7, 8, 9, 10, 11, 12,
+    6, 7, 8, 9, 10, 11, 12, 13,
+    7, 8, 9, 10, 11, 12, 13, 14
+};
+
+const cuint64 NCH_DIAGONAL_ANTI[15] = {
+    0x0000000000000080ull,
+    0x0000000000008040ull,
+    0x0000000000804020ull,
+    0x0000000080402010ull,
+    0x0000008040201008ull,
+    
+    0x0000804020100804ull,
+    
+    0x0080402010080402ull,
+    0x8040201008040201ull,
+    0x4020100804020100ull,
+    0x2010080402010000ull,
+    0x1008040201000000ull,
+    0x0804020100000000ull,
+    0x0402010000000000ull,
+    0x0201000000000000ull,
+    0x0100000000000000ull,
+};
+
+const int NCH_DIAGONAL_ANTI_IDX[64] = {
+    7, 6, 5, 4, 3, 2, 1, 0,
+    8, 7, 6, 5, 4, 3, 2, 1,
+    9, 8, 7, 6, 5, 4, 3, 2,
+    10, 9, 8, 7, 6, 5, 4, 3,
+    11, 10, 9, 8, 7, 6, 5, 4,
+    12, 11, 10, 9, 8, 7, 6, 5,
+    13, 12, 11, 10, 9, 8, 7, 6,
+    14, 13, 12, 11, 10, 9, 8, 7
+};
+
+#define NCH_BOARDER 0xFF818181818181FF
+
 #define NCH_WHITE_PAWNS_START_POS 0x000000000000FF00ull
 #define NCH_BLACK_PAWNS_START_POS 0x00FF000000000000ull
 
@@ -193,18 +206,20 @@ typedef enum{
 #define NCH_RMVFLG(x, flag) (x &= ~flag)
 #define NCH_SETFLG(x, flag) (x |= flag)
 #define NCH_CHKUNI(x, flag) ((x & flag) != 0)
+#define NCH_CNGFLG(x, old_flag, new_flag) NCH_RMVFLG(x, old_flag); NCH_SETFLG(x, new_flag);
+#define NCH_FLPFLG(x, flag) (x ^= flag)
 
 #define NCH_SQR(idx) (1ull << (idx))
-#ifdef __GNUC__
-    #define NCH_SQRIDX(square) NCH_CTZLL(square)
-#else
-    #define NCH_SQRIDX(square) (cuint64)log2((double)square)
-#endif
+#define NCH_SQRIDX(square) NCH_CTZLL(square)
 #define NCH_GETCOL(square) (NCH_SQRIDX(square) % 8ull)
 #define NCH_GETROW(square) (NCH_SQRIDX(square) / 8ull)
+#define NCH_GETDIGMAIN(idx) NCH_DIAGONAL_MAIN[NCH_DIAGONAL_MAIN_IDX[idx]]
+#define NCH_GETDIGANTI(idx) NCH_DIAGONAL_ANTI[NCH_DIAGONAL_ANTI_IDX[idx]]
 
 #define NCH_NXTSQR_UP(square) (square << 8)
+#define NCH_NXTSQR_UP2(square) (square << 16)
 #define NCH_NXTSQR_DOWN(square) (square >> 8)
+#define NCH_NXTSQR_DOWN2(square) (square >> 16)
 #define NCH_NXTSQR_RIGHT(square) (square >> 1)
 #define NCH_NXTSQR_LEFT(square) (square << 1)
 #define NCH_NXTSQR_UPRIGHT(square) (square << 7)
@@ -220,8 +235,6 @@ typedef enum{
 #define NCH_NXTSQR_K_RIGHTDOWN(square) (square >> 10)
 #define NCH_NXTSQR_K_LEFTUP(square) (square << 10)
 #define NCH_NXTSQR_K_LEFTDOWN(square) (square >> 6)
-
-#define NCH_MKMOVE(map, src_sqr, trg_sqr) NCH_RMVFLG(map, src_sqr); NCH_SETFLG(map, trg_sqr);
 
 typedef struct{
     cuint64 W_Pawns;
@@ -250,6 +263,8 @@ typedef struct{
 
     int fifty_count;
     int move_count;
+    cuint64 enpassant_sqr;
+    cuint64 king_attackers;
 }CBoard;
 
 #define NCH_CF_WHITE_OO (cuint8)1
@@ -271,7 +286,7 @@ const cuint64 NCH_KING_CASTLE_SQUARES = NCH_G1 | NCH_C1 | NCH_G8 | NCH_C8 ;
 
 #define NCH_B_MASKPAWNCOl 0x0000000F
 #define NCH_B_PAWNMOVED 0x00000010
-#define NCH_B_PAWNMOVED2SQR 0x00000020
+#define NCH_B_MANYCHECKS 0x00000020
 #define NCH_B_ENPASSANT 0x00000040
 #define NCH_B_CAPTURE 0x00000080
 #define NCH_B_CHECK 0x00000100
@@ -281,11 +296,11 @@ const cuint64 NCH_KING_CASTLE_SQUARES = NCH_G1 | NCH_C1 | NCH_G8 | NCH_C8 ;
 #define NCH_B_FIFTYMOVES 0x00004000
 #define NCH_B_GAMEEND 0x00008000
 #define NCH_B_DRAW 0x00010000
-#define NCH_B_WHITEWIN 0x00020000
-#define NCH_B_WHITETURN 0x00040000
+#define NCH_B_WIN 0x00020000
+#define NCH_B_TURN 0x00040000
 
 #define NCH_B_IS_PAWNMOVED(board) NCH_CHKFLG(board->flags, NCH_B_PAWNMOVED)
-#define NCH_B_IS_PAWNMOVED2SQR(board) NCH_CHKFLG(board->flags, NCH_B_PAWNMOVED2SQR)
+#define NCH_B_IS_MANYCHECKS(board) NCH_CHKFLG(board->flags, NCH_B_MANYCHECKS)
 #define NCH_B_IS_ENPASSANT(board) NCH_CHKFLG(board->flags, NCH_B_ENPASSANT)
 #define NCH_B_IS_CAPTURE(board) NCH_CHKFLG(board->flags, NCH_B_CAPTURE)
 #define NCH_B_IS_CHECK(board) NCH_CHKFLG(board->flags, NCH_B_CHECK)
@@ -295,27 +310,21 @@ const cuint64 NCH_KING_CASTLE_SQUARES = NCH_G1 | NCH_C1 | NCH_G8 | NCH_C8 ;
 #define NCH_B_IS_FIFTYMOVES(board) NCH_CHKFLG(board->flags, NCH_B_FIFTYMOVES)
 #define NCH_B_IS_GAMEEND(board) NCH_CHKFLG(board->flags, NCH_B_GAMEEND)
 #define NCH_B_IS_DRAW(board) NCH_CHKFLG(board->flags, NCH_B_DRAW)
-#define NCH_B_IS_WHITEWIN(board) NCH_CHKFLG(board->flags, NCH_B_WHITEWIN)
+#define NCH_B_IS_WHITEWIN(board) NCH_CHKFLG(board->flags, NCH_B_WIN)
 #define NCH_B_IS_BLACKWIN(board) !NCH_B_IS_WHITEWIN(board)
-#define NCH_B_IS_WHITETURN(board) NCH_CHKFLG(board->flags, NCH_B_WHITETURN)
+#define NCH_B_IS_WHITETURN(board) NCH_CHKFLG(board->flags, NCH_B_TURN)
 #define NCH_B_IS_BLACKTURN(board) !NCH_B_IS_WHITETURN(board)
-
-#define _NCH_B_SET_PAWNCOL(borad, col) NCH_SETFLG(board->flags, col)
-#define NCH_B_GET_PAWNCOL(borad) (board->flags & NCH_B_MASKPAWNCOl)
 
 #define NCH_B_GET_WHITEMAP(board) (board->W_Pawns | board->W_Knights | board->W_Bishops | board->W_Rooks | board->W_Queens | board->W_King)
 #define NCH_B_GET_BLACKMAP(board) (board->B_Pawns | board->B_Knights | board->B_Bishops | board->B_Rooks | board->B_Queens | board->B_King)
 
-#define NCH_B_TURN(board) NCH_B_IS_WHITETURN(board) ? NCH_WHITE : NCH_BLACK
-#define NCH_B_RAISE_WINNER(board, winner) winner == WHITE ? NCH_SETFLG(board->flags, NCH_B_WHITEWIN) : NCH_RMVFLG(board->flags, NCH_B_WHITEWIN)
-#define NCH_B_SET_WHITETURN(board) NCH_SETFLG(board->flags, NCH_B_WHITETURN)
-#define NCH_B_SET_BLACKTURN(board) NCH_RMVFLG(board->flags, NCH_B_WHITETURN)
+#define NCH_B_RAISE_WINNER(board, winner) winner == WHITE ? NCH_SETFLG(board->flags, NCH_B_WIN) : NCH_RMVFLG(board->flags, NCH_B_WIN)
 
 #define NCH_B_STRING_SIZE 73
 
-const int NCH_B_MASK_GAMEACTIONS = NCH_B_MASKPAWNCOl | NCH_B_PAWNMOVED | NCH_B_PAWNMOVED2SQR
+const int NCH_B_MASK_GAMEACTIONS = NCH_B_MASKPAWNCOl | NCH_B_PAWNMOVED | NCH_B_MANYCHECKS
                                  | NCH_B_ENPASSANT | NCH_B_CAPTURE | NCH_B_CHECK;
 
-#define NCH_B_RESET_GAMEACTIONS(board) NCH_RMVFLG(board->flags, NCH_B_MASK_GAMEACTIONS);
+#define NCH_B_RESET_GAMEACTIONS(board) NCH_RMVFLG(board->flags, NCH_B_MASK_GAMEACTIONS)
 
 #endif

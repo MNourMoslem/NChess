@@ -1,5 +1,5 @@
-#ifndef NCHESS_TYPES_H
-#define NCHESS_TYPES_H
+#ifndef NCHESS_SRC_INCLUDE_TYPES_H
+#define NCHESS_SRC_INCLUDE_TYPES_H
 
 #include <stdint.h>
 

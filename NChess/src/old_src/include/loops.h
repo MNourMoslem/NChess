@@ -1,5 +1,5 @@
-#ifndef NCHESS_LOOPS_H
-#define NCHESS_LOOPS_H
+#ifndef NCHESS_SRC_INCLUDE_LOOPS_H
+#define NCHESS_SRC_INCLUDE_LOOPS_H
 
 #include "core.h"
 #include "types.h"

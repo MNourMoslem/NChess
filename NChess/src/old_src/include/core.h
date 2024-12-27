@@ -1,9 +1,10 @@
-#ifndef NCHESS_CORE_H
-#define NCHESS_CORE_H
+#ifndef NCHESS_SRC_INCLUDE_CORE_H
+#define NCHESS_SRC_INCLUDE_CORE_H
 
 #include <math.h>
 #include "types.h"
 #include "hash.h"
+#include "config.h"
 
 #define NCH_CLZLL(x) __builtin_clzll(x)
 #define NCH_CTZLL(x) __builtin_ctzll(x)
@@ -216,6 +217,11 @@ typedef enum{
 #define NCH_GETDIGMAIN(idx) NCH_DIAGONAL_MAIN[NCH_DIAGONAL_MAIN_IDX[idx]]
 #define NCH_GETDIGANTI(idx) NCH_DIAGONAL_ANTI[NCH_DIAGONAL_ANTI_IDX[idx]]
 
+#define NCH_SAME_COL(idx1, idx2) (((idx1 ^ idx2) & 7) == 0)
+#define NCH_SAME_ROW(idx1, idx2) (((idx1 ^ idx2) & 56) == 0)
+#define NCH_SAME_MAIN_DG(idx1, idx2) (((idx2 - idx1) % 7) == 0)
+#define NCH_SAME_ANTI_DG(idx1, idx2) (((idx2 - idx1) % 9) == 0)
+
 #define NCH_NXTSQR_UP(square) (square << 8)
 #define NCH_NXTSQR_UP2(square) (square << 16)
 #define NCH_NXTSQR_DOWN(square) (square >> 8)
@@ -286,7 +292,7 @@ const cuint64 NCH_KING_CASTLE_SQUARES = NCH_G1 | NCH_C1 | NCH_G8 | NCH_C8 ;
 
 #define NCH_B_MASKPAWNCOl 0x0000000F
 #define NCH_B_PAWNMOVED 0x00000010
-#define NCH_B_MANYCHECKS 0x00000020
+#define NCH_B_DOUBLECHECK 0x00000020
 #define NCH_B_ENPASSANT 0x00000040
 #define NCH_B_CAPTURE 0x00000080
 #define NCH_B_CHECK 0x00000100
@@ -300,7 +306,7 @@ const cuint64 NCH_KING_CASTLE_SQUARES = NCH_G1 | NCH_C1 | NCH_G8 | NCH_C8 ;
 #define NCH_B_TURN 0x00040000
 
 #define NCH_B_IS_PAWNMOVED(board) NCH_CHKFLG(board->flags, NCH_B_PAWNMOVED)
-#define NCH_B_IS_MANYCHECKS(board) NCH_CHKFLG(board->flags, NCH_B_MANYCHECKS)
+#define NCH_B_IS_DOUBLECHECK(board) NCH_CHKFLG(board->flags, NCH_B_DOUBLECHECK)
 #define NCH_B_IS_ENPASSANT(board) NCH_CHKFLG(board->flags, NCH_B_ENPASSANT)
 #define NCH_B_IS_CAPTURE(board) NCH_CHKFLG(board->flags, NCH_B_CAPTURE)
 #define NCH_B_IS_CHECK(board) NCH_CHKFLG(board->flags, NCH_B_CHECK)
@@ -322,7 +328,7 @@ const cuint64 NCH_KING_CASTLE_SQUARES = NCH_G1 | NCH_C1 | NCH_G8 | NCH_C8 ;
 
 #define NCH_B_STRING_SIZE 73
 
-const int NCH_B_MASK_GAMEACTIONS = NCH_B_MASKPAWNCOl | NCH_B_PAWNMOVED | NCH_B_MANYCHECKS
+const int NCH_B_MASK_GAMEACTIONS = NCH_B_PAWNMOVED | NCH_B_DOUBLECHECK
                                  | NCH_B_ENPASSANT | NCH_B_CAPTURE | NCH_B_CHECK;
 
 #define NCH_B_RESET_GAMEACTIONS(board) NCH_RMVFLG(board->flags, NCH_B_MASK_GAMEACTIONS)

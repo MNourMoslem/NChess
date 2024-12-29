@@ -137,16 +137,18 @@ static const int NCH_DIAGONAL_ANTI_IDX[64] = {
     14, 13, 12, 11, 10, 9, 8, 7
 };
 
-#define NCH_SQR(idx) (1ULL << idx)
+#define NCH_SQR(idx) (1ULL << (idx))
 #define NCH_SQRIDX(square) count_tbits(square)
-#define NCH_GETCOL(idx) (idx % 8ull)
-#define NCH_GETROW(idx) (idx / 8ull)
-#define NCH_GETDIGMAIN(idx) NCH_DIAGONAL_MAIN[NCH_DIAGONAL_MAIN_IDX[idx]]
-#define NCH_GETDIGANTI(idx) NCH_DIAGONAL_ANTI[NCH_DIAGONAL_ANTI_IDX[idx]]
+#define NCH_GET_COLIDX(idx) ((idx) % 8ull)
+#define NCH_GET_ROWIDX(idx) ((idx) / 8ull)
+#define NCH_GET_COL(idx) (NCH_COL1 << (NCH_GET_COLIDX(idx)))
+#define NCH_GET_ROW(idx) (NCH_ROW1 << (NCH_GET_ROWIDX(idx) * 8))
+#define NCH_GET_DIGMAIN(idx) NCH_DIAGONAL_MAIN[NCH_DIAGONAL_MAIN_IDX[idx]]
+#define NCH_GET_DIGANTI(idx) NCH_DIAGONAL_ANTI[NCH_DIAGONAL_ANTI_IDX[idx]]
 
-#define NCH_SAME_COL(idx1, idx2) (NCH_GETCOL(idx1) == NCH_GETCOL(idx2))
-#define NCH_SAME_ROW(idx1, idx2) (NCH_GETROW(idx1) == NCH_GETROW(idx2))
-#define NCH_SAME_MAIN_DG(idx1, idx2) (NCH_GETDIGMAIN(idx1) == NCH_GETDIGMAIN(idx2))
-#define NCH_SAME_ANTI_DG(idx1, idx2) (NCH_GETDIGANTI(idx1) == NCH_GETDIGANTI(idx2))
+#define NCH_SAME_COL(idx1, idx2) (NCH_GET_COLIDX(idx1) == NCH_GET_COLIDX(idx2))
+#define NCH_SAME_ROW(idx1, idx2) (NCH_GET_ROWIDX(idx1) == NCH_GET_ROWIDX(idx2))
+#define NCH_SAME_MAIN_DG(idx1, idx2) (NCH_DIAGONAL_MAIN_IDX[idx1] == NCH_DIAGONAL_MAIN_IDX[idx2])
+#define NCH_SAME_ANTI_DG(idx1, idx2) (NCH_DIAGONAL_ANTI_IDX[idx1] == NCH_DIAGONAL_ANTI_IDX[idx2])
 
 #endif

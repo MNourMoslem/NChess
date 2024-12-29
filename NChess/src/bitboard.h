@@ -17,7 +17,7 @@ extern uint64 KingAttacks[NCH_SQUARE_NB];                  // 64
 extern uint64 BetweenTable[NCH_SQUARE_NB][NCH_SQUARE_NB];  // 4,096
 
 extern uint64 Magics[2][NCH_SQUARE_NB];                    // 128
-extern uint64 RelativeSquares[2][NCH_SQUARE_NB];           // 128
+extern int ReleventSquares[2][NCH_SQUARE_NB];           // 128
 extern uint64 SlidersAttackMask[2][NCH_SQUARE_NB];         // 128
 
 extern uint64 RookTable[NCH_SQUARE_NB][4096];              // 262,144
@@ -52,6 +52,43 @@ NCH_STATIC_INLINE uint64
 bb_bishop_mask(int sqr_idx){
     return SlidersAttackMask[NCH_BS][sqr_idx];
 }
+
+NCH_STATIC_INLINE int
+bb_rook_relevant(int sqr_idx){
+    return ReleventSquares[NCH_RS][sqr_idx];
+}
+
+NCH_STATIC_INLINE int
+bb_bishop_relevant(int sqr_idx){
+    return ReleventSquares[NCH_BS][sqr_idx];
+}
+
+NCH_STATIC_INLINE int
+bb_rook_magic(int sqr_idx){
+    return Magics[NCH_RS][sqr_idx];
+}
+
+NCH_STATIC_INLINE int
+bb_bishop_magic(int sqr_idx){
+    return Magics[NCH_BS][sqr_idx];
+}
+
+NCH_STATIC_INLINE uint64
+bb_rook_attacks(int sqr_idx, uint64 block){
+    block &= bb_rook_mask(sqr_idx);
+    block *= bb_rook_magic(sqr_idx);
+    block >>= 64 - bb_rook_relevant(sqr_idx);
+    return RookTable[sqr_idx][block];
+}
+
+NCH_STATIC_INLINE uint64
+bb_bishop_attacks(int sqr_idx, uint64 block){
+    block &= bb_bishop_mask(sqr_idx);
+    block *= bb_bishop_magic(sqr_idx);
+    block >>= 64 - bb_bishop_relevant(sqr_idx);
+    return BishopTable[sqr_idx][block];
+}
+
 
 void
 InitBitboards();

@@ -70,6 +70,6 @@ Board_SetSquare(Board* board, Side side, Piece ptype, int sqr_idx){
 
 void
 Board_SetBitboard(Board* board, Side side, Piece ptype, uint64 bb){
-    board->bitboards[side][ptype] |= bb;
+    board->bitboards[side][ptype] = bb;
     _set_board_occupancy(board);
 }

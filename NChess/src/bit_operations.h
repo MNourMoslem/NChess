@@ -4,14 +4,8 @@
 #include "config.h"
 #include "types.h"
 
-#define NCH_CLZLL(x) __builtin_clzll(x)
-#define NCH_CTZLL(x) __builtin_ctzll(x)
-#define NCH_POPCOUNT(x) __builtin_popcount(x)
-#define NCH_POPCOUNTLL(x) __builtin_popcountll(x)
 
-#define NCH_HEADER NCH_STATIC NCH_INLINE
-
-NCH_HEADER uint64
+NCH_STATIC_INLINE uint64
 count_bits(uint64 x){
     #if NCH_GCC
         return __builtin_popcountll(x);
@@ -27,7 +21,7 @@ count_bits(uint64 x){
     #endif
 };
 
-NCH_HEADER uint64
+NCH_STATIC_INLINE uint64
 count_lbits(uint64 x){
     #if NCH_GCC
         return __builtin_clzll(x);
@@ -46,7 +40,7 @@ count_lbits(uint64 x){
     #endif 
 };
 
-NCH_HEADER uint64
+NCH_STATIC_INLINE uint64
 count_tbits(uint64 x){
     #if NCH_GCC
         return __builtin_ctzll(x);
@@ -65,12 +59,12 @@ count_tbits(uint64 x){
     #endif
 };
 
-NCH_HEADER uint64
+NCH_STATIC_INLINE uint64
 get_ls1b(uint64 x) {
     return x & -x;
 }
 
-NCH_HEADER uint64
+NCH_STATIC_INLINE uint64
 get_ts1b(uint64 x) {
     return x & ~(x - 1);
 }

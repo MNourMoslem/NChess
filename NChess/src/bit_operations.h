@@ -66,7 +66,11 @@ get_ls1b(uint64 x) {
 
 NCH_STATIC_INLINE uint64
 get_ts1b(uint64 x) {
-    return x & ~(x - 1);
+    #if NCH_GCC
+        return 1ULL << count_tbits(x);
+    #else
+        return x & ~(x - 1);
+    #endif
 }
 
 #endif // NCHESS_SRC_BIT_OPERATIONS_H

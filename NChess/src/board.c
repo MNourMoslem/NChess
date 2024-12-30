@@ -1,6 +1,8 @@
 #include "board.h"
 #include "config.h"
 #include "io.h"
+#include "bitboard.h"
+#include "generate_utils.h"
 
 NCH_STATIC_INLINE void
 _set_board_occupancy(Board* board){
@@ -60,8 +62,6 @@ Board_InitEmpty(Board* board){
     _set_board_occupancy(board);
 }
 
-
-
 void
 Board_SetSquare(Board* board, Side side, Piece ptype, int sqr_idx){
     board->bitboards[side][ptype] |= NCH_SQR(sqr_idx);
@@ -72,4 +72,14 @@ void
 Board_SetBitboard(Board* board, Side side, Piece ptype, uint64 bb){
     board->bitboards[side][ptype] = bb;
     _set_board_occupancy(board);
+}
+
+int
+Board_IsCheck(Board* board){
+    return get_checkmap(
+            board,
+            Board_IS_WHITETURN(board) ? NCH_White : NCH_Black,
+            NCH_SQRIDX( Board_IS_WHITETURN(board) ? Board_WHITE_KING(board) : Board_BLACK_KING(board)),
+            Board_ALL_OCC(board)
+        ) != 0ULL;
 }

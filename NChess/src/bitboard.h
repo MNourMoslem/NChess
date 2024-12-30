@@ -63,12 +63,12 @@ bb_bishop_relevant(int sqr_idx){
     return ReleventSquares[NCH_BS][sqr_idx];
 }
 
-NCH_STATIC_INLINE int
+NCH_STATIC_INLINE uint64
 bb_rook_magic(int sqr_idx){
     return Magics[NCH_RS][sqr_idx];
 }
 
-NCH_STATIC_INLINE int
+NCH_STATIC_INLINE uint64
 bb_bishop_magic(int sqr_idx){
     return Magics[NCH_BS][sqr_idx];
 }
@@ -89,6 +89,10 @@ bb_bishop_attacks(int sqr_idx, uint64 block){
     return BishopTable[sqr_idx][block];
 }
 
+NCH_STATIC_INLINE uint64
+bb_queen_attacks(int sqr_idx, uint64 block){
+    return bb_rook_attacks(sqr_idx, block) | bb_bishop_attacks(sqr_idx, block);
+}
 
 void
 InitBitboards();

@@ -19,7 +19,7 @@ find_magic(int idx, int relevant_bits, int bishop){
     int occupancy_variations = 1 << relevant_bits;
 
     uint64 mask = bishop ? bb_bishop_mask(idx) :
-                                     bb_rook_mask(idx);
+                           bb_rook_mask(idx);
 
     for (int i = 0; i < occupancy_variations; i++){
         occupancies[i] = set_occupancy(i, relevant_bits, mask);
@@ -27,8 +27,9 @@ find_magic(int idx, int relevant_bits, int bishop){
                               get_rook_mask_on_fly(idx, occupancies[i]);
     }
 
+    uint64 magic;
     for (int random_count = 0; random_count < 100000000; random_count++){
-        uint64 magic = random_fewbits();
+        magic = random_fewbits();
 
         if(count_bits((mask * magic) & 0xFF00000000000000ULL) < 6){
             continue;
@@ -36,16 +37,16 @@ find_magic(int idx, int relevant_bits, int bishop){
 
         memset(used_attacks, 0ULL, sizeof(used_attacks));
 
-        int test_count, fail;
+        int test_count, fail, magic_index;
 
         for (test_count = 0, fail = 0; !fail && test_count < occupancy_variations; test_count++){
-            int magic_index = (int)((occupancies[test_count] * magic) >> (64 - relevant_bits));
+            magic_index = (int)((occupancies[test_count] * magic) >> (64 - relevant_bits));
           
             if(used_attacks[magic_index] == 0ULL){
                 used_attacks[magic_index] = attacks[test_count];
             }
             else if(used_attacks[magic_index] != attacks[test_count]){
-              fail = 1;  
+                fail = 1;  
             }
         }
 

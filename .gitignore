@@ -2,3 +2,4 @@ git_commits.py
 bin
 obj
 *.exe
+.vscode

@@ -222,7 +222,7 @@ init_magics(){
         0x1004081002402ULL,
     };
 
-    for (int i = 0; i < 64; i++){
+    for (int i = 0; i < NCH_SQUARE_NB; i++){
         Magics[NCH_RS][i] = rook_magics[i];
     }
 
@@ -322,7 +322,7 @@ init_sliders_table(){
 
         for (int index = 0; index < occupancy_indicies; index++){
             occupancy = set_occupancy(index, rel_bits, mask);
-            magic_index = (occupancy * bb_bishop_magic(sqr_idx)) >> (64 - bb_bishop_relevant(sqr_idx));
+            magic_index = (int)((occupancy * bb_bishop_magic(sqr_idx)) >> (64 - rel_bits));
             BishopTable[sqr_idx][magic_index] = get_bishop_mask_on_fly(sqr_idx, occupancy);
         }
     }

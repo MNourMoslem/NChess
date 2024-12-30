@@ -7,7 +7,7 @@ set_occupancy(int index, int bits_in_mask, uint64 attack_mask)
     
     for (int count = 0; count < bits_in_mask; count++)
     {
-        uint64 sqr = get_ls1b(attack_mask);
+        uint64 sqr = get_ts1b(attack_mask);
         NCH_RMVFLG(attack_mask, sqr);
         
         if (index & (1 << count))

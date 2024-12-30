@@ -6,6 +6,7 @@
 #include "core.h"
 
 #define LOOP_U64_T(map)\
-for (uint64 map = map, sqr = get_ts1b(map); map != 0; NCH_RMVFLG(map, sqr), sqr = get_ls1b(map))
+int idx;\
+for (uint64 map = map, idx = count_tbits(map); map != 0; NCH_RMVFLG(map, NCH_SQR(idx)), idx = count_tbits(map))
 
 #endif

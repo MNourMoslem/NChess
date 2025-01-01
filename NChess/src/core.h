@@ -30,7 +30,8 @@ typedef enum {
     NCH_Queen,
     NCH_King,
 
-    NCH_PIECE_NB
+    NCH_PIECE_NB,
+    NCH_NO_PIECE
 }Piece;
  
 #define NCH_ROW1 0x00000000000000FFULL

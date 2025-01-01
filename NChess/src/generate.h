@@ -7,7 +7,7 @@
 #include "board.h"
 #include "loops.h"
 
-int
-generate_pseudo_moves(Board* board, uint64 allowd_pieces);
+void
+generate_moves(Board* board);
 
 #endif

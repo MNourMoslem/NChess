@@ -1,7 +1,8 @@
 #include "generate_utils.h"
+#include "bitboard.h"
 
 uint64
-get_checkmap(Board* board, Side side, int king_idx, int all_occ){
+get_checkmap(Board* board, Side side, int king_idx, uint64 all_occ){
     uint64 king_sqr, occupancy;
     if (side == NCH_White){
         king_sqr = Board_WHITE_KING(board);
@@ -71,7 +72,6 @@ get_allowed_squares(Board* board){
         return NCH_UINT64_MAX;
     }
 
-    uint64 not_allowed;
     if (count_bits(attackers_map) == 1){
         return bb_between(king_idx, NCH_SQRIDX(attackers_map));
     }

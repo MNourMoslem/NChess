@@ -23,6 +23,7 @@ typedef struct
 {
     uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB];
     uint64 occupancy[NCH_SIDES_NB + 1];
+    Piece piecetables[NCH_SIDES_NB][NCH_SQUARE_NB];
 
     uint64 castles;
     int flags;
@@ -38,6 +39,9 @@ typedef struct
 #define Board_BLACK_OCC(board) (board)->occupancy[NCH_Black]
 #define Board_ALL_OCC(board) (board)->occupancy[NCH_SIDES_NB]
 
+#define Board_WHITE_TABLE(board) (board)->piecetables[NCH_White]
+#define Board_BLACK_TABLE(board) (board)->piecetables[NCH_Black]
+
 #define Board_WHITE_PAWNS(board) (board)->bitboards[NCH_White][NCH_Pawn]
 #define Board_WHITE_KNIGHTS(board) (board)->bitboards[NCH_White][NCH_Knight]
 #define Board_WHITE_BISHOPS(board) (board)->bitboards[NCH_White][NCH_Bishop]
@@ -51,6 +55,9 @@ typedef struct
 #define Board_BLACK_ROOKS(board) (board)->bitboards[NCH_Black][NCH_Rook]
 #define Board_BLACK_QUEENS(board) (board)->bitboards[NCH_Black][NCH_Queen]
 #define Board_BLACK_KING(board) (board)->bitboards[NCH_Black][NCH_King]
+
+#define Board_WHITE_PIECE(board, idx) (board)->piecetables[NCH_White][idx]
+#define Board_BLACK_PIECE(board, idx) (board)->piecetables[NCH_Black][idx]
 
 #define Board_PAWNMOVED (1 << 0)
 #define Board_ENPASSANT (1 << 1)
@@ -108,5 +115,11 @@ Board_SetBitboard(Board* board, Side side, Piece ptype, uint64 bb);
 
 int
 Board_IsCheck(Board* board);
+
+void
+Board_Update(Board* board);
+
+void
+Board_Step(Board* board, char* move);
 
 #endif

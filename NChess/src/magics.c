@@ -1,7 +1,6 @@
 #include "magics.h"
 #include "loops.h"
 #include "core.h"
-#include "scan.h"
 #include "./random.h"
 #include "bitboard.h"
 #include "magic_utils.h"

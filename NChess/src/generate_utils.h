@@ -7,7 +7,7 @@
 #include "board.h"
 
 uint64
-get_checkmap(Board* board, Side side, int king_idx, int all_occ);
+get_checkmap(Board* board, Side side, int king_idx, uint64 all_occ);
 
 uint64
 get_allowed_pieces(Board* board);

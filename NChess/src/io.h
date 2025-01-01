@@ -8,4 +8,10 @@
 void
 Board_Print(Board* board);
 
+void
+Board_PrintMoves(Board* board);
+
+void
+Board_PrintInfo(Board *board);
+
 #endif

@@ -135,6 +135,8 @@ _init_board(Board* board){
     board->en_passant_map = 0ULL;
     board->en_passant_trg = 0ULL;
     board->flags = 0ULL;
+    board->nmoves = 0;
+    board->fifty_counter = 0;
     _set_board_occupancy(board);
     init_piecetables(board);
     Board_Update(board);

@@ -40,10 +40,20 @@ _generate_pieces_psudo_pawns(Board* board, uint64 allowed_pieces){
 NCH_STATIC_INLINE void
 _generate_pieces_psudo_king(Board* board){
     Side side = Board_GET_SIDE(board);
-    uint64 king_sqr = side == NCH_White ? Board_WHITE_KING(board) : Board_BLACK_KING(board);
-    uint64 allowed_squares = side == NCH_White ? ~Board_WHITE_OCC(board) : ~Board_BLACK_OCC(board);
+    uint64 king_sqr, op_king_sqr, allowed_squares;
+    if (side == NCH_White){
+        king_sqr = Board_WHITE_KING(board);
+        op_king_sqr = Board_BLACK_KING(board);
+        allowed_squares = ~Board_WHITE_OCC(board);
+    }
+    else{
+        king_sqr = Board_BLACK_KING(board);
+        op_king_sqr = Board_WHITE_KING(board);
+        allowed_squares = ~Board_BLACK_OCC(board);
+    }
+
     int king_idx = NCH_SQRIDX(king_sqr);
-    uint64 moves = bb_king_attacks(king_idx) & allowed_squares;
+    uint64 moves = bb_king_attacks(king_idx) & allowed_squares & ~bb_king_attacks(NCH_SQRIDX(op_king_sqr));
     int idx;
     LOOP_U64_T(moves){
         if (get_checkmap(board, side, idx, Board_ALL_OCC(board))){

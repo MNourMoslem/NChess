@@ -140,6 +140,30 @@ _init_board(Board* board){
     Board_Update(board);
 }
 
+Board*
+Board_New(){
+    Board* board = malloc(sizeof(Board));
+    if (!board){
+        return NULL;
+    }
+
+    board->movelist = MoveList_New();
+    if (!board->movelist){
+        free(board);
+        return NULL;
+    }
+
+    return board;
+}
+
+void
+Board_Free(Board* board){
+    if (board){
+        MoveList_Free(board->movelist);
+        free(board);
+    }
+}
+
 void
 Board_Init(Board* board){
     board->bitboards[NCH_White][NCH_Pawn] = NCH_BOARD_W_PAWNS_STARTPOS;
@@ -303,6 +327,20 @@ Board_Step(Board* board, char* move){
         return;
     }
 
-    make_move(board, from_, to_, promotion, castle);
-    Board_Update(board);   
+    uint32 move_unit = make_move(board, from_, to_, promotion, castle);
+    
+    MoveList_Append(board->movelist, move_unit);
+    Board_Update(board);
+}
+
+void
+Board_Undo(Board* board){
+    uint32 move = MoveList_LastMove(board->movelist);
+    if (!move){
+        return;
+    }
+
+    undo_move(board, Board_IS_WHITETURN(board) ? NCH_Black : NCH_White, move);
+    MoveList_Pop(board->movelist);
+    Board_Update(board);
 }

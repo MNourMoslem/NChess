@@ -38,6 +38,9 @@ typedef struct
     uint32 last_move;
 
     MoveList* movelist;
+
+    int nmoves;
+    int fifty_counter;
 }Board;
 
 #define Board_WHITE_OCC(board) (board)->occupancy[NCH_White]

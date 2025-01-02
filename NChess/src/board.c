@@ -134,7 +134,7 @@ _init_board(Board* board){
     board->en_passant_idx = 0;
     board->en_passant_map = 0ULL;
     board->en_passant_trg = 0ULL;
-    board->flags = 0ULL;
+    board->flags = Board_TURN;
     board->nmoves = 0;
     board->fifty_counter = 0;
     _set_board_occupancy(board);
@@ -230,7 +230,6 @@ void
 Board_Update(Board* board){
     reset_state_flags(board);
     reset_castle_rigths(board);
-    flip_turn(board);
     if (Board_IsCheck(board)){
         NCH_SETFLG(board->flags, Board_CHECK);
     }
@@ -332,6 +331,19 @@ Board_Step(Board* board, char* move){
     uint32 move_unit = make_move(board, from_, to_, promotion, castle);
     
     MoveList_Append(board->movelist, move_unit);
+    flip_turn(board);
+
+    if (Board_IS_WHITETURN(board)){
+        board->nmoves += 1;
+    }
+
+    if (NCH_CHKFLG(board->flags, Board_PAWNMOVED | Board_CAPTURE | Board_CHECK | Board_DOUBLECHECK)){
+        board->fifty_counter = 0;
+    }
+    else{
+        board->fifty_counter += 1;
+    }
+
     Board_Update(board);
 }
 
@@ -344,5 +356,6 @@ Board_Undo(Board* board){
 
     undo_move(board, Board_IS_WHITETURN(board) ? NCH_Black : NCH_White, move);
     MoveList_Pop(board->movelist);
+    flip_turn(board);
     Board_Update(board);
 }

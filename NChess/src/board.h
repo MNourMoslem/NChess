@@ -4,6 +4,7 @@
 #include "core.h"
 #include "types.h"
 #include "config.h"
+#include "movelist.h"
 
 #define NCH_BOARD_W_PAWNS_STARTPOS 0x000000000000FF00
 #define NCH_BOARD_W_KNIGHTS_STARTPOS 0x0000000000000042
@@ -28,11 +29,15 @@ typedef struct
     uint64 castles;
     int flags;
 
-    int en_passant_idx;
+    Square en_passant_idx;
     uint64 en_passant_map;
     uint64 en_passant_trg;
 
     uint64 moves[NCH_SQUARE_NB];
+
+    uint32 last_move;
+
+    MoveList* movelist;
 }Board;
 
 #define Board_WHITE_OCC(board) (board)->occupancy[NCH_White]
@@ -101,6 +106,12 @@ typedef struct
 #define Board_IS_CASTLE_BK(board) NCH_CHKFLG(board->castles, Board_CASTLE_BK)
 #define Board_IS_CASTLE_BQ(board) NCH_CHKFLG(board->castles, Board_CASTLE_BQ)
 
+Board*
+Board_New();
+
+void
+Board_Free(Board* board);
+
 void
 Board_Init(Board* board);
 
@@ -121,5 +132,8 @@ Board_Update(Board* board);
 
 void
 Board_Step(Board* board, char* move);
+
+void
+Board_Undo(Board* board);
 
 #endif

@@ -7,5 +7,6 @@
 #include "bitboard.h"
 #include "types.h"
 #include "config.h"
+#include "fen.h"
 
 #endif

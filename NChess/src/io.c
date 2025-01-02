@@ -127,5 +127,6 @@ Board_PrintInfo(Board *board){
                                         , Board_IS_CASTLE_WQ(board) ? 'Q' : '-'
                                         , Board_IS_CASTLE_BK(board) ? 'k' : '-'
                                         , Board_IS_CASTLE_BQ(board) ? 'q' : '-');
-    printf("flags: 0x%x\n", board->flags);
+    printf("moves number: %i\n", board->nmoves);
+    printf("fifty counter: %i\n", board->fifty_counter);
 }   

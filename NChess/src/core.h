@@ -33,6 +33,8 @@ typedef enum {
     NCH_PIECE_NB,
     NCH_NO_PIECE
 }Piece;
+
+typedef uint32 Move;
  
 #define NCH_ROW1 0x00000000000000FFULL
 #define NCH_ROW2 (NCH_ROW1 << 8 * 1)

@@ -87,13 +87,9 @@ _init_board_flags_and_states(Board* board){
 NCH_STATIC_INLINE void
 _init_board(Board* board){
     _init_board_flags_and_states(board);
-    printf("flags and states initialized\n");
     set_board_occupancy(board);
-    printf("occupancy set\n");
     init_piecetables(board);
-    printf("piecetables initialized\n");
     Board_Update(board);
-    printf("board updated\n");
 }
 
 Board*
@@ -103,13 +99,11 @@ Board_New(){
         return NULL;
     }
 
-    printf("board created\n");
     board->movelist = MoveList_New();
     if (!board->movelist){
         free(board);
         return NULL;
     }
-    printf("movelist created\n");
 
     board->dict = BoardDict_New();
     if (!board->dict){
@@ -117,10 +111,8 @@ Board_New(){
         free(board);
         return NULL;
     }
-    printf("dict created\n");
 
     Board_Init(board);
-    printf("board initialized\n");
     return board;
 }
 
@@ -199,24 +191,17 @@ Board_Update(Board* board){
         return;
     }
 
-    printf("updating board\n");
     generate_moves(board);
-    printf("moves generated\n");
-
-    if (!board->dict)
-        printf("dict is null\n");
 
     if (BoardDict_GetCount(board->dict, board->bitboards) > 2){
         end_game_by_draw(board, Board_THREEFOLD);
         return;
     }
-    printf("dict checked\n");
 
     if (board->fifty_counter > 49){
         end_game_by_draw(board, Board_FIFTYMOVES);
         return;
     }
-    printf("fifty counter checked\n");
 
     if (!at_least_one_move(board)){
         if (Board_IS_CHECK(board)){

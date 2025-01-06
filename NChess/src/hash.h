@@ -2,9 +2,9 @@
 #define NCHESS_SRC_HASH_H
 
 #include "types.h"
-#include "board.h"
+#include "core.h"
 
-#define NCH_BOARD_DICT_SIZE 1
+#define NCH_BOARD_DICT_SIZE 100
 
 typedef struct BoardNode
 {
@@ -27,13 +27,13 @@ void
 BoardDict_Free(BoardDict* dict);
 
 int
-BoardDict_GetCount(BoardDict* dict, Board* board);
+BoardDict_GetCount(BoardDict* dict, uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]);
 
 int
-BoardDict_Add(BoardDict* dict, Board* board);
+BoardDict_Add(BoardDict* dict, uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]);
 
 int
-BoardDict_Remove(BoardDict* dict, Board* board);
+BoardDict_Remove(BoardDict* dict, uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]);
 
 void
 BoardDict_Reset(BoardDict* dict);

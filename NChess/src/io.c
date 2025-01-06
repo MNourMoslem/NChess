@@ -125,6 +125,7 @@ Board_MovesAsString(Board* board, char buffer[][7]){
     char* src;
     int idx;
     int move_counter = 0;
+    Side side = Board_GET_SIDE(board);
 
     for (int i = 0; i < NCH_SQUARE_NB; i++){
         if (board->moves[i]){
@@ -135,9 +136,9 @@ Board_MovesAsString(Board* board, char buffer[][7]){
                 buffer[move_counter][2] = squares_char[idx][0];
                 buffer[move_counter][3] = squares_char[idx][1];
 
-                if (NCH_CHKFLG(Board_WHITE_PAWNS(board) | Board_BLACK_PAWNS(board), NCH_SQR(idx))
-                    && NCH_CHKFLG(NCH_ROW1 | NCH_ROW8, NCH_SQR(idx))){
-                    
+                if (board->piecetables[side][i] == NCH_Pawn
+                    && (idx <= NCH_A1 || idx >= NCH_H8))
+                {             
                     memcpy(buffer[move_counter + 1], buffer[move_counter], sizeof(char) * 4);
                     buffer[move_counter+1][4] = 'r';
                     buffer[move_counter+1][5] = '\0';
@@ -170,14 +171,15 @@ Board_PrintInfo(Board *board){
     Board_Print(board);
     printf("=========\n  Moves  \n=========\n");
     Board_PrintMoves(board);
-    printf("\n");
     printf("=========\n  Info  \n=========\n");
     printf("Turn: %s\n", Board_IS_WHITETURN(board) ? "White" : "Black");
     printf("caslte rights: %c%c%c%c\n"  , Board_IS_CASTLE_WK(board) ? 'K' : '-'
                                         , Board_IS_CASTLE_WQ(board) ? 'Q' : '-'
                                         , Board_IS_CASTLE_BK(board) ? 'k' : '-'
                                         , Board_IS_CASTLE_BQ(board) ? 'q' : '-');
-    printf("moves number: %i\n", board->nmoves);
+    printf("number of moves: %i\n", Board_NMoves(board));
+    printf("played turns: %i\n", board->nmoves);
     printf("fifty counter: %i\n", board->fifty_counter);
-    printf("enpassant square: %s\n", squares_char[NCH_SQRIDX(board->en_passant_trg)]);
+    printf("enpassant square: %s\n", board->en_passant_trg ? 
+                                    squares_char[NCH_SQRIDX(board->en_passant_trg)] : "-");
 }   

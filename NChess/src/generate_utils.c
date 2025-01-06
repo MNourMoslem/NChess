@@ -27,39 +27,6 @@ get_checkmap(Board* board, Side side, int king_idx, uint64 all_occ){
 }
 
 uint64
-get_allowed_pieces(Board* board){
-    uint64 king_sqr = Board_IS_WHITETURN(board) ? Board_WHITE_KING(board) : Board_BLACK_KING(board);
-    int king_idx = NCH_SQRIDX(king_sqr);
-
-    uint64 all_occ = Board_ALL_OCC(board);
-    uint64 queen_attack = bb_queen_attacks(king_idx, all_occ);
-
-    NCH_RMVFLG(all_occ, queen_attack);
-    if (Board_IS_ENPASSANT(board) && !NCH_CHKFLG(all_occ, board->en_passant_map)){
-        NCH_RMVFLG(all_occ, board->en_passant_map);
-    }
-    
-    queen_attack = bb_queen_attacks(king_idx, all_occ);
-
-    uint64 attackers_map = get_checkmap(board, Board_GET_SIDE(board), king_idx, all_occ);
-    if (!attackers_map){
-        return NCH_UINT64_MAX;
-    }
-
-
-    uint64 not_allowed;
-    if (count_bits(attackers_map) == 1){
-        not_allowed = bb_between(king_idx, NCH_SQRIDX(attackers_map));
-    }
-    else{
-        not_allowed = bb_between(king_idx, NCH_SQRIDX(get_ls1b(attackers_map)))
-                    | bb_between(king_idx, NCH_SQRIDX(get_ts1b(attackers_map)));
-    }
-
-    return NCH_UINT64_MAX & ~not_allowed;
-}
-
-uint64
 get_allowed_squares(Board* board){
     if (!Board_IS_CHECK(board)){
         return NCH_UINT64_MAX;

@@ -179,4 +179,5 @@ Board_PrintInfo(Board *board){
                                         , Board_IS_CASTLE_BQ(board) ? 'q' : '-');
     printf("moves number: %i\n", board->nmoves);
     printf("fifty counter: %i\n", board->fifty_counter);
+    printf("enpassant square: %s\n", squares_char[NCH_SQRIDX(board->en_passant_trg)]);
 }   

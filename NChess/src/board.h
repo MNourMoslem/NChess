@@ -5,6 +5,7 @@
 #include "types.h"
 #include "config.h"
 #include "movelist.h"
+#include "hash.h"
 
 #define NCH_BOARD_W_PAWNS_STARTPOS 0x000000000000FF00
 #define NCH_BOARD_W_KNIGHTS_STARTPOS 0x0000000000000042
@@ -35,9 +36,8 @@ typedef struct
 
     uint64 moves[NCH_SQUARE_NB];
 
-    uint32 last_move;
-
     MoveList* movelist;
+    BoardDict* dict;
 
     int nmoves;
     int fifty_counter;
@@ -70,21 +70,23 @@ typedef struct
 #define Board_PAWNMOVED (1 << 0)
 #define Board_ENPASSANT (1 << 1)
 #define Board_CAPTURE (1 << 2)
-#define Board_CHECK (1 << 3)
-#define Board_DOUBLECHECK (1 << 4)
-#define Board_CHECKMATE (1 << 5)
-#define Board_STALEMATE (1 << 6)
-#define Board_THREEFOLD (1 << 7)
-#define Board_FIFTYMOVES (1 << 8)
-#define Board_GAMEEND (1 << 9)
-#define Board_DRAW (1 << 10)
-#define Board_WIN (1 << 11)
-#define Board_TURN (1 << 12)
+#define Board_PROMOTION (1 << 3)
+#define Board_CHECK (1 << 4)
+#define Board_DOUBLECHECK (1 << 5)
+#define Board_CHECKMATE (1 << 6)
+#define Board_STALEMATE (1 << 7)
+#define Board_THREEFOLD (1 << 8)
+#define Board_FIFTYMOVES (1 << 9)
+#define Board_GAMEEND (1 << 10)
+#define Board_DRAW (1 << 11)
+#define Board_WIN (1 << 12)
+#define Board_TURN (1 << 13)
 
 #define Board_IS_PAWNMOVED(board) NCH_CHKFLG(board->flags, Board_PAWNMOVED)
 #define Board_IS_DOUBLECHECK(board) NCH_CHKFLG(board->flags, Board_DOUBLECHECK)
 #define Board_IS_ENPASSANT(board) NCH_CHKFLG(board->flags, Board_ENPASSANT)
 #define Board_IS_CAPTURE(board) NCH_CHKFLG(board->flags, Board_CAPTURE)
+#define Board_IS_PROMOTION(board) NCH_CHKFLG(board->flags, Board_PROMOTION)
 #define Board_IS_CHECK(board) NCH_CHKFLG(board->flags, Board_CHECK)
 #define Board_IS_CHECKMATE(board) NCH_CHKFLG(board->flags, Board_CHECKMATE)
 #define Board_IS_STALEMATE(board) NCH_CHKFLG(board->flags, Board_STALEMATE)
@@ -97,7 +99,9 @@ typedef struct
 #define Board_IS_WHITETURN(board) NCH_CHKFLG(board->flags, Board_TURN)
 #define Board_IS_BLACKTURN(board) !Board_IS_WHITETURN(board)
 
+#define Board_GAME_ON(board) !Board_IS_GAMEEND(board)
 #define Board_GET_SIDE(board) (Board_IS_WHITETURN(board) ? NCH_White : NCH_Black)
+#define Board_GET_OP_SIDE(board) (Board_IS_WHITETURN(board) ? NCH_Black : NCH_White)
 
 #define Board_CASTLE_WK 1
 #define Board_CASTLE_WQ 2
@@ -134,9 +138,15 @@ void
 Board_Update(Board* board);
 
 void
+Board_StepByMove(Board* board, Move move);
+
+void
 Board_Step(Board* board, char* move);
 
 void
 Board_Undo(Board* board);
+
+int
+Board_NMoves(Board* board);
 
 #endif

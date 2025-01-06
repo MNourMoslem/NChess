@@ -8,7 +8,28 @@
 #include <string.h>
 #include "move.h"
 #include <stdio.h>
+#include "utils.h"
+#include "hash.h"
 
+NCH_STATIC_INLINE void
+end_game_by_draw(Board* board, int state){
+    NCH_SETFLG(board->flags, Board_GAMEEND | Board_DRAW | state);
+}
+
+NCH_STATIC_INLINE void
+end_game_by_wl(Board* board){
+    NCH_SETFLG(board->flags, Board_GAMEEND | (Board_IS_WHITETURN(board) ? 0 : Board_WIN));
+}
+
+NCH_STATIC_INLINE int
+at_least_one_move(Board* board){
+    for (int i = 0; i < NCH_SQUARE_NB; i++){
+        if (board->moves[i]){
+            return 1;
+        }
+    }
+    return 0;
+}
 
 NCH_STATIC_INLINE void
 flip_turn(Board* board){
@@ -21,115 +42,39 @@ reset_state_flags(Board* board){
 }
 
 NCH_STATIC_INLINE void
+reset_every_turn_states(Board* board){
+    NCH_RMVFLG(board->flags, Board_CHECK | Board_DOUBLECHECK 
+                           | Board_CAPTURE | Board_PAWNMOVED 
+                           | Board_ENPASSANT | Board_PROMOTION);
+}
+
+
+NCH_STATIC_INLINE void
 reset_castle_rigths(Board* board){
-    if (Board_IS_WHITETURN(board)){
-        if (NCH_CHKFLG(board->castles, Board_CASTLE_WK) &&
-            !NCH_CHKFLG(Board_WHITE_OCC(board), (NCH_SQR(NCH_E1) | NCH_SQR(NCH_H1))))
-        {
-            NCH_RMVFLG(board->castles, Board_CASTLE_WK);
-        }
-        if (NCH_CHKFLG(board->castles, Board_CASTLE_WQ) && 
-            !NCH_CHKFLG(Board_WHITE_OCC(board), (NCH_SQR(NCH_E1) | NCH_SQR(NCH_A1))))
-        {
-            NCH_RMVFLG(board->castles, Board_CASTLE_WQ);
-        }
+    if (NCH_CHKFLG(board->castles, Board_CASTLE_WK) &&
+        !NCH_CHKFLG(Board_WHITE_OCC(board), (NCH_SQR(NCH_E1) | NCH_SQR(NCH_H1))))
+    {
+        NCH_RMVFLG(board->castles, Board_CASTLE_WK);
     }
-    else{
-        if (NCH_CHKFLG(board->castles, Board_CASTLE_BK) &&
-            !NCH_CHKFLG(Board_BLACK_OCC(board), (NCH_SQR(NCH_E8) | NCH_SQR(NCH_H8))))
-        {
-            NCH_RMVFLG(board->castles, Board_CASTLE_BK);
-        }
-        if (NCH_CHKFLG(board->castles, Board_CASTLE_BQ) &&
-            !NCH_CHKFLG(Board_BLACK_OCC(board), (NCH_SQR(NCH_E8) | NCH_SQR(NCH_A8))))
-        {
-            NCH_RMVFLG(board->castles, Board_CASTLE_BQ);
-        }
+    if (NCH_CHKFLG(board->castles, Board_CASTLE_WQ) && 
+        !NCH_CHKFLG(Board_WHITE_OCC(board), (NCH_SQR(NCH_E1) | NCH_SQR(NCH_A1))))
+    {
+        NCH_RMVFLG(board->castles, Board_CASTLE_WQ);
+    }
+    if (NCH_CHKFLG(board->castles, Board_CASTLE_BK) &&
+        !NCH_CHKFLG(Board_BLACK_OCC(board), (NCH_SQR(NCH_E8) | NCH_SQR(NCH_H8))))
+    {
+        NCH_RMVFLG(board->castles, Board_CASTLE_BK);
+    }
+    if (NCH_CHKFLG(board->castles, Board_CASTLE_BQ) &&
+        !NCH_CHKFLG(Board_BLACK_OCC(board), (NCH_SQR(NCH_E8) | NCH_SQR(NCH_A8))))
+    {
+        NCH_RMVFLG(board->castles, Board_CASTLE_BQ);
     }
 }
 
 NCH_STATIC_INLINE void
-init_piecetables(Board* board){
-    for (int i = 0; i < NCH_SQUARE_NB; i++){
-        Board_WHITE_PIECE(board, i) = NCH_NO_PIECE;
-    }
-
-    for (int i = 0; i < NCH_SQUARE_NB; i++){
-        Board_BLACK_PIECE(board, i) = NCH_NO_PIECE;
-    }
-
-    int idx;
-    LOOP_U64_T(Board_WHITE_PAWNS(board)){
-        Board_WHITE_PIECE(board, idx) = NCH_Pawn;
-    }
-
-    LOOP_U64_T(Board_WHITE_KNIGHTS(board)){
-        Board_WHITE_PIECE(board, idx) = NCH_Knight;
-    }
-
-    LOOP_U64_T(Board_WHITE_BISHOPS(board)){
-        Board_WHITE_PIECE(board, idx) = NCH_Bishop;
-    }
-    
-    LOOP_U64_T(Board_WHITE_ROOKS(board)){
-        Board_WHITE_PIECE(board, idx) = NCH_Rook;
-    }
-
-    LOOP_U64_T(Board_WHITE_QUEENS(board)){
-        Board_WHITE_PIECE(board, idx) = NCH_Queen;
-    }
-
-    LOOP_U64_T(Board_WHITE_KING(board)){
-        Board_WHITE_PIECE(board, idx) = NCH_King;
-    }
-
-    LOOP_U64_T(Board_BLACK_PAWNS(board)){
-        Board_BLACK_PIECE(board, idx) = NCH_Pawn;
-    }
-
-    LOOP_U64_T(Board_BLACK_KNIGHTS(board)){
-        Board_BLACK_PIECE(board, idx) = NCH_Knight;
-    }
-
-    LOOP_U64_T(Board_BLACK_BISHOPS(board)){
-        Board_BLACK_PIECE(board, idx) = NCH_Bishop;
-    }
-    
-    LOOP_U64_T(Board_BLACK_ROOKS(board)){
-        Board_BLACK_PIECE(board, idx) = NCH_Rook;
-    }
-
-    LOOP_U64_T(Board_BLACK_QUEENS(board)){
-        Board_BLACK_PIECE(board, idx) = NCH_Queen;
-    }
-
-    LOOP_U64_T(Board_BLACK_KING(board)){
-        Board_BLACK_PIECE(board, idx) = NCH_King;
-    }
-}
-
-NCH_STATIC_INLINE void
-_set_board_occupancy(Board* board){
-    board->occupancy[NCH_White] = board->bitboards[NCH_White][NCH_Pawn]
-                                | board->bitboards[NCH_White][NCH_Knight]
-                                | board->bitboards[NCH_White][NCH_Bishop]
-                                | board->bitboards[NCH_White][NCH_Rook]
-                                | board->bitboards[NCH_White][NCH_Queen]
-                                | board->bitboards[NCH_White][NCH_King];
-
-    board->occupancy[NCH_Black] = board->bitboards[NCH_Black][NCH_Pawn]
-                                | board->bitboards[NCH_Black][NCH_Knight]
-                                | board->bitboards[NCH_Black][NCH_Bishop]
-                                | board->bitboards[NCH_Black][NCH_Rook]
-                                | board->bitboards[NCH_Black][NCH_Queen]
-                                | board->bitboards[NCH_Black][NCH_King];
-
-    board->occupancy[NCH_SIDES_NB] = board->occupancy[NCH_Black] 
-                                   | board->occupancy[NCH_White];
-}
-
-NCH_STATIC_INLINE void
-_init_board(Board* board){
+_init_board_flags_and_states(Board* board){
     board->castles = Board_CASTLE_WQ | Board_CASTLE_WK | Board_CASTLE_BQ | Board_CASTLE_BK;
     board->en_passant_idx = 0;
     board->en_passant_map = 0ULL;
@@ -137,9 +82,18 @@ _init_board(Board* board){
     board->flags = Board_TURN;
     board->nmoves = 0;
     board->fifty_counter = 0;
-    _set_board_occupancy(board);
+}
+
+NCH_STATIC_INLINE void
+_init_board(Board* board){
+    _init_board_flags_and_states(board);
+    printf("flags and states initialized\n");
+    set_board_occupancy(board);
+    printf("occupancy set\n");
     init_piecetables(board);
+    printf("piecetables initialized\n");
     Board_Update(board);
+    printf("board updated\n");
 }
 
 Board*
@@ -149,12 +103,24 @@ Board_New(){
         return NULL;
     }
 
+    printf("board created\n");
     board->movelist = MoveList_New();
     if (!board->movelist){
         free(board);
         return NULL;
     }
+    printf("movelist created\n");
 
+    board->dict = BoardDict_New();
+    if (!board->dict){
+        MoveList_Free(board->movelist);
+        free(board);
+        return NULL;
+    }
+    printf("dict created\n");
+
+    Board_Init(board);
+    printf("board initialized\n");
     return board;
 }
 
@@ -162,6 +128,7 @@ void
 Board_Free(Board* board){
     if (board){
         MoveList_Free(board->movelist);
+        BoardDict_Free(board->dict);
         free(board);
     }
 }
@@ -207,13 +174,13 @@ Board_InitEmpty(Board* board){
 void
 Board_SetSquare(Board* board, Side side, Piece ptype, int sqr_idx){
     board->bitboards[side][ptype] |= NCH_SQR(sqr_idx);
-    _set_board_occupancy(board);
+    set_board_occupancy(board);
 }
 
 void
 Board_SetBitboard(Board* board, Side side, Piece ptype, uint64 bb){
     board->bitboards[side][ptype] = bb;
-    _set_board_occupancy(board);
+    set_board_occupancy(board);
 }
 
 int
@@ -228,134 +195,182 @@ Board_IsCheck(Board* board){
 
 void
 Board_Update(Board* board){
-    reset_state_flags(board);
-    reset_castle_rigths(board);
-    if (Board_IsCheck(board)){
-        NCH_SETFLG(board->flags, Board_CHECK);
+    if (!Board_GAME_ON(board)){
+        return;
     }
 
+    printf("updating board\n");
     generate_moves(board);
-}
+    printf("moves generated\n");
 
-NCH_STATIC_INLINE int
-is_valid_column(char arg){
-    return arg >= 'a' && arg <= 'h';
-}
+    if (!board->dict)
+        printf("dict is null\n");
 
-NCH_STATIC_INLINE int
-is_valid_row(char arg){
-    return arg >= '1' && arg <= '8';
-}
-
-int
-parse_step_arg(Board* board, char* arg, Square* from_, Square* to_, Piece* promotion, uint8* castle){
-    int len = strlen(arg);
-    if (len > 5 || len < 4){
-        return -1;
-    }
-
-    if (!is_valid_column(arg[0]) || !is_valid_row(arg[1])
-         || !is_valid_column(arg[2]) || !is_valid_row(arg[3]))
-    {
-        return -1;
-    }
-
-    *from_ = ('h' - arg[0]) + 8 * (arg[1] - '1');
-    *to_ = ('h' - arg[2]) + 8 * (arg[3] - '1');
-
-    if (len == 5){
-        if (arg[4] == 'q'){
-            *promotion = NCH_Queen;
-        }
-        else if (arg[4] == 'r'){
-            *promotion = NCH_Rook;
-        }
-        else if (arg[4] == 'b'){
-            *promotion = NCH_Bishop;
-        }
-        else if (arg[4] == 'n'){
-            *promotion = NCH_Knight;
-        }
-        else{
-            return -1;
-        }
-    }
-    else{
-        *promotion = 0;
-    }
-
-    if (Board_IS_WHITETURN(board)){
-        if (*from_ == NCH_E1 && Board_WHITE_KING(board) == NCH_SQR(NCH_E1)){
-            if (*to_ == NCH_G1){
-                *castle = Board_CASTLE_WK;
-            }
-            else if (*to_ == NCH_C1){
-                *castle = Board_CASTLE_WQ;
-            }
-        }
-        else{
-            *castle = 0;
-        }
-    }
-    else{
-        if (*from_ == NCH_E8 && Board_BLACK_KING(board) == NCH_SQR(NCH_E8)){
-            if (*to_ == NCH_G8){
-                *castle = Board_CASTLE_BK;
-            }
-            else if (*to_ == NCH_C8){
-                *castle = Board_CASTLE_BQ;
-            }
-        }
-        else{
-            *castle = 0;
-        }
-    }
-
-    return 0;
-}
-
-void
-Board_Step(Board* board, char* move){
-    Square from_, to_;
-    Piece promotion;
-    uint8 castle;
-
-    if ( parse_step_arg(board, move, &from_, &to_, &promotion, &castle) != 0){
+    if (BoardDict_GetCount(board->dict, board->bitboards) > 2){
+        end_game_by_draw(board, Board_THREEFOLD);
         return;
     }
+    printf("dict checked\n");
 
-    if (!is_valid_move(board, from_, to_)){
+    if (board->fifty_counter > 49){
+        end_game_by_draw(board, Board_FIFTYMOVES);
         return;
     }
+    printf("fifty counter checked\n");
 
-    uint32 move_unit = make_move(board, from_, to_, promotion, castle);
-    
-    MoveList_Append(board->movelist, move_unit);
-    flip_turn(board);
+    if (!at_least_one_move(board)){
+        if (Board_IS_CHECK(board)){
+            end_game_by_wl(board);
+        }
+        else{
+            end_game_by_draw(board, Board_STALEMATE);
+        }
+    }
+    printf("moves checked\n");
+}
 
+NCH_STATIC_INLINE void
+update_check(Board* board){
+    if (Board_IsCheck(board)){
+        uint64 check_map = get_checkmap(
+            board,
+            Board_IS_WHITETURN(board) ? NCH_White : NCH_Black,
+            NCH_SQRIDX( Board_IS_WHITETURN(board) ? Board_WHITE_KING(board) : Board_BLACK_KING(board)),
+            Board_ALL_OCC(board)
+        );
+
+        if (check_map){
+            if (count_bits(check_map) > 1){
+                NCH_SETFLG(board->flags, Board_CHECK | Board_DOUBLECHECK);
+            }
+            else{
+                NCH_SETFLG(board->flags, Board_CHECK);
+            }
+        }
+    }
+}
+
+NCH_STATIC_INLINE void
+increase_counter(Board* board){
     if (Board_IS_WHITETURN(board)){
         board->nmoves += 1;
     }
 
-    if (NCH_CHKFLG(board->flags, Board_PAWNMOVED | Board_CAPTURE | Board_CHECK | Board_DOUBLECHECK)){
+    if (NCH_CHKUNI(board->flags, Board_PAWNMOVED | Board_CAPTURE | Board_CHECK | Board_DOUBLECHECK)){
         board->fifty_counter = 0;
     }
     else{
         board->fifty_counter += 1;
     }
+}
 
+NCH_STATIC_INLINE void
+_Board_MakeMove(Board* board, Square from_, Square to_, Piece promotion, uint8 castle){
+    if (!Move_IsValid(board, from_, to_)){
+        return;
+    }
+    Square last_en_passant_idx = board->en_passant_idx;
+    uint8 last_castles = board->castles;
+    int last_flags = board->flags;
+    int last_fifty_counter = board->fifty_counter;
+
+    reset_every_turn_states(board);
+
+    Piece captured_piece = make_move(board, from_, to_, promotion, castle);
+    Move move = Move_New(from_, to_, castle, promotion);
+    MoveList_Append(board->movelist, move,
+                     Board_IS_ENPASSANT(board), Board_IS_PROMOTION(board),
+                     last_en_passant_idx, captured_piece,
+                     last_fifty_counter, last_castles, last_flags);
+
+    BoardDict_Add(board->dict, board->bitboards);
+
+    reset_castle_rigths(board);
+    flip_turn(board);
+    update_check(board);
+    increase_counter(board);
     Board_Update(board);
 }
 
 void
-Board_Undo(Board* board){
-    uint32 move = MoveList_LastMove(board->movelist);
-    if (!move){
+Board_StepByMove(Board* board, Move move){
+    if (!Board_GAME_ON(board)){
         return;
     }
 
-    undo_move(board, Board_IS_WHITETURN(board) ? NCH_Black : NCH_White, move);
+    Square from_, to_;
+    Piece promotion;
+    uint8 castle;
+    
+    Move_Parse(move, &from_, &to_, &castle, &promotion);
+    _Board_MakeMove(board, from_, to_, promotion, castle);
+}
+
+void
+Board_Step(Board* board, char* move){
+    if (!Board_GAME_ON(board)){
+        return;
+    }
+
+    Square from_, to_;
+    Piece promotion;
+    uint8 castle;
+
+    if (Move_ParseFromString(board, move, &from_, &to_, &promotion, &castle) != 0){
+        return;
+    }
+
+    _Board_MakeMove(board, from_, to_, promotion, castle);
+}
+
+void
+Board_Undo(Board* board){
+    MoveNode* node = MoveList_Last(board->movelist);
+    if (!node){
+        return;
+    }
+    BoardDict_Remove(board->dict, board->bitboards);
+
+    undo_move(board, Board_GET_OP_SIDE(board),
+             node->move, MoveNode_ENPASSANT(node),
+             MoveNode_PROMOTION(node), MoveNode_CAP_PIECE(node));
+
+    if (MoveNode_ENP_SQR(node)){
+        set_board_enp_settings(board, Board_GET_SIDE(board), MoveNode_ENP_SQR(node));
+    }
+    else{
+        reset_enpassant_variable(board);
+    }
+    board->fifty_counter = MoveNode_FIFTY_COUNT(node);
+    board->castles = MoveNode_CASTLE_FLAGS(node);
+    board->flags = MoveNode_GAME_FLAGS(node);
+
+    if (Board_IS_BLACKTURN(board)){
+        board->nmoves -= 1;
+    }
+
     MoveList_Pop(board->movelist);
-    flip_turn(board);
     Board_Update(board);
+}
+
+int
+Board_NMoves(Board* board){
+    int count = 0;
+    for (int i = 0; i < NCH_SQUARE_NB; i++){
+        if (board->moves[i]){
+            count += count_bits(board->moves[i]);
+        }
+    }
+
+    uint64* pawns_map = Board_IS_WHITETURN(board) ? &Board_WHITE_PAWNS(board)
+                                                  : &Board_BLACK_PAWNS(board);
+
+    int idx;
+    LOOP_U64_T(*pawns_map){
+        if (NCH_CHKUNI(board->moves[idx], NCH_ROW1 | NCH_ROW8)){
+            count += 3 * count_bits(board->moves[idx]);
+        }
+    }
+
+    return count;
 }

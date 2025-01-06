@@ -1,5 +1,7 @@
 #include "fen.h"
+#include "utils.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 NCH_STATIC_INLINE void
 char2piece(char c, Side* side, Piece* piece){
@@ -156,20 +158,31 @@ parse_fen(Board* board, char* fen){
 
     if (*fen != '-'){
         Side trg_side = Board_IS_WHITETURN(board) ? NCH_Black : NCH_White;
+        if (fen[1] == '6'){
+            *(fen+1) = '5';
+        }
+        else if (fen[1] == '3'){
+            *(fen+1) = '4'; 
+        }
+
         Square en_passant_idx = str2square(fen);
         if (!is_valid_square(en_passant_idx)){
             return -1;
         }
-        board->en_passant_idx = en_passant_idx;
-        board->en_passant_map = NCH_SQR(en_passant_idx) | (((NCH_NXTSQR_RIGHT(NCH_SQR(en_passant_idx)) & 0x7f7f7f7f7f7f7f7f)
-                                |(NCH_NXTSQR_LEFT(NCH_SQR(en_passant_idx)) & 0xfefefefefefefefe))
-                                & board->bitboards[trg_side][NCH_Pawn]);
-        board->en_passant_trg = trg_side == NCH_Black ? NCH_NXTSQR_DOWN(NCH_SQR(en_passant_idx))
-                                                      : NCH_NXTSQR_UP(NCH_SQR(en_passant_idx));
+        
+        set_board_enp_settings(board, trg_side, en_passant_idx);
+
         fen += 3;
     }
     else{
+        reset_enpassant_variable(board);
         fen += 2;
+    }
+
+    if (*fen == '\0'){
+        board->fifty_counter = 0;
+        board->nmoves = 0;
+        return 0;
     }
 
     if (!is_number(*fen)){
@@ -188,11 +201,12 @@ parse_fen(Board* board, char* fen){
 
 Board*
 Board_FromFen(char* fen){
+    printf("all good?\n");
     Board* board = Board_New();
+    printf("all good 222?\n");
     if (!board){
         return NULL;
     }
-
     Board_InitEmpty(board);
 
     int out = parse_fen(board, fen);
@@ -200,6 +214,9 @@ Board_FromFen(char* fen){
         Board_Free(board);
         return NULL;
     }
+
+    set_board_occupancy(board);
+    init_piecetables(board);
 
     Board_Update(board);
 

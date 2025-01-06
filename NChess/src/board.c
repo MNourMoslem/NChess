@@ -211,7 +211,6 @@ Board_Update(Board* board){
             end_game_by_draw(board, Board_STALEMATE);
         }
     }
-    printf("moves checked\n");
 }
 
 NCH_STATIC_INLINE void

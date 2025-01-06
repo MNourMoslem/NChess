@@ -14,4 +14,7 @@ Board_PrintMoves(Board* board);
 void
 Board_PrintInfo(Board *board);
 
+int
+Board_MovesAsString(Board* board, char buffer[][7]);
+
 #endif

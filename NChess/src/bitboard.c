@@ -84,11 +84,10 @@ init_between_table(){
             s1 = NCH_SQR(i);
             s2 = NCH_SQR(j);
             if (s1 == s2){
-                bet = s1;
+                bet = 0ull;
             }
             else if (NCH_SAME_COL(i, j)){
-                bet = NCH_GET_COL(i);
-                bet &= ~s1; 
+                bet = NCH_GET_COL(i); 
             }
             else if (NCH_SAME_ROW(i, j))
             {
@@ -113,7 +112,7 @@ init_between_table(){
                 bet &= (-s1) & (s2-1);
             }
 
-            BetweenTable[i][j] = bet | s2;
+            BetweenTable[i][j] = ( bet | s2 ) & ~s1;
         }
     }
 }

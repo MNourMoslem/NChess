@@ -1,6 +1,7 @@
 #include "board.h" 
 #include "stdio.h"
 #include "loops.h"
+#include <string.h>
 
 
 const char NCH_PIECES[13] = {'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k', '.'};
@@ -73,27 +74,32 @@ match_square_with_map(Board* board, uint64 sqr, Side* side, Piece* ptype){
 
 void
 Board_Print(Board* board){
-    int i = 63;
+    int i = 64;
     uint64 current;
-    uint64 occupancy = Board_ALL_OCC(board);
-    
+    uint64 white_occ = Board_WHITE_OCC(board);
+    uint64 black_occ = Board_BLACK_OCC(board);
+
     Side side;
-    Piece ptype;
-    int out;
-    char c;
+    Piece p;
 
     for (int file = 0; file < 8; file++){
         for (int raw = 0; raw < 8; raw++){
-            current = NCH_SQR(i);
-            out = 0;
-            
-            if (NCH_CHKFLG(occupancy, current)){
-                out = match_square_with_map(board, current, &side, &ptype);
-            }
-
-            c = out ? NCH_PIECES[side * NCH_PIECE_NB + ptype] : '.';
-            printf("%c", c);
             i--;
+            current = NCH_SQR(i);
+            
+            if (NCH_CHKFLG(white_occ, current)){
+                p = Board_WHITE_PIECE(board, i);
+                side = NCH_White;
+            }
+            else if (NCH_CHKFLG(black_occ, current)){
+                p = Board_BLACK_PIECE(board, i);
+                side = NCH_Black;
+            }
+            else{
+                printf(".");
+                continue;
+            }
+            printf("%c", NCH_PIECES[side * NCH_PIECE_NB + p]);
         }
         printf("\n");
     }
@@ -112,6 +118,50 @@ Board_PrintMoves(Board* board){
         }
     }
     printf("\n");
+}
+
+int
+Board_MovesAsString(Board* board, char buffer[][7]){
+    char* src;
+    int idx;
+    int move_counter = 0;
+
+    for (int i = 0; i < NCH_SQUARE_NB; i++){
+        if (board->moves[i]){
+           src = squares_char[i];
+           LOOP_U64_T(board->moves[i]){
+                buffer[move_counter][0] = src[0];
+                buffer[move_counter][1] = src[1];
+                buffer[move_counter][2] = squares_char[idx][0];
+                buffer[move_counter][3] = squares_char[idx][1];
+
+                if (NCH_CHKFLG(Board_WHITE_PAWNS(board) | Board_BLACK_PAWNS(board), NCH_SQR(idx))
+                    && NCH_CHKFLG(NCH_ROW1 | NCH_ROW8, NCH_SQR(idx))){
+                    
+                    memcpy(buffer[move_counter + 1], buffer[move_counter], sizeof(char) * 4);
+                    buffer[move_counter+1][4] = 'r';
+                    buffer[move_counter+1][5] = '\0';
+
+                    memcpy(buffer[move_counter + 2], buffer[move_counter], sizeof(char) * 4);
+                    buffer[move_counter+2][4] = 'b';
+                    buffer[move_counter+2][5] = '\0';
+
+                    memcpy(buffer[move_counter + 3], buffer[move_counter], sizeof(char) * 4);
+                    buffer[move_counter+3][4] = 'n';
+                    buffer[move_counter+3][5] = '\0';
+
+                    buffer[move_counter][4] = 'q';
+                    buffer[move_counter][5] = '\0';
+
+                    move_counter+=4;
+                    continue;
+                }
+                buffer[move_counter][4] = '\0';
+                move_counter++;
+           }
+        }
+    }
+    return move_counter;
 }
 
 void

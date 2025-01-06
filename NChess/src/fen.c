@@ -201,9 +201,7 @@ parse_fen(Board* board, char* fen){
 
 Board*
 Board_FromFen(char* fen){
-    printf("all good?\n");
     Board* board = Board_New();
-    printf("all good 222?\n");
     if (!board){
         return NULL;
     }

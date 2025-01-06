@@ -27,7 +27,7 @@ typedef struct
     uint64 occupancy[NCH_SIDES_NB + 1];
     Piece piecetables[NCH_SIDES_NB][NCH_SQUARE_NB];
 
-    uint64 castles;
+    uint8 castles;
     int flags;
 
     Square en_passant_idx;
@@ -103,10 +103,10 @@ typedef struct
 #define Board_GET_SIDE(board) (Board_IS_WHITETURN(board) ? NCH_White : NCH_Black)
 #define Board_GET_OP_SIDE(board) (Board_IS_WHITETURN(board) ? NCH_Black : NCH_White)
 
-#define Board_CASTLE_WK 1
-#define Board_CASTLE_WQ 2
-#define Board_CASTLE_BK 4
-#define Board_CASTLE_BQ 8
+#define Board_CASTLE_WK (uint8)1
+#define Board_CASTLE_WQ (uint8)2
+#define Board_CASTLE_BK (uint8)4
+#define Board_CASTLE_BQ (uint8)8
 
 #define Board_IS_CASTLE_WK(board) NCH_CHKFLG(board->castles, Board_CASTLE_WK)
 #define Board_IS_CASTLE_WQ(board) NCH_CHKFLG(board->castles, Board_CASTLE_WQ)

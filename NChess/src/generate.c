@@ -5,15 +5,14 @@
 #include <stdio.h>
 
 NCH_STATIC_INLINE void
-_generate_pieces_psudo_pawns(Board* board, uint64 allowed_pieces){
-    Side side = Board_GET_SIDE(board);
+_generate_pieces_psudo_pawns(Board* board){
     uint64 op_map, sqr;
-    uint64 pawns_map = allowed_pieces;
+    uint64 pawns_map;
     int idx;
     
     uint64 allowed_map = ~Board_ALL_OCC(board);
-    if (side == NCH_White){
-        pawns_map &= Board_WHITE_PAWNS(board);
+    if (Board_IS_WHITETURN(board)){
+        pawns_map = Board_WHITE_PAWNS(board);
         op_map = Board_BLACK_OCC(board) | board->en_passant_trg;
 
         LOOP_U64_T(pawns_map){
@@ -25,7 +24,7 @@ _generate_pieces_psudo_pawns(Board* board, uint64 allowed_pieces){
 
     }
     else{
-        pawns_map &= Board_BLACK_PAWNS(board);
+        pawns_map = Board_BLACK_PAWNS(board);
         op_map = Board_WHITE_OCC(board) | board->en_passant_trg;
 
         LOOP_U64_T(pawns_map){
@@ -53,6 +52,9 @@ _generate_pieces_psudo_king(Board* board){
     }
 
     int king_idx = NCH_SQRIDX(king_sqr);
+    if (king_idx >= 64)
+        return;
+        
     uint64 moves = bb_king_attacks(king_idx) & allowed_squares & ~bb_king_attacks(NCH_SQRIDX(op_king_sqr));
     int idx;
     LOOP_U64_T(moves){
@@ -65,22 +67,22 @@ _generate_pieces_psudo_king(Board* board){
 }
 
 NCH_STATIC_INLINE void
-_generate_pieces_psudo_others(Board* board, uint64 allowed_pieces){
+_generate_pieces_psudo_others(Board* board){
     uint64 knight_map, bishop_map, rook_map, queen_map;
     uint64 allowed_squares;
     if (Board_IS_WHITETURN(board)){
-        knight_map = Board_WHITE_KNIGHTS(board) & allowed_pieces;
-        bishop_map = Board_WHITE_BISHOPS(board) & allowed_pieces;
-        rook_map = Board_WHITE_ROOKS(board) & allowed_pieces;
-        queen_map = Board_WHITE_QUEENS(board) & allowed_pieces;
+        knight_map = Board_WHITE_KNIGHTS(board);
+        bishop_map = Board_WHITE_BISHOPS(board);
+        rook_map = Board_WHITE_ROOKS(board);
+        queen_map = Board_WHITE_QUEENS(board);
     
         allowed_squares = ~Board_WHITE_OCC(board);
     }
     else{
-        knight_map = Board_BLACK_KNIGHTS(board) & allowed_pieces;
-        bishop_map = Board_BLACK_BISHOPS(board) & allowed_pieces;
-        rook_map = Board_BLACK_ROOKS(board) & allowed_pieces;
-        queen_map = Board_BLACK_QUEENS(board) & allowed_pieces;
+        knight_map = Board_BLACK_KNIGHTS(board);
+        bishop_map = Board_BLACK_BISHOPS(board);
+        rook_map = Board_BLACK_ROOKS(board);
+        queen_map = Board_BLACK_QUEENS(board);
     
         allowed_squares = ~Board_BLACK_OCC(board);
     }
@@ -105,7 +107,7 @@ _generate_pieces_psudo_others(Board* board, uint64 allowed_pieces){
     }
 }
 
-void 
+NCH_STATIC_INLINE void 
 generate_castle_moves(Board* board){
     if (Board_IS_CHECK(board)){
         return;
@@ -143,20 +145,53 @@ generate_castle_moves(Board* board){
     }
 }
 
+NCH_STATIC_INLINE void
+execlude_pinned_pieces_unlegal_moves(Board *board){
+    uint64 king_sqr = Board_IS_WHITETURN(board) ? Board_WHITE_KING(board) : Board_BLACK_KING(board);
+    int king_idx = NCH_SQRIDX(king_sqr);
+
+    uint64 all_occ = Board_ALL_OCC(board);
+    uint64 queen_attack = bb_queen_attacks(king_idx, all_occ);
+
+    NCH_RMVFLG(all_occ, queen_attack);
+    if (board->en_passant_idx && NCH_SAME_ROW(king_idx, board->en_passant_idx) 
+        && !NCH_CHKFLG(all_occ, board->en_passant_map)){
+
+        NCH_RMVFLG(all_occ, board->en_passant_map);
+    }
+    
+    queen_attack = bb_queen_attacks(king_idx, all_occ);
+
+    uint64 attackers_map = get_checkmap(board, Board_GET_SIDE(board), king_idx, all_occ);
+    if (!attackers_map){
+        return;
+    }
+
+    uint64 self_map = Board_IS_WHITETURN(board) ? Board_WHITE_OCC(board) : Board_BLACK_OCC(board);
+    uint64 between;
+    int idx, piece_idx;
+    LOOP_U64_T(attackers_map){
+        between = bb_between(king_idx, idx);
+        piece_idx = NCH_SQRIDX(self_map & between);
+        if (piece_idx < 64)
+            board->moves[piece_idx] &= between;
+    }
+}
+
 void
 generate_moves(Board* board){
     memset(board->moves, 0ULL, sizeof(board->moves));
 
-    uint64 allowed_square = get_allowed_squares(board);
-    if (allowed_square){
-        uint64 allowed_pieces = get_allowed_pieces(board);
-        _generate_pieces_psudo_pawns(board, allowed_pieces);
-        _generate_pieces_psudo_others(board, allowed_pieces);
+    uint64 allowed_squares = get_allowed_squares(board);
+    if (allowed_squares){
+        _generate_pieces_psudo_pawns(board);
+        _generate_pieces_psudo_others(board);
+        execlude_pinned_pieces_unlegal_moves(board);
 
-        if (allowed_pieces != NCH_UINT64_MAX){
+        if (allowed_squares != NCH_UINT64_MAX){
             for (int i = 0; i < NCH_SQUARE_NB; i++){
                 if (board->moves[i]){
-                    board->moves[i] &= allowed_square;
+                    board->moves[i] &= allowed_squares;
                 }
             }
         }

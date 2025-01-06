@@ -74,7 +74,11 @@ set_node(uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB], BoardNode* node){
 
 NCH_STATIC BoardNode*
 get_node(uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB], BoardNode* node){
-    if (!node->empty && is_same_board(bitboards, node)){
+    if (node->empty){
+        return NULL;
+    }
+    
+    if (is_same_board(bitboards, node)){
         return node;
     }
     else{

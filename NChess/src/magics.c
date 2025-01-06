@@ -59,15 +59,13 @@ find_magic(int idx, int relevant_bits, int bishop){
 
 void find_all_magic_numbers()
 {
-  printf("const U64 rook_magics[64] = {\n");
+  printf("const uint64 rook_magics[64] = {\n");
   
-  // loop over 64 board squares
   for(int i = 0; i < 64; i++)
       printf("    0x%llxULL,\n", find_magic(i, bb_rook_relevant(i), 0));
   
-  printf("};\n\nconst U64 bishop_magics[64] = {\n");
+  printf("};\n\nconst uint64 bishop_magics[64] = {\n");
   
-  // loop over 64 board squares
   for(int i = 0; i < 64; i++)
       printf("    0x%llxULL,\n", find_magic(i, bb_bishop_relevant(i), 1));
   

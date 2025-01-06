@@ -8,5 +8,6 @@
 #include "types.h"
 #include "config.h"
 #include "fen.h"
+#include "preft.h"
 
 #endif

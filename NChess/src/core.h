@@ -154,14 +154,14 @@ static const int NCH_DIAGONAL_ANTI_IDX[64] = {
 
 typedef uint32 Move;
 
-#define Move_ASSIGN_FROM(from_) (from_)
-#define Move_ASSIGN_TO(to_) (to_ << 6)
-#define Move_ASSIGN_CASTLE(castle) (castle << 12)
-#define Move_ASSIGN_PRO_PIECE(pro_piece) (pro_piece << 16)
+#define Move_ASSIGN_FROM(from_) ((from_))
+#define Move_ASSIGN_TO(to_) ((to_) << 6)
+#define Move_ASSIGN_CASTLE(castle) ((castle) << 12)
+#define Move_ASSIGN_PRO_PIECE(pro_piece) ((pro_piece) << 16)
 
-#define Move_FROM(move) (move & 0x3F)
-#define Move_TO(move) ((move >> 6) & 0x3F)
-#define Move_CASTLE(move) ((move >> 12) & 0xF)
-#define Move_PRO_PIECE(move) ((move >> 16) & 0xF)
+#define Move_FROM(move) ((move) & 0x3F)
+#define Move_TO(move) (((move) >> 6) & 0x3F)
+#define Move_CASTLE(move) (((move) >> 12) & 0xF)
+#define Move_PRO_PIECE(move) (((move) >> 16) & 0xF)
 
 #endif

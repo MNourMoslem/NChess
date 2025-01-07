@@ -75,7 +75,18 @@ reset_castle_rigths(Board* board){
 
 NCH_STATIC_INLINE void
 _init_board_flags_and_states(Board* board){
-    board->castles = Board_CASTLE_WQ | Board_CASTLE_WK | Board_CASTLE_BQ | Board_CASTLE_BK;
+    // board->castles = 0;
+    // board->castles |= NCH_CHKFLG(Board_WHITE_KING(board), NCH_SQR(NCH_E1))
+    //                 && NCH_CHKFLG(Board_WHITE_ROOKS(board), NCH_SQR(NCH_H1)) ? Board_CASTLE_WK : 0;
+    // board->castles |= NCH_CHKFLG(Board_WHITE_KING(board), NCH_SQR(NCH_E1))
+    //                 && NCH_CHKFLG(Board_WHITE_ROOKS(board), NCH_SQR(NCH_A1)) ? Board_CASTLE_WQ : 0;
+    // board->castles |= NCH_CHKFLG(Board_BLACK_KING(board), NCH_SQR(NCH_E8))
+    //                 && NCH_CHKFLG(Board_BLACK_ROOKS(board), NCH_SQR(NCH_H8)) ? Board_CASTLE_BK : 0;
+    // board->castles |= NCH_CHKFLG(Board_BLACK_KING(board), NCH_SQR(NCH_E8))
+    //                 && NCH_CHKFLG(Board_BLACK_ROOKS(board), NCH_SQR(NCH_A8)) ? Board_CASTLE_BQ : 0;
+
+    board->castles = Board_CASTLE_WK | Board_CASTLE_WQ | Board_CASTLE_BK | Board_CASTLE_WQ;
+
     board->en_passant_idx = 0;
     board->en_passant_map = 0ULL;
     board->en_passant_trg = 0ULL;
@@ -86,14 +97,14 @@ _init_board_flags_and_states(Board* board){
 
 NCH_STATIC_INLINE void
 _init_board(Board* board){
-    _init_board_flags_and_states(board);
     set_board_occupancy(board);
     init_piecetables(board);
+    _init_board_flags_and_states(board);
     Board_Update(board);
 }
 
-Board*
-Board_New(){
+NCH_STATIC_INLINE Board*
+new_board(){
     Board* board = malloc(sizeof(Board));
     if (!board){
         return NULL;
@@ -112,7 +123,27 @@ Board_New(){
         return NULL;
     }
 
+    return board;
+}
+
+Board*
+Board_New(){
+    Board* board = new_board();
+    if (!board){
+        return NULL;
+    }
     Board_Init(board);
+    return board;
+}
+
+
+Board*
+Board_NewEmpty(){
+    Board* board = new_board();
+    if (!board){
+        return NULL;
+    }
+    Board_InitEmpty(board);
     return board;
 }
 
@@ -161,6 +192,7 @@ Board_InitEmpty(Board* board){
     board->bitboards[NCH_Black][NCH_King] = 0ULL;
 
     _init_board(board);
+    board->castles = 0;
 }
 
 void
@@ -185,11 +217,33 @@ Board_IsCheck(Board* board){
         ) != 0ULL;
 }
 
+NCH_STATIC_INLINE void
+update_check(Board* board){
+    if (Board_IsCheck(board)){
+        uint64 check_map = get_checkmap(
+            board,
+            Board_IS_WHITETURN(board) ? NCH_White : NCH_Black,
+            NCH_SQRIDX( Board_IS_WHITETURN(board) ? Board_WHITE_KING(board) : Board_BLACK_KING(board)),
+            Board_ALL_OCC(board)
+        );
+
+        if (check_map){
+            if (count_bits(check_map) > 1){
+                NCH_SETFLG(board->flags, Board_CHECK | Board_DOUBLECHECK);
+            }
+            else{
+                NCH_SETFLG(board->flags, Board_CHECK);
+            }
+        }
+    }
+}
+
 void
 Board_Update(Board* board){
     if (!Board_GAME_ON(board)){
         return;
     }
+    update_check(board);
 
     generate_moves(board);
 
@@ -209,27 +263,6 @@ Board_Update(Board* board){
         }
         else{
             end_game_by_draw(board, Board_STALEMATE);
-        }
-    }
-}
-
-NCH_STATIC_INLINE void
-update_check(Board* board){
-    if (Board_IsCheck(board)){
-        uint64 check_map = get_checkmap(
-            board,
-            Board_IS_WHITETURN(board) ? NCH_White : NCH_Black,
-            NCH_SQRIDX( Board_IS_WHITETURN(board) ? Board_WHITE_KING(board) : Board_BLACK_KING(board)),
-            Board_ALL_OCC(board)
-        );
-
-        if (check_map){
-            if (count_bits(check_map) > 1){
-                NCH_SETFLG(board->flags, Board_CHECK | Board_DOUBLECHECK);
-            }
-            else{
-                NCH_SETFLG(board->flags, Board_CHECK);
-            }
         }
     }
 }
@@ -271,7 +304,6 @@ _Board_MakeMove(Board* board, Square from_, Square to_, Piece promotion, uint8 c
 
     reset_castle_rigths(board);
     flip_turn(board);
-    update_check(board);
     increase_counter(board);
     Board_Update(board);
 }

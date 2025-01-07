@@ -147,35 +147,46 @@ generate_castle_moves(Board* board){
 
 NCH_STATIC_INLINE void
 execlude_pinned_pieces_unlegal_moves(Board *board){
-    uint64 king_sqr = Board_IS_WHITETURN(board) ? Board_WHITE_KING(board) : Board_BLACK_KING(board);
+    Side side = Board_GET_SIDE(board);
+    uint64 king_sqr = side == NCH_White ? Board_WHITE_KING(board) : Board_BLACK_KING(board);
     int king_idx = NCH_SQRIDX(king_sqr);
 
-    uint64 all_occ = Board_ALL_OCC(board);
+    uint64 all_occ = Board_ALL_OCC(board) &~ king_sqr;
+    uint64 self_occ = side == NCH_White ? Board_WHITE_OCC(board) : Board_BLACK_OCC(board);
     uint64 queen_attack = bb_queen_attacks(king_idx, all_occ);
 
-    NCH_RMVFLG(all_occ, queen_attack);
-    if (board->en_passant_idx && NCH_SAME_ROW(king_idx, board->en_passant_idx) 
-        && !NCH_CHKFLG(all_occ, board->en_passant_map)){
+    int special_case = 0;
+    uint64 special_map;
+    if (board->en_passant_idx && NCH_SAME_ROW(king_idx, board->en_passant_idx)
+        && NCH_CHKUNI(queen_attack, board->en_passant_map) && count_bits(board->en_passant_map) == 2){
 
-        NCH_RMVFLG(all_occ, board->en_passant_map);
+        queen_attack = (queen_attack & self_occ) | board->en_passant_map;
+        special_case = NCH_SQRIDX(board->en_passant_map &~ NCH_SQR(board->en_passant_idx));
+        special_map = board->moves[special_case];
     }
-    
-    queen_attack = bb_queen_attacks(king_idx, all_occ);
+    else{
+        queen_attack &= self_occ;
+    }
+    NCH_RMVFLG(all_occ, queen_attack);
 
-    uint64 attackers_map = get_checkmap(board, Board_GET_SIDE(board), king_idx, all_occ);
-    if (!attackers_map){
+    uint64 attackmap = get_checkmap(board, side, king_idx, all_occ);
+    if (!attackmap){
         return;
     }
 
-    uint64 self_map = Board_IS_WHITETURN(board) ? Board_WHITE_OCC(board) : Board_BLACK_OCC(board);
-    uint64 between;
-    int idx, piece_idx;
-    LOOP_U64_T(attackers_map){
+    int idx, trg_idx;
+    uint64 between, btable = 0ull;
+    LOOP_U64_T(attackmap){
         between = bb_between(king_idx, idx);
-        piece_idx = NCH_SQRIDX(self_map & between);
-        if (piece_idx < 64)
-            board->moves[piece_idx] &= between;
+        btable |= between;
+        trg_idx = NCH_SQRIDX(between & self_occ);
+        if (trg_idx < 64)
+            board->moves[trg_idx] &= between;
     }
+
+    if (special_case && NCH_CHKFLG(btable, NCH_SQR(special_case)))
+        board->moves[special_case] = special_map &~ board->en_passant_trg;
+    
 }
 
 void
@@ -186,7 +197,6 @@ generate_moves(Board* board){
     if (allowed_squares){
         _generate_pieces_psudo_pawns(board);
         _generate_pieces_psudo_others(board);
-        execlude_pinned_pieces_unlegal_moves(board);
 
         if (allowed_squares != NCH_UINT64_MAX){
             for (int i = 0; i < NCH_SQUARE_NB; i++){
@@ -194,7 +204,15 @@ generate_moves(Board* board){
                     board->moves[i] &= allowed_squares;
                 }
             }
+            if (board->en_passant_idx && NCH_CHKFLG(allowed_squares, NCH_SQR(board->en_passant_idx))){
+                int idx;
+                LOOP_U64_T(board->en_passant_map & (~NCH_SQR(board->en_passant_idx))){
+                    board->moves[idx] |= board->en_passant_trg;
+                }
+            }
         }
+
+        execlude_pinned_pieces_unlegal_moves(board);
     }
     _generate_pieces_psudo_king(board);
     generate_castle_moves(board);

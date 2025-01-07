@@ -33,4 +33,10 @@ Move_FromString(Board* board, char* move);
 void
 Move_Print(Move move);
 
+void
+Move_AsString(Move move, Piece promotion, char* dst);
+
+void
+Move_AsStringBoard(Board* board, Move move, char* dst);
+
 #endif //NCHESS_SRC_MOVE_H

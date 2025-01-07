@@ -198,7 +198,7 @@ play_pawn_move(Board* board, Side side, Square from_, Square to_, Piece promotio
     return captured_piece;
 }
 
-NCH_STATIC Piece
+NCH_STATIC_INLINE Piece
 play_move(Board* board, Side side, Square from_, Square to_, Piece promotion){
     if (is_pawn_move(board, side, from_)){
         return play_pawn_move(board, side, from_, to_, promotion);
@@ -240,14 +240,11 @@ make_move(Board* board, Square from_, Square to_, Piece promotion, uint8 castle)
 void
 undo_move(Board* board, Side side, Move move, int is_enpassant,
          int is_promotion, Piece last_captured_piece){
-    Square from_;
-    Square to_;
-    uint8 castle;
-    Piece promotion;
-    Move_Parse(move, &from_, &to_, &castle, &promotion);
+    Square from_ = Move_FROM(move);
+    Square to_ = Move_TO(move);
     
-    if (castle){
-        if (NCH_CHKUNI(castle, Board_CASTLE_WK | Board_CASTLE_BK)){
+    if (Move_CASTLE(move)){
+        if (NCH_CHKUNI(Move_CASTLE(move), Board_CASTLE_WK | Board_CASTLE_BK)){
             move_piece(board, side, to_, from_);
             move_piece(board, side, to_ + 1, from_ - 3);
         }
@@ -273,6 +270,60 @@ undo_move(Board* board, Side side, Move move, int is_enpassant,
         }
     }
 
-
     set_board_occupancy(board);
+}
+
+static char* squares_char[] = {
+    "h1", "g1", "f1", "e1", "d1", "c1", "b1", "a1", 
+    "h2", "g2", "f2", "e2", "d2", "c2", "b2", "a2", 
+    "h3", "g3", "f3", "e3", "d3", "c3", "b3", "a3", 
+    "h4", "g4", "f4", "e4", "d4", "c4", "b4", "a4", 
+    "h5", "g5", "f5", "e5", "d5", "c5", "b5", "a5", 
+    "h6", "g6", "f6", "e6", "d6", "c6", "b6", "a6", 
+    "h7", "g7", "f7", "e7", "d7", "c7", "b7", "a7", 
+    "h8", "g8", "f8", "e8", "d8", "c8", "b8", "a8"
+};
+
+void
+Move_AsString(Move move, Piece promotion, char* dst){
+    char* temp;
+    Square from_ = Move_FROM(move);
+    Square to_ = Move_TO(move);
+    
+    temp = squares_char[from_];
+    dst[0] = temp[0];
+    dst[1] = temp[1];
+    temp = squares_char[to_];
+    dst[2] = temp[0];
+    dst[3] = temp[1];
+
+    if (promotion != NCH_NO_PIECE){
+        if (promotion == NCH_Queen)
+            dst[4] = 'q';
+        else if (promotion == NCH_Rook)
+            dst[4] = 'r';
+        else if (promotion == NCH_Knight)
+            dst[4] = 'n';
+        else if (promotion == NCH_Bishop)
+            dst[4] = 'b';
+        else
+            dst[4] = 'q';
+
+        dst[5] = '\0';
+    }
+    else{
+        dst[4] = '\0';
+    }
+}
+
+void
+Move_AsStringBoard(Board* board, Move move, char* dst){
+    if (NCH_CHKFLG(NCH_ROW1 | NCH_ROW8, NCH_SQR(Move_TO(move)))
+        && NCH_CHKFLG(Board_WHITE_PAWNS(board) | Board_BLACK_PAWNS(board), NCH_SQR(Move_FROM(move)))){
+        
+        Move_AsString(move, Move_PRO_PIECE(move), dst);
+    }
+    else{
+        Move_AsString(move, NCH_NO_PIECE, dst);
+    }
 }

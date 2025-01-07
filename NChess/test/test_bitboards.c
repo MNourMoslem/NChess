@@ -1,43 +1,17 @@
 #include "./base.h"
 #include "nchess.h"
-#include "magic_utils.h"
-#include "stdio.h"
-#include "magics.h"
-#include "loops.h"
 
 NCH_STATIC_INLINE int
 test_bitboard_1(){
-    Board board;
-    Board_Init(&board);
-    // Board_PrintMoves(&board);
-    Board_Step(&board, "e2e4");
-    Board_Step(&board, "e7e5");
-    Board_Step(&board, "f1b5");
-    Board_Step(&board, "f7f5");
-    Board_Step(&board, "d1e2");
-    Board_Step(&board, "f8c5");
-    Board_Step(&board, "c2c3");
-    Board_Step(&board, "g8h6");
-    Board_Step(&board, "e4f5");
-    Board_Step(&board, "g7g5");
-    Board_Step(&board, "f5g6");
-    Board_Step(&board, "e8g8");
-    Board_Step(&board, "g6g7");
-    Board_Step(&board, "a7a5");
-    Board_Step(&board, "g7f8q");
-    Board_PrintInfo(&board);
-
-    for (int i = 0; i < NCH_SQUARE_NB; i++){
-        printf("%d ", Board_WHITE_PIECE(&board, i));
+    char fen[] = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ";
+    Board* board = Board_FromFen(fen);
+    if (!board){
+        return 0;
     }
-    printf("\n");
 
-    for (int i = 0; i < NCH_SQUARE_NB; i++){
-        printf("%d ", Board_BLACK_PIECE(&board, i));
-    }
-    printf("\n");
+    Board_Perft(board, 4);
 
-    // printf("0x%llx\n",  board.moves[NCH_E2]);
+    Board_Free(board);
     return 1;
 }
 

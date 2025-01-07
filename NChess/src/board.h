@@ -116,6 +116,9 @@ typedef struct
 Board*
 Board_New();
 
+Board*
+Board_NewEmpty();
+
 void
 Board_Free(Board* board);
 
@@ -148,5 +151,8 @@ Board_Undo(Board* board);
 
 int
 Board_NMoves(Board* board);
+
+int
+Board_GetLegalMoves(Board* board, Move* moves);
 
 #endif

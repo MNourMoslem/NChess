@@ -148,10 +148,6 @@ parse_fen(Board* board, char* fen){
         else if (*fen == 'q'){
             NCH_SETFLG(board->castles, Board_CASTLE_BQ);
         }
-        else{
-            return -1;
-        }
-
         fen++;
     }
     fen++;
@@ -201,11 +197,10 @@ parse_fen(Board* board, char* fen){
 
 Board*
 Board_FromFen(char* fen){
-    Board* board = Board_New();
+    Board* board = Board_NewEmpty();
     if (!board){
         return NULL;
     }
-    Board_InitEmpty(board);
 
     int out = parse_fen(board, fen);
     if (out != 0){

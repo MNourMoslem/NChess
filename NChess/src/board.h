@@ -128,26 +128,11 @@ Board_Init(Board* board);
 void
 Board_InitEmpty(Board* board);
 
-void
-Board_SetSquare(Board* board, Side side, Piece ptype, int sqr_idx);
-
-void
-Board_SetBitboard(Board* board, Side side, Piece ptype, uint64 bb);
-
 int
 Board_IsCheck(Board* board);
 
 void
 Board_Update(Board* board);
-
-void
-Board_StepByMove(Board* board, Move move);
-
-void
-Board_Step(Board* board, char* move);
-
-void
-Board_Undo(Board* board);
 
 int
 Board_NMoves(Board* board);

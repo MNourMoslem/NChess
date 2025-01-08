@@ -182,19 +182,13 @@ _Board_MakeMove(Board* board, Square from_, Square to_, Piece promotion, uint8 c
     if (!Move_IsValid(board, from_, to_)){
         return;
     }
-    Square last_en_passant_idx = board->en_passant_idx;
-    uint8 last_castles = board->castles;
-    int last_flags = board->flags;
-    int last_fifty_counter = board->fifty_counter;
-
+    MoveList_Append(board->movelist, Move_New(from_, to_, castle, promotion),
+                     board->en_passant_idx, board->captured_piece,
+                     board->fifty_counter, board->castles, board->flags);
+    
     reset_every_turn_states(board);
-
     Piece captured_piece = make_move(board, from_, to_, promotion, castle);
-    Move move = Move_New(from_, to_, castle, promotion);
-    MoveList_Append(board->movelist, move,
-                     Board_IS_ENPASSANT(board), Board_IS_PROMOTION(board),
-                     last_en_passant_idx, captured_piece,
-                     last_fifty_counter, last_castles, last_flags);
+    board->captured_piece = captured_piece;
 
     BoardDict_Add(board->dict, board->bitboards);
 
@@ -244,8 +238,8 @@ Board_Undo(Board* board){
     BoardDict_Remove(board->dict, board->bitboards);
 
     undo_move(board, Board_GET_OP_SIDE(board),
-             node->move, MoveNode_ENPASSANT(node),
-             MoveNode_PROMOTION(node), MoveNode_CAP_PIECE(node));
+             node->move, Board_IS_ENPASSANT(board),
+             Board_IS_PROMOTION(board), board->captured_piece);
 
     if (MoveNode_ENP_SQR(node)){
         set_board_enp_settings(board, Board_GET_SIDE(board), MoveNode_ENP_SQR(node));
@@ -256,6 +250,7 @@ Board_Undo(Board* board){
     board->fifty_counter = MoveNode_FIFTY_COUNT(node);
     board->castles = MoveNode_CASTLE_FLAGS(node);
     board->flags = MoveNode_GAME_FLAGS(node);
+    board->captured_piece = MoveNode_CAP_PIECE(node);
 
     if (Board_IS_BLACKTURN(board)){
         board->nmoves -= 1;

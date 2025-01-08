@@ -70,7 +70,10 @@ capture_piece_if_possible(Board* board, Side trg_side, Square sqr){
 }
 
 NCH_STATIC_INLINE Piece 
-play_pawn_move(Board* board, Side side, Square from_, Square to_, Piece promotion){
+play_pawn_move(Board* board, Side side, Move move){
+    Square from_ = Move_FROM(move);
+    Square to_ = Move_TO(move);
+
     move_piece(board, side, from_, to_);
     if (NCH_SQR(to_) == board->en_passant_trg){
        to_ = side == NCH_White ? to_ - 8 : to_ + 8; 
@@ -88,19 +91,19 @@ play_pawn_move(Board* board, Side side, Square from_, Square to_, Piece promotio
     }
 
     if (to_ <= NCH_A1 || to_ >= NCH_H8){
-        make_promotion(board, side, to_, promotion);
+        make_promotion(board, side, to_, Move_PRO_PIECE(move));
     }
     return captured_piece;
 }
 
 NCH_STATIC_INLINE Piece
-play_move(Board* board, Side side, Square from_, Square to_, Piece promotion){
-    if (is_pawn_move(board, side, from_)){
-        return play_pawn_move(board, side, from_, to_, promotion);
+play_move(Board* board, Side side, Move move){
+    if (is_pawn_move(board, side, Move_FROM(move))){
+        return play_pawn_move(board, side, move);
     }
 
-    move_piece(board, side, from_, to_);
-    Piece captured_piece = capture_piece_if_possible(board, TARGET_SIDE(side), to_);
+    move_piece(board, side, Move_FROM(move), Move_TO(move));
+    Piece captured_piece = capture_piece_if_possible(board, TARGET_SIDE(side), Move_TO(move));
     reset_enpassant_variable(board);
     return captured_piece;
 }
@@ -131,15 +134,15 @@ play_castle_move(Board* board, Side side, int king_side){
 }
 
 Piece
-make_move(Board* board, Square from_, Square to_, Piece promotion, uint8 castle){
+make_move(Board* board, Move move){
     Piece captured_piece;
-    if (castle){
+    if (Move_CASTLE(move)){
         play_castle_move(board, Board_GET_SIDE(board),
-                         NCH_CHKUNI(castle, Board_CASTLE_WK | Board_CASTLE_BK));
+                         NCH_CHKUNI(Move_CASTLE(move), Board_CASTLE_WK | Board_CASTLE_BK));
         captured_piece = NCH_NO_PIECE;
     }
     else{
-        captured_piece = play_move(board, Board_GET_SIDE(board), from_, to_, promotion);
+        captured_piece = play_move(board, Board_GET_SIDE(board), move);
     }
     set_board_occupancy(board);
     return captured_piece;
@@ -196,16 +199,16 @@ increase_counter(Board* board){
 }
 
 NCH_STATIC_INLINE void
-_Board_MakeMove(Board* board, Square from_, Square to_, Piece promotion, uint8 castle){
+_Board_MakeMove(Board* board, Move move){
     // if (!is_valid_move(board, from_, to_, castle))
     //     return;
 
-    MoveList_Append(board->movelist, Move_New(from_, to_, castle, promotion),
+    MoveList_Append(board->movelist, move,
                      board->en_passant_idx, board->captured_piece,
                      board->fifty_counter, board->castles, board->flags);
     
     reset_every_turn_states(board);
-    Piece captured_piece = make_move(board, from_, to_, promotion, castle);
+    Piece captured_piece = make_move(board, move);
     board->captured_piece = captured_piece;
 
     BoardDict_Add(board->dict, board->bitboards);
@@ -218,25 +221,12 @@ _Board_MakeMove(Board* board, Square from_, Square to_, Piece promotion, uint8 c
 
 void
 Board_StepByMove(Board* board, Move move){
-    Square from_, to_;
-    Piece promotion;
-    uint8 castle;
-    
-    Move_Parse(move, &from_, &to_, &castle, &promotion);
-    _Board_MakeMove(board, from_, to_, promotion, castle);
+    _Board_MakeMove(board, move);
 }
 
 void
 Board_Step(Board* board, char* move){
-    Square from_, to_;
-    Piece promotion;
-    uint8 castle;
-
-    if (Move_ParseFromString(move, &from_, &to_, &promotion, &castle) != 0){
-        return;
-    }
-
-    _Board_MakeMove(board, from_, to_, promotion, castle);
+    _Board_MakeMove(board, Move_FromString(move));
 }
 
 void

@@ -72,7 +72,7 @@ Board_Perft(Board* board, int depth){
         Board_Undo(board);
         format_number_with_commas(count, formatted_total);
 
-        Move_AsStringBoard(board, moves[i], move_str);
+        Move_AsString(moves[i], move_str);
         printf("%s: %s\n", move_str, formatted_total);
         total += count;
     }

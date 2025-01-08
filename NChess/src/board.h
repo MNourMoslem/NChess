@@ -41,6 +41,8 @@ typedef struct
 
     int nmoves;
     int fifty_counter;
+
+    Piece captured_piece;
 }Board;
 
 #define Board_WHITE_OCC(board) (board)->occupancy[NCH_White]

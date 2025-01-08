@@ -22,6 +22,7 @@ _init_board_flags_and_states(Board* board){
     board->flags = Board_TURN;
     board->nmoves = 0;
     board->fifty_counter = 0;
+    board->captured_piece = NCH_NO_PIECE;
 }
 
 NCH_STATIC_INLINE void

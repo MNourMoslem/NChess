@@ -1,4 +1,4 @@
-#include "preft.h"
+#include "perft.h"
 #include "io.h"
 #include "move.h"
 #include <stdio.h>

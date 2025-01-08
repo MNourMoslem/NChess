@@ -7,6 +7,11 @@
 
 #include <stdlib.h>
 
+NCH_STATIC_INLINE int
+is_valid_move(Board* board, Square from_, Square to_, uint8 castle){
+    return (board->moves[from_] & NCH_SQR(to_)) || castle;
+}
+
 NCH_STATIC_INLINE void*
 get_target_map(Board* board, Side side, Square sqr){
     return board->piecetables[side][sqr] != NCH_NO_PIECE ? 
@@ -101,13 +106,26 @@ play_move(Board* board, Side side, Square from_, Square to_, Piece promotion){
 }
 
 void
-play_castle_move(Board* board, Side side, Square from_, Square to_, int king_side){
-    move_piece(board, side, from_, to_);
-    if (king_side){
-        move_piece(board, side, from_ - 3, to_ + 1);
+play_castle_move(Board* board, Side side, int king_side){
+    if (side == NCH_White){
+        if (king_side){
+            move_piece(board, NCH_White, NCH_E1, NCH_G1);
+            move_piece(board, NCH_White, NCH_H1, NCH_F1);
+        }
+        else{
+            move_piece(board, NCH_White, NCH_E1, NCH_C1);
+            move_piece(board, NCH_White, NCH_A1, NCH_D1);
+        }
     }
     else{
-        move_piece(board, side, from_ + 4, to_ - 1);
+        if (king_side){
+            move_piece(board, NCH_Black, NCH_E8, NCH_G8);
+            move_piece(board, NCH_Black, NCH_H8, NCH_F8);
+        }
+        else{
+            move_piece(board, NCH_Black, NCH_E8, NCH_C8);
+            move_piece(board, NCH_Black, NCH_A8, NCH_D8);
+        }
     }
     reset_enpassant_variable(board);
 }
@@ -116,7 +134,7 @@ Piece
 make_move(Board* board, Square from_, Square to_, Piece promotion, uint8 castle){
     Piece captured_piece;
     if (castle){
-        play_castle_move(board, Board_GET_SIDE(board), from_, to_,
+        play_castle_move(board, Board_GET_SIDE(board),
                          NCH_CHKUNI(castle, Board_CASTLE_WK | Board_CASTLE_BK));
         captured_piece = NCH_NO_PIECE;
     }
@@ -179,9 +197,9 @@ increase_counter(Board* board){
 
 NCH_STATIC_INLINE void
 _Board_MakeMove(Board* board, Square from_, Square to_, Piece promotion, uint8 castle){
-    if (!Move_IsValid(board, from_, to_)){
-        return;
-    }
+    // if (!is_valid_move(board, from_, to_, castle))
+    //     return;
+
     MoveList_Append(board->movelist, Move_New(from_, to_, castle, promotion),
                      board->en_passant_idx, board->captured_piece,
                      board->fifty_counter, board->castles, board->flags);
@@ -200,10 +218,6 @@ _Board_MakeMove(Board* board, Square from_, Square to_, Piece promotion, uint8 c
 
 void
 Board_StepByMove(Board* board, Move move){
-    if (!Board_GAME_ON(board)){
-        return;
-    }
-
     Square from_, to_;
     Piece promotion;
     uint8 castle;
@@ -214,15 +228,11 @@ Board_StepByMove(Board* board, Move move){
 
 void
 Board_Step(Board* board, char* move){
-    if (!Board_GAME_ON(board)){
-        return;
-    }
-
     Square from_, to_;
     Piece promotion;
     uint8 castle;
 
-    if (Move_ParseFromString(board, move, &from_, &to_, &promotion, &castle) != 0){
+    if (Move_ParseFromString(move, &from_, &to_, &promotion, &castle) != 0){
         return;
     }
 

@@ -1,4 +1,5 @@
 #include "perft.h"
+#include "makemove.h"
 #include "io.h"
 #include "move.h"
 #include <stdio.h>

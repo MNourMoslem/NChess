@@ -9,5 +9,6 @@
 #include "config.h"
 #include "fen.h"
 #include "perft.h"
+#include "makemove.h"
 
 #endif

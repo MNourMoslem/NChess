@@ -23,6 +23,7 @@ _init_board_flags_and_states(Board* board){
     board->nmoves = 0;
     board->fifty_counter = 0;
     board->captured_piece = NCH_NO_PIECE;
+    board->castle_moves = 0;
 }
 
 NCH_STATIC_INLINE void
@@ -158,11 +159,7 @@ update_check(Board* board){
 
 void
 Board_Update(Board* board){
-    if (!Board_GAME_ON(board)){
-        return;
-    }
     update_check(board);
-
     generate_moves(board);
 
     if (BoardDict_GetCount(board->dict, board->bitboards) > 2){
@@ -204,29 +201,26 @@ Board_NMoves(Board* board){
         }
     }
 
+    if (board->castle_moves){
+        count += count_bits(board->castle_moves);
+    }
+
     return count;
 }
 
 int
 Board_GetLegalMoves(Board* board, Move* moves){
-    uint64 passer_pawns = Board_IS_WHITETURN(board) ?
+    Side side = Board_GET_SIDE(board);
+    uint64 passer_pawns = side == NCH_White ?
                         Board_WHITE_PAWNS(board) & NCH_ROW7 :
                         Board_BLACK_PAWNS(board) & NCH_ROW2 ;
 
-    uint64 king_sqr = Board_IS_WHITETURN(board) ? Board_WHITE_KING(board)
-                                                : Board_BLACK_KING(board);
-    int temp = NCH_SQRIDX(king_sqr);
-    uint64 castle_moves = board->moves[temp] 
-                        & (NCH_SQR(NCH_G1) | NCH_SQR(NCH_C1)
-                        | NCH_SQR(NCH_G8) | NCH_SQR(NCH_C8));
-    board->moves[temp] &= ~castle_moves;
-
-    uint64 occ_map = (Board_IS_WHITETURN(board) ? Board_WHITE_OCC(board)
-                                               : Board_BLACK_OCC(board))
+    uint64 occ_map = (side == NCH_White ? Board_WHITE_OCC(board)
+                                        : Board_BLACK_OCC(board))
                     & ~passer_pawns;
 
 
-    int idx, counter = 0;
+    int idx, temp, counter = 0;
     LOOP_U64_NAMED(occ, temp, occ_map){
         if (board->moves[temp]){
             LOOP_U64_NAMED(mv, idx, board->moves[temp]){
@@ -253,35 +247,20 @@ Board_GetLegalMoves(Board* board, Move* moves){
         }
     }
 
-    temp = NCH_SQRIDX(king_sqr);
-    board->moves[temp] |= castle_moves;
-
-    if (NCH_CHKFLG(NCH_SQR(NCH_E1) | NCH_SQR(NCH_E8), king_sqr) && castle_moves){
-        if (NCH_CHKUNI(castle_moves, (NCH_SQR(NCH_G1) | NCH_SQR(NCH_G8)))){
-            moves[counter++] = Move_ASSIGN_FROM(temp) 
-                            | Move_ASSIGN_TO(NCH_SQRIDX(castle_moves & (NCH_SQR(NCH_G1) | NCH_SQR(NCH_G8)))) 
+    if (board->castle_moves){
+        if (NCH_CHKUNI(board->castle_moves, Board_CASTLE_WK | Board_CASTLE_BK)){
+            moves[counter++] = Move_ASSIGN_FROM(side == NCH_White ? NCH_E1 : NCH_E8) 
+                            | Move_ASSIGN_TO(Board_IS_WHITETURN(board) ? NCH_G1 : NCH_G8)
                             | Move_ASSIGN_CASTLE(
-                                castle_moves & (NCH_SQR(NCH_G1) | NCH_SQR(NCH_G8)) ?
-                                (Board_CASTLE_WK | Board_CASTLE_BK) : 0
+                                (Board_CASTLE_WK | Board_CASTLE_BK)
                             );
         }
-
-        if (NCH_CHKUNI(castle_moves, (NCH_SQR(NCH_C1) | NCH_SQR(NCH_C8)))){
-            moves[counter++] = Move_ASSIGN_FROM(temp) 
-                            | Move_ASSIGN_TO(NCH_SQRIDX(castle_moves & (NCH_SQR(NCH_C1) | NCH_SQR(NCH_C8)))) 
+        if (NCH_CHKUNI(board->castle_moves, Board_CASTLE_WQ | Board_CASTLE_BQ)){
+            moves[counter++] = Move_ASSIGN_FROM(side == NCH_White ? NCH_E1 : NCH_E8) 
+                            | Move_ASSIGN_TO(Board_IS_WHITETURN(board) ? NCH_C1 : NCH_C8)
                             | Move_ASSIGN_CASTLE(
-                                castle_moves & (NCH_SQR(NCH_C1) | NCH_SQR(NCH_C8)) ?
-                                (Board_CASTLE_WQ | Board_CASTLE_BQ) : 0
+                                (Board_CASTLE_WQ | Board_CASTLE_BQ)
                             );
-        }
-    }
-    else{
-        if (castle_moves){
-            moves[counter++] = Move_ASSIGN_FROM(temp) | Move_ASSIGN_TO(NCH_SQRIDX(castle_moves));
-            castle_moves &= castle_moves-1;
-        }
-        if (castle_moves){
-            moves[counter++] = Move_ASSIGN_FROM(temp) | Move_ASSIGN_TO(NCH_SQRIDX(castle_moves));
         }
     }
 

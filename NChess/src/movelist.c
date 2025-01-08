@@ -3,14 +3,6 @@
 #include "types.h"
 #include <stdio.h>
 
-uint32
-gamestate_new(int is_enpassant, int is_promotion, Square enp_sqr, Piece captured_piece){
-    uint32 state;
-    state = is_enpassant | (is_promotion << 1) | (enp_sqr << 2) 
-          | (captured_piece << 8);
-    return state;
-}
-
 void*
 MoveList_New(){
     MoveList* movelist = malloc(sizeof(MoveList));
@@ -25,8 +17,7 @@ MoveList_New(){
     return movelist;
 }
 
-int MoveList_Append(MoveList* movelist, Move move, int is_enpassant,
-                     int is_promotion, Square enp_sqr, Piece captured_piece,
+int MoveList_Append(MoveList* movelist, Move move, Square enp_sqr, Piece captured_piece,
                      int fifty_count, uint8 castle_flags, int flags){
     MoveNode* node = (MoveNode*)malloc(sizeof(MoveNode));
     if (!node) {
@@ -34,10 +25,11 @@ int MoveList_Append(MoveList* movelist, Move move, int is_enpassant,
     }
     node->next = NULL;
     node->move = move;
-    node->gamestate = gamestate_new(is_enpassant, is_promotion, enp_sqr, captured_piece);
     node->fifty_count = fifty_count;
     node->castle = castle_flags;
     node->gameflags = flags;
+    node->enp_sqr = enp_sqr;
+    node->captured_piece = captured_piece;
 
     if (movelist->len < 1) {
         node->prev = NULL;

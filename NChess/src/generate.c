@@ -118,14 +118,14 @@ generate_castle_moves(Board* board){
             && !get_checkmap(board, NCH_White, NCH_G1, Board_ALL_OCC(board)) 
             && !get_checkmap(board, NCH_White, NCH_F1, Board_ALL_OCC(board))){
             
-            board->moves[NCH_E1] |= NCH_SQR(NCH_G1);
+            board->castle_moves |= Board_CASTLE_WK;
         }
 
         if (Board_IS_CASTLE_WQ(board) && !NCH_CHKUNI(Board_ALL_OCC(board), (NCH_SQR(NCH_D1) | NCH_SQR(NCH_C1) | NCH_SQR(NCH_B1)))
             && !get_checkmap(board, NCH_White, NCH_D1, Board_ALL_OCC(board)) 
             && !get_checkmap(board, NCH_White, NCH_C1, Board_ALL_OCC(board))){
             
-            board->moves[NCH_E1] |= NCH_SQR(NCH_C1);
+            board->castle_moves |= Board_CASTLE_WQ;
         }
     }
     else{
@@ -133,14 +133,14 @@ generate_castle_moves(Board* board){
             && !get_checkmap(board, NCH_Black, NCH_G8, Board_ALL_OCC(board)) 
             && !get_checkmap(board, NCH_Black, NCH_F8, Board_ALL_OCC(board))){
             
-            board->moves[NCH_E8] |= NCH_SQR(NCH_G8);
+            board->castle_moves |= Board_CASTLE_BK;
         }
 
         if (Board_IS_CASTLE_BQ(board) && !NCH_CHKUNI(Board_ALL_OCC(board), 0x7000000000000000)
             && !get_checkmap(board, NCH_Black, NCH_D8, Board_ALL_OCC(board)) 
             && !get_checkmap(board, NCH_Black, NCH_C8, Board_ALL_OCC(board))){
             
-            board->moves[NCH_E8] |= NCH_SQR(NCH_C8);
+            board->castle_moves |= Board_CASTLE_BQ;
         }
     }
 }
@@ -192,6 +192,7 @@ execlude_pinned_pieces_unlegal_moves(Board *board){
 void
 generate_moves(Board* board){
     memset(board->moves, 0ULL, sizeof(board->moves));
+    board->castle_moves = 0;
 
     uint64 allowed_squares = get_allowed_squares(board);
     if (allowed_squares){
@@ -214,6 +215,8 @@ generate_moves(Board* board){
 
         execlude_pinned_pieces_unlegal_moves(board);
     }
+
+
     _generate_pieces_psudo_king(board);
     generate_castle_moves(board);
 }

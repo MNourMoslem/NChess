@@ -35,6 +35,7 @@ typedef struct
     uint64 en_passant_trg;
 
     uint64 moves[NCH_SQUARE_NB];
+    uint8 castle_moves;
 
     MoveList* movelist;
     BoardDict* dict;

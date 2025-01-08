@@ -5,6 +5,164 @@
 #include "movelist.h"
 #include "hash.h"
 
+#include <stdlib.h>
+
+NCH_STATIC_INLINE void*
+get_target_map(Board* board, Side side, Square sqr){
+    return board->piecetables[side][sqr] != NCH_NO_PIECE ? 
+            &board->bitboards[side][board->piecetables[side][sqr]] :
+            NULL;
+}
+
+NCH_STATIC_INLINE void
+set_piece(Board* board, Side side, Square sqr, Piece piece){
+    board->bitboards[side][piece] |= NCH_SQR(sqr);
+    board->piecetables[side][sqr] = piece;
+}
+
+NCH_STATIC_INLINE void
+remove_piece(Board* board, Side side, Square sqr){
+    uint64* piece_map = get_target_map(board, side, sqr);
+    if (piece_map){
+        *piece_map &= ~NCH_SQR(sqr);
+        board->piecetables[side][sqr] = NCH_NO_PIECE;
+    }
+}
+
+NCH_STATIC_INLINE void
+move_piece(Board* board, Side side, Square from_, Square to_){
+    set_piece(board, side, to_, board->piecetables[side][from_]);
+    remove_piece(board, side, from_);
+}
+
+void
+make_promotion(Board* board, Side side, uint64 sqr, Piece promotion){
+    if (promotion <= NCH_Pawn || promotion >= NCH_King){
+        promotion = NCH_Queen;
+    }
+
+    remove_piece(board, side, sqr);
+    set_piece(board, side, sqr, promotion);
+    NCH_SETFLG(board->flags, Board_PROMOTION);
+}
+
+NCH_STATIC_INLINE int
+is_pawn_move(Board* board, Side side, Square from_){
+    return board->piecetables[side][from_] == NCH_Pawn;
+}
+
+NCH_STATIC_INLINE Piece
+capture_piece_if_possible(Board* board, Side trg_side, Square sqr){
+    uint64* piece_map = get_target_map(board, trg_side, sqr);
+    if (piece_map){
+        *piece_map &= ~NCH_SQR(sqr);
+        Piece captured_piece = board->piecetables[trg_side][sqr];
+        board->piecetables[trg_side][sqr] = NCH_NO_PIECE;
+        NCH_SETFLG(board->flags, Board_CAPTURE);
+        return captured_piece;
+    }    
+    return NCH_NO_PIECE;
+}
+
+NCH_STATIC_INLINE Piece 
+play_pawn_move(Board* board, Side side, Square from_, Square to_, Piece promotion){
+    move_piece(board, side, from_, to_);
+    if (NCH_SQR(to_) == board->en_passant_trg){
+       to_ = side == NCH_White ? to_ - 8 : to_ + 8; 
+        NCH_SETFLG(board->flags, Board_ENPASSANT);
+    }
+
+    Piece captured_piece = capture_piece_if_possible(board, TARGET_SIDE(side), to_);
+    NCH_SETFLG(board->flags, Board_PAWNMOVED);
+
+    if (to_ - from_ == 16 || from_ - to_ == 16){
+        set_board_enp_settings(board, side, to_);
+    }
+    else{
+        reset_enpassant_variable(board);
+    }
+
+    if (to_ <= NCH_A1 || to_ >= NCH_H8){
+        make_promotion(board, side, to_, promotion);
+    }
+    return captured_piece;
+}
+
+NCH_STATIC_INLINE Piece
+play_move(Board* board, Side side, Square from_, Square to_, Piece promotion){
+    if (is_pawn_move(board, side, from_)){
+        return play_pawn_move(board, side, from_, to_, promotion);
+    }
+
+    move_piece(board, side, from_, to_);
+    Piece captured_piece = capture_piece_if_possible(board, TARGET_SIDE(side), to_);
+    reset_enpassant_variable(board);
+    return captured_piece;
+}
+
+void
+play_castle_move(Board* board, Side side, Square from_, Square to_, int king_side){
+    move_piece(board, side, from_, to_);
+    if (king_side){
+        move_piece(board, side, from_ - 3, to_ + 1);
+    }
+    else{
+        move_piece(board, side, from_ + 4, to_ - 1);
+    }
+    reset_enpassant_variable(board);
+}
+
+Piece
+make_move(Board* board, Square from_, Square to_, Piece promotion, uint8 castle){
+    Piece captured_piece;
+    if (castle){
+        play_castle_move(board, Board_GET_SIDE(board), from_, to_,
+                         NCH_CHKUNI(castle, Board_CASTLE_WK | Board_CASTLE_BK));
+        captured_piece = NCH_NO_PIECE;
+    }
+    else{
+        captured_piece = play_move(board, Board_GET_SIDE(board), from_, to_, promotion);
+    }
+    set_board_occupancy(board);
+    return captured_piece;
+}
+
+void
+undo_move(Board* board, Side side, Move move, int is_enpassant,
+         int is_promotion, Piece last_captured_piece){
+    Square from_ = Move_FROM(move);
+    Square to_ = Move_TO(move);
+    
+    if (Move_CASTLE(move)){
+        if (NCH_CHKUNI(Move_CASTLE(move), Board_CASTLE_WK | Board_CASTLE_BK)){
+            move_piece(board, side, to_, from_);
+            move_piece(board, side, to_ + 1, from_ - 3);
+        }
+        else{
+            move_piece(board, side, to_, from_);
+            move_piece(board, side,  to_ - 1, from_ + 4);
+        }
+    }
+    else{
+        if (is_promotion){
+            remove_piece(board, side, to_);
+            set_piece(board, side, from_, NCH_Pawn);
+        }
+        else{
+            move_piece(board, side, to_, from_);
+        }
+        
+        if (is_enpassant){
+            set_piece(board, TARGET_SIDE(side), side == NCH_White ? to_ - 8 : to_ + 8, NCH_Pawn);
+        }
+        else if(last_captured_piece != NCH_NO_PIECE){
+            set_piece(board, TARGET_SIDE(side), to_, last_captured_piece);
+        }
+    }
+
+    set_board_occupancy(board);
+}
+
 NCH_STATIC_INLINE void
 increase_counter(Board* board){
     if (Board_IS_WHITETURN(board)){

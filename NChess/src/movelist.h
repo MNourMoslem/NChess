@@ -4,6 +4,7 @@
 #include "types.h"
 #include "config.h"
 #include "core.h"
+#include "move.h"
 
 typedef struct MoveNode
 {

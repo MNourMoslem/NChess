@@ -32,10 +32,23 @@ Move_New(Square from_, Square to_, uint8 castle, Piece promotion){
 }
 
 int
-Move_ParseFromString(Board* board, char* arg, Square* from_, Square* to_, Piece* promotion, uint8* castle){
+Move_ParseFromString(char* arg, Square* from_, Square* to_, Piece* promotion, uint8* castle){
     int len = strlen(arg);
-    if (len > 5 || len < 4){
+    if (len > 5){
         return -1;
+    }
+
+    if (arg[0] == 'O'){
+        if (len == 3){
+            *castle = Board_CASTLE_WK | Board_CASTLE_BK;
+        }
+        else{
+            *castle = Board_CASTLE_WQ | Board_CASTLE_BQ;
+        }
+        *from_ = 0;
+        *to_ = 0;
+        *promotion = 0;
+        return 0;
     }
 
     if (!is_valid_column(arg[0]) || !is_valid_row(arg[1])
@@ -44,6 +57,7 @@ Move_ParseFromString(Board* board, char* arg, Square* from_, Square* to_, Piece*
         return -1;
     }
 
+    *castle = 0;
     *from_ = ('h' - arg[0]) + 8 * (arg[1] - '1');
     *to_ = ('h' - arg[2]) + 8 * (arg[3] - '1');
 
@@ -67,38 +81,15 @@ Move_ParseFromString(Board* board, char* arg, Square* from_, Square* to_, Piece*
     else{
         *promotion = 0;
     }
-    
-    *castle = 0;
-    if (Board_IS_WHITETURN(board)){
-        if (*from_ == NCH_E1 && Board_WHITE_KING(board) == NCH_SQR(NCH_E1)){
-            if (*to_ == NCH_G1){
-                *castle |= Board_CASTLE_WK;
-            }
-            else if (*to_ == NCH_C1){
-                *castle |= Board_CASTLE_WQ;
-            }
-        }
-    }
-    else{
-        if (*from_ == NCH_E8 && Board_BLACK_KING(board) == NCH_SQR(NCH_E8)){
-            if (*to_ == NCH_G8){
-                *castle = Board_CASTLE_BK;
-            }
-            else if (*to_ == NCH_C8){
-                *castle = Board_CASTLE_BQ;
-            }
-        }
-    }
-
     return 0;
 }
 
 Move
-Move_FromString(Board* board, char* move){
+Move_FromString(char* move){
     Square from_, to_;
     Piece promotion;
     uint8 castle;
-    Move_ParseFromString(board, move, &from_, &to_, &promotion, &castle);
+    Move_ParseFromString(move, &from_, &to_, &promotion, &castle);
     return Move_New(from_, to_, castle, promotion);
 }
 
@@ -129,11 +120,22 @@ static char* squares_char[] = {
 };
 
 void
-Move_AsString(Move move, Piece promotion, char* dst){
+Move_AsString(Move move, char* dst){
     char* temp;
+    if (Move_CASTLE(move)){
+        if (NCH_CHKUNI(Move_CASTLE(move), Board_CASTLE_WK | Board_CASTLE_BK)){
+            strcpy(dst, "O-O");
+        }
+        else{
+            strcpy(dst, "O-O-O");
+        }
+        return;
+    }
+
     Square from_ = Move_FROM(move);
     Square to_ = Move_TO(move);
-    
+    Piece promotion = Move_PRO_PIECE(move);
+
     temp = squares_char[from_];
     dst[0] = temp[0];
     dst[1] = temp[1];
@@ -141,7 +143,7 @@ Move_AsString(Move move, Piece promotion, char* dst){
     dst[2] = temp[0];
     dst[3] = temp[1];
 
-    if (promotion != NCH_NO_PIECE){
+    if (promotion){
         if (promotion == NCH_Queen)
             dst[4] = 'q';
         else if (promotion == NCH_Rook)
@@ -157,17 +159,5 @@ Move_AsString(Move move, Piece promotion, char* dst){
     }
     else{
         dst[4] = '\0';
-    }
-}
-
-void
-Move_AsStringBoard(Board* board, Move move, char* dst){
-    if (NCH_CHKFLG(NCH_ROW1 | NCH_ROW8, NCH_SQR(Move_TO(move)))
-        && NCH_CHKFLG(Board_WHITE_PAWNS(board) | Board_BLACK_PAWNS(board), NCH_SQR(Move_FROM(move)))){
-        
-        Move_AsString(move, Move_PRO_PIECE(move), dst);
-    }
-    else{
-        Move_AsString(move, NCH_NO_PIECE, dst);
     }
 }

@@ -78,70 +78,17 @@ typedef enum {
 #define NCH_NXTSQR_K_LEFTUP(square) (square << 10)
 #define NCH_NXTSQR_K_LEFTDOWN(square) (square >> 6)
 
-static const uint64 NCH_DIAGONAL_MAIN[15] = {
-    0x0000000000000001ull,
-    0x0000000000000101ull,
-    0x0000000000010204ull,
-    0x0000000001020408ull,
-    0x0000000102040810ull,
-    0x0000010204081020ull,
-    0x0001020408102040ull,
-    0x0102040810204080ull,
-    0x0204081020408000ull,
-    0x0408102040800000ull,
-    0x0810204080000000ull,
-    0x1020408000000000ull,
-    0x2040800000000000ull,
-    0x4080000000000000ull,
-    0x8000000000000000ull,
-};
-
-static const int NCH_DIAGONAL_MAIN_IDX[64] = {
-    0, 1, 2, 3, 4, 5, 6, 7,
-    1, 2, 3, 4, 5, 6, 7, 8,
-    2, 3, 4, 5, 6, 7, 8, 9,
-    3, 4, 5, 6, 7, 8, 9, 10,
-    4, 5, 6, 7, 8, 9, 10, 11,
-    5, 6, 7, 8, 9, 10, 11, 12,
-    6, 7, 8, 9, 10, 11, 12, 13,
-    7, 8, 9, 10, 11, 12, 13, 14
-};
-
-static const uint64 NCH_DIAGONAL_ANTI[15] = {
-    0x0000000000000080ull,
-    0x0000000000008040ull,
-    0x0000000000804020ull,
-    0x0000000080402010ull,
-    0x0000008040201008ull,
-    
-    0x0000804020100804ull,
-    
-    0x0080402010080402ull,
-    0x8040201008040201ull,
-    0x4020100804020100ull,
-    0x2010080402010000ull,
-    0x1008040201000000ull,
-    0x0804020100000000ull,
-    0x0402010000000000ull,
-    0x0201000000000000ull,
-    0x0100000000000000ull,
-};
-
-static const int NCH_DIAGONAL_ANTI_IDX[64] = {
-    7, 6, 5, 4, 3, 2, 1, 0,
-    8, 7, 6, 5, 4, 3, 2, 1,
-    9, 8, 7, 6, 5, 4, 3, 2,
-    10, 9, 8, 7, 6, 5, 4, 3,
-    11, 10, 9, 8, 7, 6, 5, 4,
-    12, 11, 10, 9, 8, 7, 6, 5,
-    13, 12, 11, 10, 9, 8, 7, 6,
-    14, 13, 12, 11, 10, 9, 8, 7
-};
+extern const int NCH_ROW_TABLE[64];
+extern const int NCH_COL_TABLE[64];
+extern const uint64 NCH_DIAGONAL_MAIN[15];
+extern const int NCH_DIAGONAL_MAIN_IDX[64];
+extern const uint64 NCH_DIAGONAL_ANTI[15];
+extern const int NCH_DIAGONAL_ANTI_IDX[64];
 
 #define NCH_SQR(idx) (1ULL << (idx))
 #define NCH_SQRIDX(square) count_tbits(square)
-#define NCH_GET_COLIDX(idx) ((idx) % 8ull)
-#define NCH_GET_ROWIDX(idx) ((idx) / 8ull)
+#define NCH_GET_COLIDX(idx) NCH_COL_TABLE[idx]
+#define NCH_GET_ROWIDX(idx) NCH_ROW_TABLE[idx]
 #define NCH_GET_COL(idx) (NCH_COL1 << (NCH_GET_COLIDX(idx)))
 #define NCH_GET_ROW(idx) (NCH_ROW1 << (NCH_GET_ROWIDX(idx) * 8))
 #define NCH_GET_DIGMAIN(idx) NCH_DIAGONAL_MAIN[NCH_DIAGONAL_MAIN_IDX[idx]]
@@ -151,17 +98,5 @@ static const int NCH_DIAGONAL_ANTI_IDX[64] = {
 #define NCH_SAME_ROW(idx1, idx2) (NCH_GET_ROWIDX(idx1) == NCH_GET_ROWIDX(idx2))
 #define NCH_SAME_MAIN_DG(idx1, idx2) (NCH_DIAGONAL_MAIN_IDX[idx1] == NCH_DIAGONAL_MAIN_IDX[idx2])
 #define NCH_SAME_ANTI_DG(idx1, idx2) (NCH_DIAGONAL_ANTI_IDX[idx1] == NCH_DIAGONAL_ANTI_IDX[idx2])
-
-typedef uint32 Move;
-
-#define Move_ASSIGN_FROM(from_) ((from_))
-#define Move_ASSIGN_TO(to_) ((to_) << 6)
-#define Move_ASSIGN_CASTLE(castle) ((castle) << 12)
-#define Move_ASSIGN_PRO_PIECE(pro_piece) ((pro_piece) << 16)
-
-#define Move_FROM(move) ((move) & 0x3F)
-#define Move_TO(move) (((move) >> 6) & 0x3F)
-#define Move_CASTLE(move) (((move) >> 12) & 0xF)
-#define Move_PRO_PIECE(move) (((move) >> 16) & 0xF)
 
 #endif

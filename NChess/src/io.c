@@ -18,60 +18,6 @@ char* squares_char[] = {
     "h8", "g8", "f8", "e8", "d8", "c8", "b8", "a8"
 };
 
-NCH_STATIC_INLINE int
-match_square_with_map(Board* board, uint64 sqr, Side* side, Piece* ptype){
-    if (NCH_CHKFLG(Board_WHITE_OCC(board), sqr)){
-        *side = NCH_White;
-        if (NCH_CHKFLG(Board_WHITE_PAWNS(board), sqr)){
-            *ptype = NCH_Pawn;
-        }
-        else if (NCH_CHKFLG(Board_WHITE_KNIGHTS(board), sqr)){
-            *ptype = NCH_Knight;
-        }
-        else if (NCH_CHKFLG(Board_WHITE_BISHOPS(board), sqr)){
-            *ptype = NCH_Bishop;
-        }
-        else if (NCH_CHKFLG(Board_WHITE_ROOKS(board), sqr)){
-            *ptype = NCH_Rook;
-        }
-        else if (NCH_CHKFLG(Board_WHITE_QUEENS(board), sqr)){
-            *ptype = NCH_Queen;
-        }
-        else if (NCH_CHKFLG(Board_WHITE_KING(board), sqr)){
-            *ptype = NCH_King;
-        }
-        else{
-            return 0;
-        }
-    } else if (NCH_CHKFLG(Board_BLACK_OCC(board), sqr)){
-        *side = NCH_Black;
-        if (NCH_CHKFLG(Board_BLACK_PAWNS(board), sqr)){
-            *ptype = NCH_Pawn;
-        }
-        else if (NCH_CHKFLG(Board_BLACK_KNIGHTS(board), sqr)){
-            *ptype = NCH_Knight;
-        }
-        else if (NCH_CHKFLG(Board_BLACK_BISHOPS(board), sqr)){
-            *ptype = NCH_Bishop;
-        }
-        else if (NCH_CHKFLG(Board_BLACK_ROOKS(board), sqr)){
-            *ptype = NCH_Rook;
-        }
-        else if (NCH_CHKFLG(Board_BLACK_QUEENS(board), sqr)){
-            *ptype = NCH_Queen;
-        }
-        else if (NCH_CHKFLG(Board_BLACK_KING(board), sqr)){
-            *ptype = NCH_King;
-        }
-        else{
-            return 0;
-        }
-    } else {
-        return 0;
-    }
-    return 1;
-}
-
 void
 Board_Print(Board* board){
     int i = 64;

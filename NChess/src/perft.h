@@ -7,6 +7,9 @@ long long
 Board_Perft(Board* board, int depth);
 
 long long
+Board_PerftPretty(Board* board, int depth);
+
+long long
 Board_PerftNoPrint(Board* board, int depth);
 
 #endif

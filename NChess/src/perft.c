@@ -56,6 +56,36 @@ Board_Perft(Board* board, int depth){
         return 0;
     }
 
+    clock_t start_time = clock();
+
+    long long total = 0, count;
+    Move moves[256];
+    int nmoves = Board_GetLegalMoves(board, moves);
+
+    char move_str[6];
+    for (int i = 0; i < nmoves; i++){
+        Board_StepByMove(board, moves[i]);
+        count = preft_recursive(board, depth - 1);
+        Board_Undo(board);
+        Move_AsString(moves[i], move_str);
+        printf("%s: %lld\n", move_str, count);
+        total += count;
+    }
+
+    clock_t end_time = clock();
+    double time_spent = (double)(end_time - start_time) / CLOCKS_PER_SEC;
+
+    printf("Total: %lld | Time spent: %f seconds\n", total, time_spent);
+
+    return total;
+}
+
+long long
+Board_PerftPretty(Board* board, int depth){
+    if (depth < 1){
+        return 0;
+    }
+
     clock_t start_time = clock(); // Start the timer
 
     long long total = 0, count;

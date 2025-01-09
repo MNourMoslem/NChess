@@ -12,7 +12,7 @@
 #include "hash.h"
 #include "board_utils.h"
 
-NCH_STATIC_INLINE void
+NCH_STATIC_FINLINE void
 _init_board_flags_and_states(Board* board){
     board->castles = Board_CASTLE_WK | Board_CASTLE_WQ | Board_CASTLE_BK | Board_CASTLE_WQ;
 
@@ -26,7 +26,7 @@ _init_board_flags_and_states(Board* board){
     board->castle_moves = 0;
 }
 
-NCH_STATIC_INLINE void
+NCH_STATIC_FINLINE void
 _init_board(Board* board){
     set_board_occupancy(board);
     init_piecetables(board);
@@ -34,7 +34,7 @@ _init_board(Board* board){
     Board_Update(board);
 }
 
-NCH_STATIC_INLINE Board*
+NCH_STATIC_FINLINE Board*
 new_board(){
     Board* board = malloc(sizeof(Board));
     if (!board){
@@ -136,7 +136,7 @@ Board_IsCheck(Board* board){
         ) != 0ULL;
 }
 
-NCH_STATIC_INLINE void
+NCH_STATIC_FINLINE void
 update_check(Board* board){
     if (Board_IsCheck(board)){
         uint64 check_map = get_checkmap(
@@ -191,12 +191,10 @@ Board_NMoves(Board* board){
         }
     }
 
-    uint64* pawns_map = Board_IS_WHITETURN(board) ? &Board_WHITE_PAWNS(board)
-                                                  : &Board_BLACK_PAWNS(board);
-
     int idx;
-    LOOP_U64_T(*pawns_map){
-        if (NCH_CHKUNI(board->moves[idx], NCH_ROW1 | NCH_ROW8)){
+    LOOP_U64_T(Board_IS_WHITETURN(board) ? Board_WHITE_PAWNS(board) & NCH_ROW7 
+                                         : Board_BLACK_PAWNS(board) & NCH_ROW2){
+        if (board->moves[idx]){
             count += 3 * count_bits(board->moves[idx]);
         }
     }
@@ -210,18 +208,15 @@ Board_NMoves(Board* board){
 
 int
 Board_GetLegalMoves(Board* board, Move* moves){
-    Side side = Board_GET_SIDE(board);
-    uint64 passer_pawns = side == NCH_White ?
+    uint64 passer_pawns = Board_IS_WHITETURN(board) ?
                         Board_WHITE_PAWNS(board) & NCH_ROW7 :
                         Board_BLACK_PAWNS(board) & NCH_ROW2 ;
 
-    uint64 occ_map = (side == NCH_White ? Board_WHITE_OCC(board)
-                                        : Board_BLACK_OCC(board))
-                    & ~passer_pawns;
-
-
     int idx, temp, counter = 0;
-    LOOP_U64_NAMED(occ, temp, occ_map){
+    LOOP_U64_NAMED(occ, temp,
+     (Board_IS_WHITETURN(board) ? Board_WHITE_OCC(board) : Board_BLACK_OCC(board)) &~ passer_pawns
+    )
+    {
         if (board->moves[temp]){
             LOOP_U64_NAMED(mv, idx, board->moves[temp]){
                 moves[counter++] = Move_ASSIGN_FROM(temp) | Move_ASSIGN_TO(idx);
@@ -249,14 +244,14 @@ Board_GetLegalMoves(Board* board, Move* moves){
 
     if (board->castle_moves){
         if (NCH_CHKUNI(board->castle_moves, Board_CASTLE_WK | Board_CASTLE_BK)){
-            moves[counter++] = Move_ASSIGN_FROM(side == NCH_White ? NCH_E1 : NCH_E8) 
+            moves[counter++] = Move_ASSIGN_FROM(Board_IS_WHITETURN(board) ? NCH_E1 : NCH_E8) 
                             | Move_ASSIGN_TO(Board_IS_WHITETURN(board) ? NCH_G1 : NCH_G8)
                             | Move_ASSIGN_CASTLE(
                                 (Board_CASTLE_WK | Board_CASTLE_BK)
                             );
         }
         if (NCH_CHKUNI(board->castle_moves, Board_CASTLE_WQ | Board_CASTLE_BQ)){
-            moves[counter++] = Move_ASSIGN_FROM(side == NCH_White ? NCH_E1 : NCH_E8) 
+            moves[counter++] = Move_ASSIGN_FROM(Board_IS_WHITETURN(board) ? NCH_E1 : NCH_E8) 
                             | Move_ASSIGN_TO(Board_IS_WHITETURN(board) ? NCH_C1 : NCH_C8)
                             | Move_ASSIGN_CASTLE(
                                 (Board_CASTLE_WQ | Board_CASTLE_BQ)

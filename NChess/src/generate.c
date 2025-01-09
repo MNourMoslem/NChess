@@ -42,24 +42,14 @@ generate_pieces_psudo_pawns(Board* board, uint64 allowed_squares){
 NCH_STATIC_FINLINE void
 generate_pieces_psudo_king(Board* board){
     Side side = Board_GET_SIDE(board);
-    uint64 king_sqr, op_king_sqr, allowed_squares;
 
-    if (side == NCH_White){
-        king_sqr = Board_WHITE_KING(board);
-        op_king_sqr = Board_BLACK_KING(board);
-        allowed_squares = ~Board_WHITE_OCC(board);
-    }
-    else{
-        king_sqr = Board_BLACK_KING(board);
-        op_king_sqr = Board_WHITE_KING(board);
-        allowed_squares = ~Board_BLACK_OCC(board);
-    }
-
-    int king_idx = NCH_SQRIDX(king_sqr);
+    int king_idx = NCH_SQRIDX(board->bitboards[side][NCH_King]);
     if (king_idx >= 64)
         return;
         
-    uint64 moves = bb_king_attacks(king_idx) & allowed_squares & ~bb_king_attacks(NCH_SQRIDX(op_king_sqr));
+    uint64 moves = bb_king_attacks(king_idx) 
+                    &  ~board->occupancy[side] 
+                    &  ~bb_king_attacks(NCH_SQRIDX(board->bitboards[Board_GET_OP_SIDE(board)][NCH_King]));
     int idx;
     LOOP_U64_T(moves){
         if (get_checkmap(board, side, idx, Board_ALL_OCC(board))){
@@ -134,12 +124,10 @@ generate_castle_moves(Board* board){
 NCH_STATIC_FINLINE void
 execlude_pinned_pieces_unlegal_moves(Board *board){
     Side side = Board_GET_SIDE(board);
-    uint64 king_sqr = side == NCH_White ? Board_WHITE_KING(board) : Board_BLACK_KING(board);
-    int king_idx = NCH_SQRIDX(king_sqr);
+    int king_idx = NCH_SQRIDX(board->bitboards[side][NCH_King]);
 
-    uint64 all_occ = Board_ALL_OCC(board) &~ king_sqr;
-    uint64 self_occ = side == NCH_White ? Board_WHITE_OCC(board) : Board_BLACK_OCC(board);
-    uint64 queen_attack = bb_queen_attacks(king_idx, all_occ);
+    uint64 self_occ = board->occupancy[side];
+    uint64 queen_attack = bb_queen_attacks(king_idx, Board_ALL_OCC(board));
 
     int special_case = 0;
     uint64 special_map;
@@ -153,21 +141,22 @@ execlude_pinned_pieces_unlegal_moves(Board *board){
     else{
         queen_attack &= self_occ;
     }
-    NCH_RMVFLG(all_occ, queen_attack);
+
+    uint64 all_occ = Board_ALL_OCC(board) &~ queen_attack;
 
     uint64 attackmap = get_checkmap(board, side, king_idx, all_occ);
     if (!attackmap){
         return;
     }
 
-    int idx, trg_idx;
+    int idx;
     uint64 between, btable = 0ull;
     LOOP_U64_T(attackmap){
         between = bb_between(king_idx, idx);
         btable |= between;
-        trg_idx = NCH_SQRIDX(between & self_occ);
-        if (trg_idx < 64)
-            board->moves[trg_idx] &= between;
+        idx = NCH_SQRIDX(between & self_occ);
+        if (idx < 64)
+            board->moves[idx] &= between;
     }
 
     if (special_case && NCH_CHKFLG(btable, NCH_SQR(special_case)))

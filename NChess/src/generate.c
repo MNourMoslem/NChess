@@ -47,7 +47,7 @@ generate_pieces_psudo_king(Board* board){
     if (king_idx >= 64)
         return;
         
-    uint64 moves = bb_king_attacks(king_idx) 
+    uint64 moves =     bb_king_attacks(king_idx) 
                     &  ~board->occupancy[side] 
                     &  ~bb_king_attacks(NCH_SQRIDX(board->bitboards[Board_GET_OP_SIDE(board)][NCH_King]));
     int idx;

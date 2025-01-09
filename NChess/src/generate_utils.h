@@ -15,18 +15,16 @@ get_checkmap(Board* board, Side side, int king_idx, uint64 all_occ){
     if (side == NCH_White){
         occupancy = all_occ & ~Board_WHITE_KING(board);
 
-        return    (bb_rook_attacks(king_idx, occupancy)   & Board_BLACK_ROOKS(board)  ) 
-                | (bb_bishop_attacks(king_idx, occupancy) & Board_BLACK_BISHOPS(board))
-                | (bb_queen_attacks(king_idx, occupancy)  & Board_BLACK_QUEENS(board) )
+        return    (bb_rook_attacks(king_idx, occupancy)   & (Board_BLACK_ROOKS(board)   | Board_BLACK_QUEENS(board))) 
+                | (bb_bishop_attacks(king_idx, occupancy) & (Board_BLACK_BISHOPS(board) | Board_BLACK_QUEENS(board)))
                 | (bb_knight_attacks(king_idx)            & Board_BLACK_KNIGHTS(board))
                 | (bb_pawn_attacks(NCH_White, king_idx)   & Board_BLACK_PAWNS(board)  );
     }
     else{
         occupancy = all_occ & ~Board_BLACK_KING(board);
 
-        return    (bb_rook_attacks(king_idx, occupancy)   & Board_WHITE_ROOKS(board)  ) 
-                | (bb_bishop_attacks(king_idx, occupancy) & Board_WHITE_BISHOPS(board))
-                | (bb_queen_attacks(king_idx, occupancy)  & Board_WHITE_QUEENS(board) )
+        return    (bb_rook_attacks(king_idx, occupancy)   & (Board_WHITE_ROOKS(board)   | Board_WHITE_QUEENS(board))) 
+                | (bb_bishop_attacks(king_idx, occupancy) & (Board_WHITE_BISHOPS(board) | Board_WHITE_QUEENS(board)))
                 | (bb_knight_attacks(king_idx)            & Board_WHITE_KNIGHTS(board))
                 | (bb_pawn_attacks(NCH_Black, king_idx)   & Board_WHITE_PAWNS(board)  );
     }

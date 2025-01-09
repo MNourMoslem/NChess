@@ -166,7 +166,6 @@ execlude_pinned_pieces_unlegal_moves(Board *board){
 
 void
 generate_moves(Board* board){
-    memset(board->moves, 0ULL, sizeof(board->moves));
     board->castle_moves = 0;
 
     uint64 allowed_squares = get_allowed_squares(board);
@@ -184,6 +183,9 @@ generate_moves(Board* board){
 
         execlude_pinned_pieces_unlegal_moves(board);
         generate_castle_moves(board);
+    }
+    else{
+        memset(board->moves, 0, sizeof(board->moves));
     }
 
     generate_pieces_psudo_king(board);

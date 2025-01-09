@@ -30,11 +30,10 @@ format_number_with_commas(long long num, char* output) {
 
 long long
 preft_recursive(Board* board, int depth){
-    if (depth < 1){
+    if (depth <= 1){
+        if (depth == 1)
+            return Board_NMoves(board);
         return 1;
-    }
-    else if (depth == 1){
-        return Board_NMoves(board);
     }
     
     long long count = 0;

@@ -70,36 +70,36 @@ typedef struct
 #define Board_WHITE_PIECE(board, idx) (board)->piecetables[NCH_White][idx]
 #define Board_BLACK_PIECE(board, idx) (board)->piecetables[NCH_Black][idx]
 
-#define Board_PAWNMOVED (1 << 0)
-#define Board_ENPASSANT (1 << 1)
-#define Board_CAPTURE (1 << 2)
-#define Board_PROMOTION (1 << 3)
-#define Board_CHECK (1 << 4)
-#define Board_DOUBLECHECK (1 << 5)
-#define Board_CHECKMATE (1 << 6)
-#define Board_STALEMATE (1 << 7)
-#define Board_THREEFOLD (1 << 8)
-#define Board_FIFTYMOVES (1 << 9)
-#define Board_GAMEEND (1 << 10)
-#define Board_DRAW (1 << 11)
-#define Board_WIN (1 << 12)
-#define Board_TURN (1 << 13)
+#define Board_PAWNMOVED 0x1
+#define Board_ENPASSANT 0x2
+#define Board_CAPTURE 0x4
+#define Board_PROMOTION 0x8
+#define Board_CHECK 0x10
+#define Board_DOUBLECHECK 0x20
+#define Board_CHECKMATE 0x40
+#define Board_STALEMATE 0x80
+#define Board_THREEFOLD 0x100
+#define Board_FIFTYMOVES 0x200
+#define Board_GAMEEND 0x400
+#define Board_DRAW 0x800
+#define Board_WIN 0x1000
+#define Board_TURN 0x2000
 
-#define Board_IS_PAWNMOVED(board) NCH_CHKFLG(board->flags, Board_PAWNMOVED)
-#define Board_IS_DOUBLECHECK(board) NCH_CHKFLG(board->flags, Board_DOUBLECHECK)
-#define Board_IS_ENPASSANT(board) NCH_CHKFLG(board->flags, Board_ENPASSANT)
-#define Board_IS_CAPTURE(board) NCH_CHKFLG(board->flags, Board_CAPTURE)
-#define Board_IS_PROMOTION(board) NCH_CHKFLG(board->flags, Board_PROMOTION)
-#define Board_IS_CHECK(board) NCH_CHKFLG(board->flags, Board_CHECK)
-#define Board_IS_CHECKMATE(board) NCH_CHKFLG(board->flags, Board_CHECKMATE)
-#define Board_IS_STALEMATE(board) NCH_CHKFLG(board->flags, Board_STALEMATE)
-#define Board_IS_THREEFOLD(board) NCH_CHKFLG(board->flags, Board_THREEFOLD)
-#define Board_IS_FIFTYMOVES(board) NCH_CHKFLG(board->flags, Board_FIFTYMOVES)
-#define Board_IS_GAMEEND(board) NCH_CHKFLG(board->flags, Board_GAMEEND)
-#define Board_IS_DRAW(board) NCH_CHKFLG(board->flags, Board_DRAW)
-#define Board_IS_WHITEWIN(board) NCH_CHKFLG(board->flags, Board_WIN)
+#define Board_IS_PAWNMOVED(board) (board->flags & Board_PAWNMOVED)
+#define Board_IS_DOUBLECHECK(board) (board->flags & Board_DOUBLECHECK)
+#define Board_IS_ENPASSANT(board) (board->flags & Board_ENPASSANT)
+#define Board_IS_CAPTURE(board) (board->flags & Board_CAPTURE)
+#define Board_IS_PROMOTION(board) (board->flags & Board_PROMOTION)
+#define Board_IS_CHECK(board) (board->flags & Board_CHECK)
+#define Board_IS_CHECKMATE(board) (board->flags & Board_CHECKMATE)
+#define Board_IS_STALEMATE(board) (board->flags & Board_STALEMATE)
+#define Board_IS_THREEFOLD(board) (board->flags & Board_THREEFOLD)
+#define Board_IS_FIFTYMOVES(board) (board->flags & Board_FIFTYMOVES)
+#define Board_IS_GAMEEND(board) (board->flags & Board_GAMEEND)
+#define Board_IS_DRAW(board) (board->flags & Board_DRAW)
+#define Board_IS_WHITEWIN(board) (board->flags & Board_WIN)
 #define Board_IS_BLACKWIN(board) !Board_IS_WHITEWIN(board)
-#define Board_IS_WHITETURN(board) NCH_CHKFLG(board->flags, Board_TURN)
+#define Board_IS_WHITETURN(board) (board->flags & Board_TURN)
 #define Board_IS_BLACKTURN(board) !Board_IS_WHITETURN(board)
 
 #define Board_GAME_ON(board) !Board_IS_GAMEEND(board)
@@ -111,10 +111,10 @@ typedef struct
 #define Board_CASTLE_BK (uint8)4
 #define Board_CASTLE_BQ (uint8)8
 
-#define Board_IS_CASTLE_WK(board) NCH_CHKFLG(board->castles, Board_CASTLE_WK)
-#define Board_IS_CASTLE_WQ(board) NCH_CHKFLG(board->castles, Board_CASTLE_WQ)
-#define Board_IS_CASTLE_BK(board) NCH_CHKFLG(board->castles, Board_CASTLE_BK)
-#define Board_IS_CASTLE_BQ(board) NCH_CHKFLG(board->castles, Board_CASTLE_BQ)
+#define Board_IS_CASTLE_WK(board) (board->castles & Board_CASTLE_WK)
+#define Board_IS_CASTLE_WQ(board) (board->castles & Board_CASTLE_WQ)
+#define Board_IS_CASTLE_BK(board) (board->castles & Board_CASTLE_BK)
+#define Board_IS_CASTLE_BQ(board) (board->castles & Board_CASTLE_BQ)
 
 Board*
 Board_New();

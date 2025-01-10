@@ -7,6 +7,9 @@
 #include "config.h"
 
 void
+_Board_MakeMove(Board* board, Move move);
+
+void
 Board_StepByMove(Board* board, Move move);
 
 void
@@ -14,5 +17,8 @@ Board_Step(Board* board, char* move);
 
 void
 Board_Undo(Board* board);
+
+int 
+Board_IsMoveLegal(Board* board, Move move);
 
 #endif

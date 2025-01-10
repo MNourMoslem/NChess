@@ -137,10 +137,4 @@ Board_IsCheck(Board* board);
 void
 Board_Update(Board* board);
 
-int
-Board_NMoves(Board* board);
-
-int
-Board_GetLegalMoves(Board* board, Move* moves);
-
 #endif

@@ -25,6 +25,9 @@ Move_Print(Move move);
 void
 Move_AsString(Move move, char* dst);
 
+void
+Move_PrintAll(Move* move, int nmoves);
+
 #define Move_ASSIGN_FROM(from_) ((from_))
 #define Move_ASSIGN_TO(to_) ((to_) << 6)
 #define Move_ASSIGN_CASTLE(castle) ((castle) << 12)

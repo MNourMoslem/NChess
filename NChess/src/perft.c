@@ -43,7 +43,7 @@ preft_recursive(Board* board, int depth){
     int nmoves = Board_GenerateLegalMoves(board, moves);
     
     for (int i = 0; i < nmoves; i++){
-        Board_StepByMove(board, moves[i]);
+        _Board_MakeMove(board, moves[i]);
         count += preft_recursive(board, depth - 1);
         Board_Undo(board);
     }
@@ -65,7 +65,7 @@ Board_Perft(Board* board, int depth){
 
     char move_str[6];
     for (int i = 0; i < nmoves; i++){
-        Board_StepByMove(board, moves[i]);
+        _Board_MakeMove(board, moves[i]);
         count = preft_recursive(board, depth - 1);
         Board_Undo(board);
         Move_AsString(moves[i], move_str);
@@ -96,7 +96,7 @@ Board_PerftPretty(Board* board, int depth){
     char move_str[6];
     char formatted_total[30];
     for (int i = 0; i < nmoves; i++){
-        Board_StepByMove(board, moves[i]);
+        _Board_MakeMove(board, moves[i]);
         
         count = preft_recursive(board, depth - 1);
 
@@ -127,7 +127,7 @@ Board_PerftNoPrint(Board* board, int depth){
     Move moves[256];
     int nmoves = Board_GenerateLegalMoves(board, moves);
     for (int i = 0; i < nmoves; i++){
-        Board_StepByMove(board, moves[i]);
+        _Board_MakeMove(board, moves[i]);
         total += preft_recursive(board, depth - 1);
         Board_Undo(board);
     }

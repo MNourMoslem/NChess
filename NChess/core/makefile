@@ -1,8 +1,8 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c11
 SRC_DIR = ./src
-OBJ_DIR = ./obj
-BIN_DIR = ./bin
+OBJ_DIR = $(SRC_DIR)/obj
+BIN_DIR = $(SRC_DIR)/bin
 TARGET = $(BIN_DIR)/nchess
 
 SRCS = $(wildcard $(SRC_DIR)/*.c)

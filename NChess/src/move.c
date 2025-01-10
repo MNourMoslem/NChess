@@ -161,3 +161,13 @@ Move_AsString(Move move, char* dst){
         dst[4] = '\0';
     }
 }
+
+void
+Move_PrintAll(Move* moves, int nmoves){
+    char buffer[7];
+    for (int i = 0; i < nmoves; i++){
+        Move_AsString(moves[i], buffer);
+        printf("%s ", buffer);
+    }
+    printf("\n");
+}

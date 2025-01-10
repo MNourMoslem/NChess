@@ -242,7 +242,7 @@ convert_to_moves(Board* board, Move* moves){
     return counter;
 }
 
-NCH_STATIC_INLINE void
+void
 generate_moves(Board* board){
     board->castle_moves = 0;
 
@@ -267,6 +267,8 @@ generate_moves(Board* board){
     }
 
     generate_pieces_psudo_king(board);
+
+    board->generated = 1;
 }
 
 int

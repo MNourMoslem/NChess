@@ -1,6 +1,7 @@
 #include "board.h" 
 #include "stdio.h"
 #include "loops.h"
+#include "generate.h"
 #include <string.h>
 
 
@@ -52,66 +53,6 @@ Board_Print(Board* board){
 }
 
 void
-Board_PrintMoves(Board* board){
-    char* src;
-    int idx;
-    for (int i = 0; i < NCH_SQUARE_NB; i++){
-        if (board->moves[i]){
-           src = squares_char[i];
-           LOOP_U64_T(board->moves[i]){
-                printf("%s%s ", src, squares_char[idx]);
-           }
-        }
-    }
-    printf("\n");
-}
-
-int
-Board_MovesAsString(Board* board, char buffer[][7]){
-    char* src;
-    int idx;
-    int move_counter = 0;
-    Side side = Board_GET_SIDE(board);
-
-    for (int i = 0; i < NCH_SQUARE_NB; i++){
-        if (board->moves[i]){
-           src = squares_char[i];
-           LOOP_U64_T(board->moves[i]){
-                buffer[move_counter][0] = src[0];
-                buffer[move_counter][1] = src[1];
-                buffer[move_counter][2] = squares_char[idx][0];
-                buffer[move_counter][3] = squares_char[idx][1];
-
-                if (board->piecetables[side][i] == NCH_Pawn
-                    && (idx <= NCH_A1 || idx >= NCH_H8))
-                {             
-                    memcpy(buffer[move_counter + 1], buffer[move_counter], sizeof(char) * 4);
-                    buffer[move_counter+1][4] = 'r';
-                    buffer[move_counter+1][5] = '\0';
-
-                    memcpy(buffer[move_counter + 2], buffer[move_counter], sizeof(char) * 4);
-                    buffer[move_counter+2][4] = 'b';
-                    buffer[move_counter+2][5] = '\0';
-
-                    memcpy(buffer[move_counter + 3], buffer[move_counter], sizeof(char) * 4);
-                    buffer[move_counter+3][4] = 'n';
-                    buffer[move_counter+3][5] = '\0';
-
-                    buffer[move_counter][4] = 'q';
-                    buffer[move_counter][5] = '\0';
-
-                    move_counter+=4;
-                    continue;
-                }
-                buffer[move_counter][4] = '\0';
-                move_counter++;
-           }
-        }
-    }
-    return move_counter;
-}
-
-void
 Board_PrintInfo(Board *board){
     printf("=========\n  Board  \n=========\n");
     Board_Print(board);
@@ -123,7 +64,7 @@ Board_PrintInfo(Board *board){
                                         , Board_IS_CASTLE_WQ(board) ? 'Q' : '-'
                                         , Board_IS_CASTLE_BK(board) ? 'k' : '-'
                                         , Board_IS_CASTLE_BQ(board) ? 'q' : '-');
-    printf("number of moves: %i\n", Board_NMoves(board));
+    // printf("number of moves: %i\n", Board_NMoves(board));
     printf("played turns: %i\n", board->nmoves);
     printf("fifty counter: %i\n", board->fifty_counter);
     printf("enpassant square: %s\n", board->en_passant_trg ? 

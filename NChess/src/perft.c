@@ -1,5 +1,6 @@
 #include "perft.h"
 #include "makemove.h"
+#include "generate.h"
 #include "io.h"
 #include "move.h"
 #include <stdio.h>
@@ -31,14 +32,15 @@ format_number_with_commas(long long num, char* output) {
 long long
 preft_recursive(Board* board, int depth){
     if (depth <= 1){
-        if (depth == 1)
-            return Board_NMoves(board);
+        if (depth == 1){
+            return Board_CountLegalMoves(board);
+        }
         return 1;
     }
     
     long long count = 0;
     Move moves[256];
-    int nmoves = Board_GetLegalMoves(board, moves);
+    int nmoves = Board_GenerateLegalMoves(board, moves);
     
     for (int i = 0; i < nmoves; i++){
         Board_StepByMove(board, moves[i]);
@@ -59,7 +61,7 @@ Board_Perft(Board* board, int depth){
 
     long long total = 0, count;
     Move moves[256];
-    int nmoves = Board_GetLegalMoves(board, moves);
+    int nmoves = Board_GenerateLegalMoves(board, moves);
 
     char move_str[6];
     for (int i = 0; i < nmoves; i++){
@@ -89,7 +91,7 @@ Board_PerftPretty(Board* board, int depth){
 
     long long total = 0, count;
     Move moves[256];
-    int nmoves = Board_GetLegalMoves(board, moves);
+    int nmoves = Board_GenerateLegalMoves(board, moves);
 
     char move_str[6];
     char formatted_total[30];
@@ -123,7 +125,7 @@ Board_PerftNoPrint(Board* board, int depth){
 
     long long total = 0;
     Move moves[256];
-    int nmoves = Board_GetLegalMoves(board, moves);
+    int nmoves = Board_GenerateLegalMoves(board, moves);
     for (int i = 0; i < nmoves; i++){
         Board_StepByMove(board, moves[i]);
         total += preft_recursive(board, depth - 1);

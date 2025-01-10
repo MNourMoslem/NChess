@@ -9,7 +9,7 @@ test_bitboard_1(){
         return 0;
     }
 
-    Board_Perft(board, 4);
+    Board_Perft(board, 5);
 
     Board_Free(board);
     return 1;

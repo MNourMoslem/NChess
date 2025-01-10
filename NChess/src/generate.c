@@ -66,26 +66,48 @@ generate_pieces_psudo_others(Board* board, uint64 allowed_squares){
     allowed_squares &= ~board->occupancy[side];
     int idx;
 
-    LOOP_U64_T(board->bitboards[side][NCH_Knight]){
+    uint64 bb;
+
+    bb = board->bitboards[side][NCH_Knight];
+    while (bb)
+    {
+        idx = NCH_SQRIDX(bb);
+        bb &= bb - 1;
+
         board->moves[idx] = bb_knight_attacks(idx) & allowed_squares;
     }
 
-    LOOP_U64_T(board->bitboards[side][NCH_Rook]){
+    bb = board->bitboards[side][NCH_Rook];
+    while (bb)
+    {
+        idx = NCH_SQRIDX(bb);
+        bb &= bb - 1;
+
         board->moves[idx] = bb_rook_attacks(idx, Board_ALL_OCC(board)) & allowed_squares;
     }
 
-    LOOP_U64_T(board->bitboards[side][NCH_Bishop]){
+    bb = board->bitboards[side][NCH_Bishop];
+    while (bb)
+    {
+        idx = NCH_SQRIDX(bb);
+        bb &= bb - 1;
+
         board->moves[idx] = bb_bishop_attacks(idx, Board_ALL_OCC(board)) & allowed_squares;
     }
 
-    LOOP_U64_T(board->bitboards[side][NCH_Queen]){
+    bb = board->bitboards[side][NCH_Queen];
+    while (bb)
+    {
+        idx = NCH_SQRIDX(bb);
+        bb &= bb - 1;
+
         board->moves[idx] = bb_queen_attacks(idx, Board_ALL_OCC(board)) & allowed_squares;
     }
 }
 
 NCH_STATIC_FINLINE void 
 generate_castle_moves(Board* board){
-    if (Board_IS_CHECK(board) || !board->castles){
+    if (!board->castles || Board_IS_CHECK(board)){
         return;
     }
 
@@ -164,7 +186,63 @@ execlude_pinned_pieces_unlegal_moves(Board *board){
     
 }
 
-void
+NCH_STATIC_INLINE int
+convert_to_moves(Board* board, Move* moves){
+        uint64 passer_pawns = Board_IS_WHITETURN(board) ?
+                        Board_WHITE_PAWNS(board) & NCH_ROW7 :
+                        Board_BLACK_PAWNS(board) & NCH_ROW2 ;
+
+    int idx, temp, counter = 0;
+    LOOP_U64_NAMED(occ, temp,
+     (Board_IS_WHITETURN(board) ? Board_WHITE_OCC(board) : Board_BLACK_OCC(board)) &~ passer_pawns
+    )
+    {
+        if (board->moves[temp]){
+            LOOP_U64_NAMED(mv, idx, board->moves[temp]){
+                moves[counter++] = Move_ASSIGN_FROM(temp) | Move_ASSIGN_TO(idx);
+            }
+        }
+    }
+    
+    LOOP_U64_NAMED(occ, temp, passer_pawns){
+        if (board->moves[temp]){
+            LOOP_U64_NAMED(mv, idx, board->moves[temp]){
+                moves[counter++] = Move_ASSIGN_FROM(temp) | Move_ASSIGN_TO(idx) 
+                                | Move_ASSIGN_PRO_PIECE(NCH_Queen);
+
+                moves[counter++] = Move_ASSIGN_FROM(temp) | Move_ASSIGN_TO(idx) 
+                                | Move_ASSIGN_PRO_PIECE(NCH_Rook);
+
+                moves[counter++] = Move_ASSIGN_FROM(temp) | Move_ASSIGN_TO(idx) 
+                                | Move_ASSIGN_PRO_PIECE(NCH_Bishop);
+
+                moves[counter++] = Move_ASSIGN_FROM(temp) | Move_ASSIGN_TO(idx) 
+                                | Move_ASSIGN_PRO_PIECE(NCH_Knight);
+            }
+        }
+    }
+
+    if (board->castle_moves){
+        if (NCH_CHKUNI(board->castle_moves, Board_CASTLE_WK | Board_CASTLE_BK)){
+            moves[counter++] = Move_ASSIGN_FROM(Board_IS_WHITETURN(board) ? NCH_E1 : NCH_E8) 
+                            | Move_ASSIGN_TO(Board_IS_WHITETURN(board) ? NCH_G1 : NCH_G8)
+                            | Move_ASSIGN_CASTLE(
+                                (Board_CASTLE_WK | Board_CASTLE_BK)
+                            );
+        }
+        if (NCH_CHKUNI(board->castle_moves, Board_CASTLE_WQ | Board_CASTLE_BQ)){
+            moves[counter++] = Move_ASSIGN_FROM(Board_IS_WHITETURN(board) ? NCH_E1 : NCH_E8) 
+                            | Move_ASSIGN_TO(Board_IS_WHITETURN(board) ? NCH_C1 : NCH_C8)
+                            | Move_ASSIGN_CASTLE(
+                                (Board_CASTLE_WQ | Board_CASTLE_BQ)
+                            );
+        }
+    }
+
+    return counter;
+}
+
+NCH_STATIC_INLINE void
 generate_moves(Board* board){
     board->castle_moves = 0;
 
@@ -189,4 +267,45 @@ generate_moves(Board* board){
     }
 
     generate_pieces_psudo_king(board);
+}
+
+int
+Board_GenerateLegalMoves(Board* board, Move* moves){
+    generate_moves(board);
+    return convert_to_moves(board, moves);
+}
+
+NCH_STATIC_INLINE int
+count_moves(Board* board){
+    uint64 passer_pawns = Board_IS_WHITETURN(board) ?
+                        Board_WHITE_PAWNS(board) & NCH_ROW7 :
+                        Board_BLACK_PAWNS(board) & NCH_ROW2 ;
+
+    int idx, counter = 0;
+    LOOP_U64_T(
+        (Board_IS_WHITETURN(board) ? Board_WHITE_OCC(board) : Board_BLACK_OCC(board)) &~ passer_pawns
+    )
+    {
+        if (board->moves[idx]){
+            counter += count_bits(board->moves[idx]);
+        }
+    }
+    
+    LOOP_U64_T(passer_pawns){
+        if (board->moves[idx]){
+            counter += count_bits(board->moves[idx]) * 4;
+        }
+    }
+
+    if (board->castle_moves){
+        counter += count_bits(board->castle_moves);
+    }
+
+    return counter;
+}
+
+int
+Board_CountLegalMoves(Board* board){
+    generate_moves(board);
+    return count_moves(board);
 }

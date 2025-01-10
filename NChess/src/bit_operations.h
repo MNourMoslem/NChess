@@ -69,4 +69,9 @@ get_ts1b(uint64 x) {
     return x & ~(x - 1);
 }
 
+NCH_STATIC_INLINE int
+more_then_one(uint64 x){
+    return x & (x - 1);
+}
+
 #endif // NCHESS_SRC_BIT_OPERATIONS_H

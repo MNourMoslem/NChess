@@ -51,22 +51,3 @@ Board_Print(Board* board){
         printf("\n");
     }
 }
-
-void
-Board_PrintInfo(Board *board){
-    printf("=========\n  Board  \n=========\n");
-    Board_Print(board);
-    printf("=========\n  Moves  \n=========\n");
-    Board_PrintMoves(board);
-    printf("=========\n  Info  \n=========\n");
-    printf("Turn: %s\n", Board_IS_WHITETURN(board) ? "White" : "Black");
-    printf("caslte rights: %c%c%c%c\n"  , Board_IS_CASTLE_WK(board) ? 'K' : '-'
-                                        , Board_IS_CASTLE_WQ(board) ? 'Q' : '-'
-                                        , Board_IS_CASTLE_BK(board) ? 'k' : '-'
-                                        , Board_IS_CASTLE_BQ(board) ? 'q' : '-');
-    // printf("number of moves: %i\n", Board_NMoves(board));
-    printf("played turns: %i\n", board->nmoves);
-    printf("fifty counter: %i\n", board->fifty_counter);
-    printf("enpassant square: %s\n", board->en_passant_trg ? 
-                                    squares_char[NCH_SQRIDX(board->en_passant_trg)] : "-");
-}   

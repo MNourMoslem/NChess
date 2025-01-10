@@ -36,6 +36,7 @@ typedef struct
 
     uint64 moves[NCH_SQUARE_NB];
     uint8 castle_moves;
+    int generated;
 
     MoveList* movelist;
     BoardDict* dict;

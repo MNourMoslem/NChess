@@ -24,6 +24,7 @@ _init_board_flags_and_states(Board* board){
     board->fifty_counter = 0;
     board->captured_piece = NCH_NO_PIECE;
     board->castle_moves = 0;
+    board->generated = 0;
 }
 
 NCH_STATIC_FINLINE void

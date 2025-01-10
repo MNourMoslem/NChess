@@ -160,7 +160,6 @@ update_check(Board* board){
 void
 Board_Update(Board* board){
     update_check(board);
-    generate_moves(board);
 
     if (BoardDict_GetCount(board->dict, board->bitboards) > 2){
         end_game_by_draw(board, Board_THREEFOLD);
@@ -182,82 +181,3 @@ Board_Update(Board* board){
     }
 }
 
-int
-Board_NMoves(Board* board){
-    int count = 0;
-    for (int i = 0; i < NCH_SQUARE_NB; i++){
-        if (board->moves[i]){
-            count += count_bits(board->moves[i]);
-        }
-    }
-
-    int idx;
-    LOOP_U64_T(Board_IS_WHITETURN(board) ? Board_WHITE_PAWNS(board) & NCH_ROW7 
-                                         : Board_BLACK_PAWNS(board) & NCH_ROW2){
-        if (board->moves[idx]){
-            count += 3 * count_bits(board->moves[idx]);
-        }
-    }
-
-    if (board->castle_moves){
-        count += count_bits(board->castle_moves);
-    }
-
-    return count;
-}
-
-int
-Board_GetLegalMoves(Board* board, Move* moves){
-    uint64 passer_pawns = Board_IS_WHITETURN(board) ?
-                        Board_WHITE_PAWNS(board) & NCH_ROW7 :
-                        Board_BLACK_PAWNS(board) & NCH_ROW2 ;
-
-    int idx, temp, counter = 0;
-    LOOP_U64_NAMED(occ, temp,
-     (Board_IS_WHITETURN(board) ? Board_WHITE_OCC(board) : Board_BLACK_OCC(board)) &~ passer_pawns
-    )
-    {
-        if (board->moves[temp]){
-            LOOP_U64_NAMED(mv, idx, board->moves[temp]){
-                moves[counter++] = Move_ASSIGN_FROM(temp) | Move_ASSIGN_TO(idx);
-            }
-        }
-    }
-    
-    LOOP_U64_NAMED(occ, temp, passer_pawns){
-        if (board->moves[temp]){
-            LOOP_U64_NAMED(mv, idx, board->moves[temp]){
-                moves[counter++] = Move_ASSIGN_FROM(temp) | Move_ASSIGN_TO(idx) 
-                                | Move_ASSIGN_PRO_PIECE(NCH_Queen);
-
-                moves[counter++] = Move_ASSIGN_FROM(temp) | Move_ASSIGN_TO(idx) 
-                                | Move_ASSIGN_PRO_PIECE(NCH_Rook);
-
-                moves[counter++] = Move_ASSIGN_FROM(temp) | Move_ASSIGN_TO(idx) 
-                                | Move_ASSIGN_PRO_PIECE(NCH_Bishop);
-
-                moves[counter++] = Move_ASSIGN_FROM(temp) | Move_ASSIGN_TO(idx) 
-                                | Move_ASSIGN_PRO_PIECE(NCH_Knight);
-            }
-        }
-    }
-
-    if (board->castle_moves){
-        if (NCH_CHKUNI(board->castle_moves, Board_CASTLE_WK | Board_CASTLE_BK)){
-            moves[counter++] = Move_ASSIGN_FROM(Board_IS_WHITETURN(board) ? NCH_E1 : NCH_E8) 
-                            | Move_ASSIGN_TO(Board_IS_WHITETURN(board) ? NCH_G1 : NCH_G8)
-                            | Move_ASSIGN_CASTLE(
-                                (Board_CASTLE_WK | Board_CASTLE_BK)
-                            );
-        }
-        if (NCH_CHKUNI(board->castle_moves, Board_CASTLE_WQ | Board_CASTLE_BQ)){
-            moves[counter++] = Move_ASSIGN_FROM(Board_IS_WHITETURN(board) ? NCH_E1 : NCH_E8) 
-                            | Move_ASSIGN_TO(Board_IS_WHITETURN(board) ? NCH_C1 : NCH_C8)
-                            | Move_ASSIGN_CASTLE(
-                                (Board_CASTLE_WQ | Board_CASTLE_BQ)
-                            );
-        }
-    }
-
-    return counter;
-}

@@ -4,13 +4,9 @@
 #include "utils.h"
 #include "movelist.h"
 #include "hash.h"
+#include "generate.h"
 
 #include <stdlib.h>
-
-NCH_STATIC_INLINE int
-is_valid_move(Board* board, Square from_, Square to_, uint8 castle){
-    return (board->moves[from_] & NCH_SQR(to_)) || castle;
-}
 
 NCH_STATIC_INLINE void*
 get_target_map(Board* board, Side side, Square sqr){
@@ -198,11 +194,20 @@ increase_counter(Board* board){
     }
 }
 
-NCH_STATIC_INLINE void
-_Board_MakeMove(Board* board, Move move){
-    // if (!is_valid_move(board, from_, to_, castle))
-    //     return;
+int 
+Board_IsMoveLegal(Board* board, Move move){
+    if (!board->generated){
+        generate_moves(board);
+    }
 
+    return (board->piecetables[Board_GET_SIDE(board)][Move_FROM(move)] != NCH_NO_PIECE
+            && board->moves[Move_FROM(move)] & Move_TO(move))
+            ||
+            (board->castle_moves & Move_CASTLE(move)); 
+}
+
+void
+_Board_MakeMove(Board* board, Move move){
     MoveList_Append(board->movelist, move,
                      board->en_passant_idx, board->captured_piece,
                      board->fifty_counter, board->castles, board->flags);
@@ -217,16 +222,21 @@ _Board_MakeMove(Board* board, Move move){
     flip_turn(board);
     increase_counter(board);
     Board_Update(board);
+
+    board->generated = 0;
 }
 
 void
 Board_StepByMove(Board* board, Move move){
-    _Board_MakeMove(board, move);
+    if (Board_IsMoveLegal(board, move))
+        _Board_MakeMove(board, move);
 }
 
 void
 Board_Step(Board* board, char* move){
-    _Board_MakeMove(board, Move_FromString(move));
+    Move m = Move_FromString(move);
+    if (Board_IsMoveLegal(board, m))
+        _Board_MakeMove(board, m);
 }
 
 void
@@ -258,4 +268,6 @@ Board_Undo(Board* board){
 
     MoveList_Pop(board->movelist);
     Board_Update(board);
+
+    board->generated = 0;
 }

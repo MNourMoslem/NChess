@@ -7,7 +7,8 @@
 typedef enum{
     NCH_White,
     NCH_Black,
-    NCH_SIDES_NB
+    NCH_SIDES_NB,
+    NCH_NO_SIDE
 }Side;
 
 typedef enum {
@@ -19,7 +20,8 @@ typedef enum {
         NCH_H6, NCH_G6, NCH_F6, NCH_E6, NCH_D6, NCH_C6, NCH_B6, NCH_A6,
         NCH_H7, NCH_G7, NCH_F7, NCH_E7, NCH_D7, NCH_C7, NCH_B7, NCH_A7,
         NCH_H8, NCH_G8, NCH_F8, NCH_E8, NCH_D8, NCH_C8, NCH_B8, NCH_A8,
-    NCH_SQUARE_NB
+    NCH_SQUARE_NB,
+    NCH_NO_SQR
 }Square;
 
 typedef enum {
@@ -85,18 +87,42 @@ extern const int NCH_DIAGONAL_MAIN_IDX[64];
 extern const uint64 NCH_DIAGONAL_ANTI[15];
 extern const int NCH_DIAGONAL_ANTI_IDX[64];
 
+typedef enum{
+    NCH_Up = 0,
+    NCH_Down,
+    NCH_Right,
+    NCH_Left,
+    NCH_UpRight,
+    NCH_UpLeft,
+    NCH_DownRight,
+    NCH_DownLeft,
+
+    NCH_DIR_NB,
+
+    NCH_NO_DIR
+}Diractions;
+
+extern Diractions NCH_DIRACTION_TABLE[NCH_SQUARE_NB][NCH_SQUARE_NB];
+
+
 #define NCH_SQR(idx) (1ULL << (idx))
 #define NCH_SQRIDX(square) count_tbits(square)
 #define NCH_GET_COLIDX(idx) NCH_COL_TABLE[idx]
 #define NCH_GET_ROWIDX(idx) NCH_ROW_TABLE[idx]
 #define NCH_GET_COL(idx) (NCH_COL1 << (NCH_GET_COLIDX(idx)))
 #define NCH_GET_ROW(idx) (NCH_ROW1 << (NCH_GET_ROWIDX(idx) * 8))
-#define NCH_GET_DIGMAIN(idx) NCH_DIAGONAL_MAIN[NCH_DIAGONAL_MAIN_IDX[idx]]
-#define NCH_GET_DIGANTI(idx) NCH_DIAGONAL_ANTI[NCH_DIAGONAL_ANTI_IDX[idx]]
+#define NCH_GET_DIGMAINIDX(idx) NCH_DIAGONAL_MAIN_IDX[idx]
+#define NCH_GET_DIGANTIIDX(idx) NCH_DIAGONAL_ANTI_IDX[idx]
+#define NCH_GET_DIGMAIN(idx) NCH_DIAGONAL_MAIN[NCH_GET_DIGMAINIDX(idx)]
+#define NCH_GET_DIGANTI(idx) NCH_DIAGONAL_ANTI[NCH_GET_DIGANTIIDX(idx)]
+#define NCH_GET_DIRACTION(from, to) NCH_DIRACTION_TABLE[from][to]
 
 #define NCH_SAME_COL(idx1, idx2) (NCH_GET_COLIDX(idx1) == NCH_GET_COLIDX(idx2))
 #define NCH_SAME_ROW(idx1, idx2) (NCH_GET_ROWIDX(idx1) == NCH_GET_ROWIDX(idx2))
 #define NCH_SAME_MAIN_DG(idx1, idx2) (NCH_DIAGONAL_MAIN_IDX[idx1] == NCH_DIAGONAL_MAIN_IDX[idx2])
 #define NCH_SAME_ANTI_DG(idx1, idx2) (NCH_DIAGONAL_ANTI_IDX[idx1] == NCH_DIAGONAL_ANTI_IDX[idx2])
+
+void
+NCH_InitTables();
 
 #endif

@@ -88,11 +88,6 @@ str2square(char* s){
     return ('h' - s[0]) + (char2number(s[1]) * 8); 
 }
 
-NCH_STATIC_INLINE Square
-is_valid_square(Square s){
-    return s >= NCH_H1 && s < NCH_A8;
-}
-
 int
 parse_fen(Board* board, char* fen){
     Square sqr = NCH_A8;

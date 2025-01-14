@@ -33,7 +33,8 @@ long long
 preft_recursive(Board* board, int depth){
     if (depth <= 1){
         if (depth == 1){
-            return Board_CountLegalMoves(board);
+            Move moves[256];
+            return Board_GenerateLegalMoves(board, moves);
         }
         return 1;
     }

@@ -7,13 +7,7 @@
 #include "board.h"
 #include "loops.h"
 
-void
-generate_moves(Board* board);
-
 int
 Board_GenerateLegalMoves(Board* board, Move* moves);
-
-int
-Board_CountLegalMoves(Board* board);
 
 #endif

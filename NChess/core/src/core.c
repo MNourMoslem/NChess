@@ -81,3 +81,92 @@ const int NCH_DIAGONAL_ANTI_IDX[64] = {
     13, 12, 11, 10, 9, 8, 7, 6,
     14, 13, 12, 11, 10, 9, 8, 7
 };
+
+Diractions NCH_DIRACTION_TABLE[NCH_SQUARE_NB][NCH_SQUARE_NB];
+
+NCH_STATIC void
+init_diractions(){
+    int row, main, anti, cur, temp;
+    for (int i = 0; i < NCH_SQUARE_NB; i++){
+
+        for (int j = 0; j < NCH_SQUARE_NB; j++)
+            NCH_DIRACTION_TABLE[i][j] = NCH_NO_DIR;
+        
+        row = NCH_GET_ROWIDX(i);
+        main = NCH_GET_DIGMAINIDX(i);
+        anti = NCH_GET_DIGANTIIDX(i);
+
+        cur = i + 8;
+        while (cur < 64)
+        {
+            NCH_DIRACTION_TABLE[i][cur] = NCH_Up;
+            cur += 8;
+        }
+        
+        cur = i - 8;
+        while (cur >= 0)
+        {
+            NCH_DIRACTION_TABLE[i][cur] = NCH_Down;
+            cur -= 8;
+        }
+        
+        cur = i + 1;
+        temp = NCH_GET_ROWIDX(cur);
+        while (cur < 64 && temp == row)
+        {
+            NCH_DIRACTION_TABLE[i][cur] = NCH_Left;
+            cur += 1;
+            temp = NCH_GET_ROWIDX(cur);
+        }
+        
+        cur = i - 1;
+        temp = NCH_GET_ROWIDX(cur);
+        while (cur > 0 && temp == row)
+        {
+            NCH_DIRACTION_TABLE[i][cur] = NCH_Right;
+            cur -= 1;
+            temp = NCH_GET_ROWIDX(cur);
+        }
+
+        cur = i + 7;
+        temp = NCH_GET_DIGMAINIDX(cur);
+        while (cur < 64 && temp == main)
+        {
+            NCH_DIRACTION_TABLE[i][cur] = NCH_UpRight;
+            cur += 7;
+            temp = NCH_GET_DIGMAINIDX(cur);
+        }
+
+        cur = i - 7;
+        temp = NCH_GET_DIGMAINIDX(cur);
+        while (cur > 0 && temp == main)
+        {
+            NCH_DIRACTION_TABLE[i][cur] = NCH_DownLeft;
+            cur -= 7;
+            temp = NCH_GET_DIGMAINIDX(cur);
+        }
+
+        cur = i - 9;
+        temp = NCH_GET_DIGANTIIDX(cur);
+        while (cur > 0 && temp == anti)
+        {
+            NCH_DIRACTION_TABLE[i][cur] = NCH_DownRight;
+            cur -= 9;
+            temp = NCH_GET_DIGANTIIDX(cur);
+        }
+
+        cur = i + 9;
+        temp = NCH_GET_DIGANTIIDX(cur);
+        while (cur < 64 && temp == anti)
+        {
+            NCH_DIRACTION_TABLE[i][cur] = NCH_UpLeft;
+            cur += 9;
+            temp = NCH_GET_DIGANTIIDX(cur);
+        }
+    }
+}
+
+void
+NCH_InitTables(){
+    init_diractions();
+}

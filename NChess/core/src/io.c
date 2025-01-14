@@ -51,3 +51,23 @@ Board_Print(Board* board){
         printf("\n");
     }
 }
+
+void
+Board_AsString(Board* board, char* buffer){
+    int i = NCH_A8, buffer_idx = 0;
+    for (int raw = 7; raw > -1; raw--){
+        for (int file = 7; file > -1; file--){
+            i = raw * 8 + file;
+            
+            buffer[buffer_idx++] = Board_WHITE_PIECE(board, i) != NCH_NO_PIECE ?
+                                   NCH_PIECES[Board_WHITE_PIECE(board, i)]
+
+                                 : Board_BLACK_PIECE(board, i) != NCH_NO_PIECE ? 
+                                   NCH_PIECES[NCH_Black * NCH_PIECE_NB + Board_BLACK_PIECE(board, i)]
+
+                                 : '.';
+        }
+        buffer[buffer_idx++] = '\n';
+    }
+    buffer[buffer_idx] = '\0';
+}

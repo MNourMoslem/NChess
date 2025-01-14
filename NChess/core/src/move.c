@@ -5,30 +5,12 @@
 #include <string.h>
 #include "utils.h"
 
-NCH_STATIC_INLINE int
-is_valid_column(char arg){
-    return arg >= 'a' && arg <= 'h';
-}
-
-NCH_STATIC_INLINE int
-is_valid_row(char arg){
-    return arg >= '1' && arg <= '8';
-}
-
 void
 Move_Parse(Move move, Square* from_, Square* to_, uint8* castle, Piece* promotion){
     *from_ = Move_FROM(move);
     *to_ = Move_TO(move);
     *castle = Move_CASTLE(move);
     *promotion = Move_PRO_PIECE(move);
-}
-
-Move
-Move_New(Square from_, Square to_, uint8 castle, Piece promotion){
-    Move move;
-    move = Move_ASSIGN_FROM(from_) | Move_ASSIGN_TO(to_) 
-         | Move_ASSIGN_CASTLE(castle) | Move_ASSIGN_PRO_PIECE(promotion) ;
-    return move;
 }
 
 int
@@ -89,8 +71,11 @@ Move_FromString(char* move){
     Square from_, to_;
     Piece promotion;
     uint8 castle;
-    Move_ParseFromString(move, &from_, &to_, &promotion, &castle);
-    return Move_New(from_, to_, castle, promotion);
+    int res = Move_ParseFromString(move, &from_, &to_, &promotion, &castle);
+    if (res == -1)
+        return 0;
+
+    return Move_New(from_, to_, promotion, castle, 0, 0);
 }
 
 void
@@ -119,7 +104,7 @@ static char* squares_char[] = {
     "h8", "g8", "f8", "e8", "d8", "c8", "b8", "a8"
 };
 
-void
+int
 Move_AsString(Move move, char* dst){
     char* temp;
     if (Move_CASTLE(move)){
@@ -129,12 +114,16 @@ Move_AsString(Move move, char* dst){
         else{
             strcpy(dst, "O-O-O");
         }
-        return;
+        return 0;
     }
 
     Square from_ = Move_FROM(move);
     Square to_ = Move_TO(move);
     Piece promotion = Move_PRO_PIECE(move);
+
+    if (!is_valid_square(from_) || !is_valid_square(to_)){
+        return -1;
+    }
 
     temp = squares_char[from_];
     dst[0] = temp[0];
@@ -160,6 +149,8 @@ Move_AsString(Move move, char* dst){
     else{
         dst[4] = '\0';
     }
+
+    return 0;
 }
 
 void

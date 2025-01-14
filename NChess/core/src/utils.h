@@ -107,5 +107,44 @@ set_board_occupancy(Board* board){
                                    | board->occupancy[NCH_White];
 }
 
+NCH_STATIC_INLINE int
+is_valid_column(const char arg){
+    return arg >= 'a' && arg <= 'h';
+}
+
+NCH_STATIC_INLINE int
+is_valid_row(const char arg){
+    return arg >= '1' && arg <= '8';
+}
+
+NCH_STATIC_INLINE int
+is_valid_square(Square s){
+    return (s >= 0) && (s < NCH_SQUARE_NB);
+}
+
+NCH_STATIC_INLINE int
+char_to_col(const char c){
+    return 'h' - c;
+}
+
+NCH_STATIC_INLINE int
+char_to_row(const char c){
+    return c - '1';
+}
+
+NCH_STATIC_INLINE Square
+str_to_square(const char* sq_str){
+    const char col_char = sq_str[0];
+    const char row_char = sq_str[1];
+    
+    if (!is_valid_column(col_char) || !is_valid_row(row_char)){
+        return NCH_NO_SQR;
+    }
+
+    int col = char_to_col(col_char);
+    int row = char_to_row(row_char);
+
+    return (Square)(col + 8 * row);
+}
 
 #endif

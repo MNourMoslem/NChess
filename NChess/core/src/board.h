@@ -34,10 +34,6 @@ typedef struct
     uint64 en_passant_map;
     uint64 en_passant_trg;
 
-    uint64 moves[NCH_SQUARE_NB];
-    uint8 castle_moves;
-    int generated;
-
     MoveList* movelist;
     BoardDict* dict;
 
@@ -70,6 +66,13 @@ typedef struct
 
 #define Board_WHITE_PIECE(board, idx) (board)->piecetables[NCH_White][idx]
 #define Board_BLACK_PIECE(board, idx) (board)->piecetables[NCH_Black][idx]
+
+#define Board_ON_SQUARE(board, idx) Board_WHITE_PIECE(board, idx) != NCH_NO_PIECE ?\
+                                    Board_WHITE_PIECE(board, idx) : Board_BLACK_PIECE(board, idx)
+
+#define Board_OWNED_BY(board, idx) Board_WHITE_PIECE(board, idx) != NCH_NO_PIECE ?\
+                                   NCH_White : Board_BLACK_PIECE(board, idx) != NCH_NO_PIECE ?\
+                                   NCH_Black : NCH_NO_SIDE;
 
 #define Board_PAWNMOVED 0x1
 #define Board_ENPASSANT 0x2

@@ -16,7 +16,7 @@ uint64 SlidersAttackMask[2][NCH_SQUARE_NB];         // 128
 int ReleventSquares[2][NCH_SQUARE_NB];              // 128
 
 uint64 RookTable[NCH_SQUARE_NB][4096];              // 262,144
-uint64 BishopTable[NCH_SQUARE_NB][512];    
+uint64 BishopTable[NCH_SQUARE_NB][512];             // 32,768  
 
 NCH_STATIC void
 init_pawn_attacks(){
@@ -329,7 +329,7 @@ init_sliders_table(){
 
 
 void
-InitBitboards(){
+NCH_InitBitboards(){
     init_pawn_attacks();
     init_knight_attacks();
     init_king_attacks();

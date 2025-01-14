@@ -5,6 +5,7 @@
 #include "movelist.h"
 #include "hash.h"
 #include "generate.h"
+#include "generate_utils.h"
 
 #include <stdlib.h>
 
@@ -44,7 +45,6 @@ make_promotion(Board* board, Side side, uint64 sqr, Piece promotion){
 
     remove_piece(board, side, sqr);
     set_piece(board, side, sqr, promotion);
-    NCH_SETFLG(board->flags, Board_PROMOTION);
 }
 
 NCH_STATIC_INLINE int
@@ -73,7 +73,6 @@ play_pawn_move(Board* board, Side side, Move move){
     move_piece(board, side, from_, to_);
     if (NCH_SQR(to_) == board->en_passant_trg){
        to_ = side == NCH_White ? to_ - 8 : to_ + 8; 
-        NCH_SETFLG(board->flags, Board_ENPASSANT);
     }
 
     Piece captured_piece = capture_piece_if_possible(board, TARGET_SIDE(side), to_);
@@ -98,10 +97,9 @@ play_move(Board* board, Side side, Move move){
         return play_pawn_move(board, side, move);
     }
 
-    move_piece(board, side, Move_FROM(move), Move_TO(move));
-    Piece captured_piece = capture_piece_if_possible(board, TARGET_SIDE(side), Move_TO(move));
     reset_enpassant_variable(board);
-    return captured_piece;
+    move_piece(board, side, Move_FROM(move), Move_TO(move));
+    return capture_piece_if_possible(board, TARGET_SIDE(side), Move_TO(move));
 }
 
 void
@@ -145,23 +143,34 @@ make_move(Board* board, Move move){
 }
 
 void
-undo_move(Board* board, Side side, Move move, int is_enpassant,
-         int is_promotion, Piece last_captured_piece){
-    Square from_ = Move_FROM(move);
-    Square to_ = Move_TO(move);
-    
+undo_move(Board* board, Side side, Move move, Piece last_captured_piece){
     if (Move_CASTLE(move)){
-        if (NCH_CHKUNI(Move_CASTLE(move), Board_CASTLE_WK | Board_CASTLE_BK)){
-            move_piece(board, side, to_, from_);
-            move_piece(board, side, to_ + 1, from_ - 3);
+        if (side == NCH_White){
+            if (Move_CASTLE(move) & Board_CASTLE_WK){
+                move_piece(board, NCH_White, NCH_G1, NCH_E1);
+                move_piece(board, NCH_White, NCH_F1, NCH_H1);
+            }
+            else{
+                move_piece(board, NCH_White, NCH_C1, NCH_E1);
+                move_piece(board, NCH_White, NCH_D1, NCH_A1);
+            }
         }
         else{
-            move_piece(board, side, to_, from_);
-            move_piece(board, side,  to_ - 1, from_ + 4);
+            if (Move_CASTLE(move) & Board_CASTLE_BK){
+                move_piece(board, NCH_Black, NCH_G8, NCH_E8);
+                move_piece(board, NCH_Black, NCH_F8, NCH_H8);
+            }
+            else{
+                move_piece(board, NCH_Black, NCH_C8, NCH_E8);
+                move_piece(board, NCH_Black, NCH_D8, NCH_A8);
+            }
         }
     }
     else{
-        if (is_promotion){
+        Square from_ = Move_FROM(move);
+        Square to_ = Move_TO(move);
+
+        if (Move_IS_PRO(move)){
             remove_piece(board, side, to_);
             set_piece(board, side, from_, NCH_Pawn);
         }
@@ -169,7 +178,7 @@ undo_move(Board* board, Side side, Move move, int is_enpassant,
             move_piece(board, side, to_, from_);
         }
         
-        if (is_enpassant){
+        if (Move_IS_ENP(move)){
             set_piece(board, TARGET_SIDE(side), side == NCH_White ? to_ - 8 : to_ + 8, NCH_Pawn);
         }
         else if(last_captured_piece != NCH_NO_PIECE){
@@ -196,14 +205,51 @@ increase_counter(Board* board){
 
 int 
 Board_IsMoveLegal(Board* board, Move move){
-    if (!board->generated){
-        generate_moves(board);
+    Piece p = board->piecetables[Board_GET_SIDE(board)][Move_FROM(move)];
+    if (p == NCH_NO_PIECE)
+        return 0;
+
+    uint64 allowed_squares = Board_IS_WHITETURN(board) ? ~Board_WHITE_OCC(board) : ~Board_BLACK_OCC(board);
+    
+    Move pseudo_moves[30];
+    Move* tail;
+
+    if (Move_CASTLE(move)){
+        tail = generate_castle_moves(board, pseudo_moves);
+    }
+    else if (p == NCH_King){
+        tail = generate_king_moves(board, pseudo_moves);
+    }
+    else{
+        tail = generate_any_move(board, Board_GET_SIDE(board), Move_FROM(move), Board_ALL_OCC(board), allowed_squares, pseudo_moves);
     }
 
-    return (board->piecetables[Board_GET_SIDE(board)][Move_FROM(move)] != NCH_NO_PIECE
-            && board->moves[Move_FROM(move)] & Move_TO(move))
-            ||
-            (board->castle_moves & Move_CASTLE(move)); 
+    if (tail == pseudo_moves)
+        return 0;
+
+    int len = tail - pseudo_moves;
+    int available = 0;
+    Move ps;
+    for (int i = 0; i < len; i++){
+        ps = pseudo_moves[i];
+        if (Move_FROM(move) == Move_FROM(ps) && Move_TO(move) == Move_TO(ps)){
+            move = Move_New(Move_FROM(move), Move_TO(move),
+                             Move_PRO_PIECE(move), Move_CASTLE(move),
+                              Move_IS_ENP(ps), Move_IS_PRO(ps));
+
+            available = 1;
+            break;
+        }
+    }
+
+    if (!available)
+        return 0;
+
+    Piece captured = make_move(board, move);
+    int is_check = Board_IsCheck(board);
+    undo_move(board, Board_GET_SIDE(board), move, captured);
+
+    return !is_check;
 }
 
 void
@@ -222,8 +268,6 @@ _Board_MakeMove(Board* board, Move move){
     flip_turn(board);
     increase_counter(board);
     Board_Update(board);
-
-    board->generated = 0;
 }
 
 void
@@ -235,6 +279,9 @@ Board_StepByMove(Board* board, Move move){
 void
 Board_Step(Board* board, char* move){
     Move m = Move_FromString(move);
+    if (!m)
+        return;
+
     if (Board_IsMoveLegal(board, m))
         _Board_MakeMove(board, m);
 }
@@ -248,8 +295,7 @@ Board_Undo(Board* board){
     BoardDict_Remove(board->dict, board->bitboards);
 
     undo_move(board, Board_GET_OP_SIDE(board),
-             node->move, Board_IS_ENPASSANT(board),
-             Board_IS_PROMOTION(board), board->captured_piece);
+             node->move, board->captured_piece);
 
     if (MoveNode_ENP_SQR(node)){
         set_board_enp_settings(board, Board_GET_SIDE(board), MoveNode_ENP_SQR(node));
@@ -268,6 +314,4 @@ Board_Undo(Board* board){
 
     MoveList_Pop(board->movelist);
     Board_Update(board);
-
-    board->generated = 0;
 }

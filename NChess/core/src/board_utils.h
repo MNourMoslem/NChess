@@ -18,12 +18,7 @@ end_game_by_wl(Board* board){
 
 NCH_STATIC_INLINE int
 at_least_one_move(Board* board){
-    for (int i = 0; i < NCH_SQUARE_NB; i++){
-        if (board->moves[i]){
-            return 1;
-        }
-    }
-    return 0;
+    return 1;
 }
 
 NCH_STATIC_INLINE void

@@ -23,8 +23,6 @@ _init_board_flags_and_states(Board* board){
     board->nmoves = 0;
     board->fifty_counter = 0;
     board->captured_piece = NCH_NO_PIECE;
-    board->castle_moves = 0;
-    board->generated = 0;
 }
 
 NCH_STATIC_FINLINE void
@@ -139,23 +137,15 @@ Board_IsCheck(Board* board){
 
 NCH_STATIC_FINLINE void
 update_check(Board* board){
-    if (Board_IsCheck(board)){
-        uint64 check_map = get_checkmap(
-            board,
-            Board_IS_WHITETURN(board) ? NCH_White : NCH_Black,
-            NCH_SQRIDX( Board_IS_WHITETURN(board) ? Board_WHITE_KING(board) : Board_BLACK_KING(board)),
-            Board_ALL_OCC(board)
-        );
+    uint64 check_map = get_checkmap(
+        board,
+        Board_GET_SIDE(board),
+        NCH_SQRIDX( Board_IS_WHITETURN(board) ? Board_WHITE_KING(board) : Board_BLACK_KING(board)),
+        Board_ALL_OCC(board)
+    );
 
-        if (check_map){
-            if (count_bits(check_map) > 1){
-                NCH_SETFLG(board->flags, Board_CHECK | Board_DOUBLECHECK);
-            }
-            else{
-                NCH_SETFLG(board->flags, Board_CHECK);
-            }
-        }
-    }
+    if (check_map)
+        NCH_SETFLG(board->flags, more_then_one(check_map) ? Board_CHECK | Board_DOUBLECHECK : Board_CHECK);
 }
 
 void

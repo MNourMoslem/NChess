@@ -8,4 +8,7 @@
 void
 Board_Print(Board* board);
 
+void
+Board_AsString(Board* board, char* buffer);
+
 #endif

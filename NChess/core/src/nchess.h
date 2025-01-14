@@ -11,5 +11,12 @@
 #include "perft.h"
 #include "makemove.h"
 #include "move.h"
+#include "generate.h"
+
+NCH_STATIC void
+NCH_Init(){
+    NCH_InitTables();
+    NCH_InitBitboards();
+}
 
 #endif

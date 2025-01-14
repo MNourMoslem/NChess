@@ -95,6 +95,6 @@ bb_queen_attacks(int sqr_idx, uint64 block){
 }
 
 void
-InitBitboards();
+NCH_InitBitboards();
 
 #endif

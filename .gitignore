@@ -6,3 +6,4 @@ obj
 build
 *.pyd
 __pycache__
+test.py

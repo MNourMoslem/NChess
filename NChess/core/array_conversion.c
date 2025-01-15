@@ -69,21 +69,21 @@ create_numpy_array(void* data, int* dims, int ndim, enum NPY_TYPES dtype){
 }
 
 NCH_STATIC PyObject*
-create_list_array_recursive(int** data, int* dims, int dim){
-    int size = dims[dim];
+create_list_array_recursive(int** data, npy_intp* dims, int dim, int roof){
+    npy_intp size = dims[dim];
     PyObject* list = PyList_New(size);
     if (!list)
         return NULL;
 
-    if (dim <= 0){
-        for (int i = 0; i < size; i++){
+    if (dim >= roof){
+        for (npy_intp i = 0; i < size; i++){
             PyList_SetItem(list, i, PyLong_FromLong(*(*data)++));
         }
     }
     else{
         PyObject* item;
-        for (int i = 0; i < size; i++){
-            item = create_list_array_recursive(data, dims, dim-1);
+        for (npy_intp i = 0; i < size; i++){
+            item = create_list_array_recursive(data, dims, dim+1, roof);
             if (!item){
                 Py_DECREF(list);
                 return NULL;
@@ -96,12 +96,12 @@ create_list_array_recursive(int** data, int* dims, int dim){
 }
 
 PyObject*
-create_list_array(int* data, int* dims, int ndim){
-    return create_list_array_recursive(&data, dims, ndim - 1);
+create_list_array(int* data, npy_intp* dims, int ndim){
+    return create_list_array_recursive(&data, dims, 0, ndim-1);
 }
 
 int
-parse_array_conversion_function_args(int nitems, npy_intp* dims, PyObject* args,
+parse_board_conversion_function_args(int nitems, npy_intp* dims, PyObject* args,
                                      PyObject* kwargs, int* reversed, int* as_list)
 {
     PyObject* shape = NULL;
@@ -110,6 +110,28 @@ parse_array_conversion_function_args(int nitems, npy_intp* dims, PyObject* args,
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|Opp", kwlist, &shape, reversed, as_list)){
         if (!PyErr_Occurred()){
             PyErr_SetString(PyExc_ValueError, "failed to parse the shape argument");
+        }
+        return NULL;
+    }
+
+    int ndim = 0;
+    if (shape && !Py_IsNone(shape)){
+        ndim = check_shape(shape, nitems, dims);
+    }
+
+    return ndim;
+}
+
+int
+parse_bb_conversion_function_args(uint64* bb, int nitems, npy_intp* dims,
+                                 PyObject* args, PyObject* kwargs, int* reversed, int* as_list)
+{
+    PyObject* shape = NULL;
+    static char* kwlist[] = {"bb", "shape", "reversed", "as_list", NULL};
+    
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "K|Opp", kwlist, bb, &shape, reversed, as_list)){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(PyExc_ValueError, "failed to parse the arguments");
         }
         return NULL;
     }

@@ -103,7 +103,7 @@ test_perft_6(int tiny){
 
 void test_perft_main(int init_bb, int tiny){
     if (init_bb)
-        InitBitboards();
+        NCH_InitBitboards();
 
     perfttest funcs[] = {
         test_perft_1,

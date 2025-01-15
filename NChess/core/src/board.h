@@ -67,6 +67,8 @@ typedef struct
 #define Board_WHITE_PIECE(board, idx) (board)->piecetables[NCH_White][idx]
 #define Board_BLACK_PIECE(board, idx) (board)->piecetables[NCH_Black][idx]
 
+#define Board_CASTLE_RIGHTS(board) (board)->castles
+
 #define Board_ON_SQUARE(board, idx) Board_WHITE_PIECE(board, idx) != NCH_NO_PIECE ?\
                                     Board_WHITE_PIECE(board, idx) : Board_BLACK_PIECE(board, idx)
 

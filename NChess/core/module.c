@@ -1,34 +1,210 @@
 #include "pyboard.h"
 #include "src/nchess.h"
 #include <numpy/arrayobject.h>
+#include "common.h"
+#include <stdio.h>
+#include "pymove.h"
+#include "bb_functions.h"
 
 PyObject*
-move_as_uci(PyObject* self, PyObject* args){
-    PyObject* m;
-    if (!PyArg_ParseTuple(args, "O", &m)){
-        PyErr_SetString(PyExc_ValueError, "failed to parse the arguments");
+uci_as_square(PyObject* self, PyObject* args){
+    PyObject* uni;
+    if (!PyArg_ParseTuple(args, "O", &uni)){
+        PyErr_SetString(PyExc_ValueError, "failed to parse the arguments to get the square from uci");
         return NULL;
     }
 
-    if (!PyLong_Check(m)){
+    if (!PyUnicode_Check(uni)){
         PyErr_Format(PyExc_ValueError,
-         "move expcted to be an int. got %s",
-         Py_TYPE(m)->tp_name);
+         "square expected to be a string. got %s",
+         Py_TYPE(uni)->tp_name);
+        return NULL;
     }
 
-    Move move = PyLong_AsUnsignedLong(m);
-    char buffer[10];
-
-    int res = Move_AsString(move, buffer);
-    if (res == -1)
-        Py_RETURN_NONE;
-
-    return PyUnicode_FromString(buffer);
+    const char* s_str = PyUnicode_AsUTF8(uni);
+    if (s_str == NULL) {
+        PyErr_SetString(PyExc_ValueError, "failed to convert square to string to get the square");
+        return NULL;
+    }
+    return square_to_pyobject(str_to_square(s_str));
 }
+
+PyObject*
+square_file(PyObject* self, PyObject* args){
+    PyObject* s;
+    if (!PyArg_ParseTuple(args, "O", &s)){
+        PyErr_SetString(PyExc_ValueError, "failed to parse the arguments to get the file of a square");
+        return NULL;
+    }
+
+    Square sqr = pyobject_as_square(s);
+    if (!is_valid_square(sqr)){
+        if (PyErr_Occurred())
+            return NULL;
+
+        Py_RETURN_NONE;
+    }
+
+    return PyLong_FromLong(NCH_GET_COLIDX(sqr));
+}
+
+PyObject*
+square_rank(PyObject* self, PyObject* args){
+    PyObject* s;
+    if (!PyArg_ParseTuple(args, "O", &s)){
+        PyErr_SetString(PyExc_ValueError, "failed to parse the arguments to get the rank of a square");
+        return NULL;
+    }
+
+    Square sqr = pyobject_as_square(s);
+    if (!is_valid_square(sqr)){
+        if (PyErr_Occurred())
+            return NULL;
+
+        Py_RETURN_NONE;
+    }
+
+    return PyLong_FromLong(NCH_GET_ROWIDX(sqr));
+}
+
+PyObject*
+square_distance(PyObject* self, PyObject* args){
+    PyObject* s1, *s2;
+    if (!PyArg_ParseTuple(args, "OO", &s1, &s2)){
+        PyErr_SetString(PyExc_ValueError, "failed to parse the arguments to calculate the distance between two squares");
+        return NULL;
+    }
+
+    Square sqr1 = pyobject_as_square(s1);
+    Square sqr2 = pyobject_as_square(s2);
+    if (!is_valid_square(sqr1) || !is_valid_square(sqr2)){
+        if (PyErr_Occurred())
+            return NULL;
+
+        Py_RETURN_NONE;
+    }
+
+    return PyLong_FromLong(NCH_SQR_DISTANCE(sqr1, sqr2));
+}
+
+PyObject*
+square_mirror(PyObject* self, PyObject* args){
+    PyObject* s;
+    int is_verical = 1;
+    if (!PyArg_ParseTuple(args, "O|p", &s)){
+        PyErr_SetString(PyExc_ValueError, "failed to parse the arguments to mirror a square");
+        return NULL;
+    }
+
+    Square sqr = pyobject_as_square(s);
+    if (!is_valid_square(sqr)){
+        if (PyErr_Occurred())
+            return NULL;
+
+        Py_RETURN_NONE;
+    }
+
+    return square_to_pyobject(is_verical ? NCH_SQR_MIRROR_V(sqr) : NCH_SQR_MIRROR_V(sqr));
+}
+
+PyObject*
+_bb_as_list(PyObject* self, PyObject* args, PyObject* kwargs){
+    uint64 bb;
+    int reversed = 0;
+
+    static const* kwlist[] = {"bb", "reversed", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "K|i", kwlist, &bb, &reversed)){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(PyExc_ValueError, "failed to parse the arguments");
+        }
+        return NULL;
+    }
+
+    int arr[NCH_SQUARE_NB];
+    bb2array(bb, arr, reversed);
+
+    PyObject* list = PyList_New(NCH_SQUARE_NB);
+    if (!list){
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    PyObject* item;
+    for (int i = 0; i < NCH_SQUARE_NB; i++){
+        item = PyLong_FromLong(arr[i]);
+        if (!item){
+            PyErr_SetString(PyExc_ValueError, "failed to convert the items to python int");
+            Py_DECREF(list);
+            return NULL;
+        }
+        
+        PyList_SetItem(list, i, item);
+    }
+    
+    return list;
+}
+
+
+PyObject*
+_bb_as_array(PyObject* self, PyObject* args, PyObject* kwargs){
+    uint64 bb;
+    int reversed = 0;
+
+    static const* kwlist[] = {"bb", "reversed", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "K|i", kwlist, &bb, &reversed)){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(PyExc_ValueError, "failed to parse the arguments");
+        }
+        return NULL;
+    }
+
+    int arr[NCH_SQUARE_NB];
+    bb2array(bb, arr, reversed);
+
+    PyObject* list = PyList_New(NCH_SQUARE_NB);
+    if (!list){
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    PyObject* item;
+    for (int i = 0; i < NCH_SQUARE_NB; i++){
+        item = PyLong_FromLong(arr[i]);
+        if (!item){
+            PyErr_SetString(PyExc_ValueError, "failed to convert the items to python int");
+            Py_DECREF(list);
+            return NULL;
+        }
+        
+        PyList_SetItem(list, i, item);
+    }
+    
+    return list;
+}
+
+PyObject* BB_AsArray(PyObject* self, PyObject* args, PyObject* kwargs);
+PyObject* BB_MoreThenOne(PyObject* self, PyObject* args);
+PyObject* BB_HasTwoBits(PyObject* self, PyObject* args);
+PyObject* BB_GetTSB(PyObject* self, PyObject* args);
+PyObject* BB_GetLSB(PyObject* self, PyObject* args);
+PyObject* BB_CountBits(PyObject* self, PyObject* args);
+PyObject* BB_IsFilled(PyObject* self, PyObject* args, PyObject* kwargs);
 
 // Method definitions
 static PyMethodDef nchess_methods[] = {
-    {"move_as_uci", (PyCFunction)move_as_uci, METH_VARARGS, NULL},
+    {"uci_as_square", (PyCFunction)uci_as_square, METH_VARARGS, NULL},
+    {"square_file", (PyCFunction)square_file, METH_VARARGS, NULL},
+    {"square_rank", (PyCFunction)square_rank, METH_VARARGS, NULL},
+    {"square_distance", (PyCFunction)square_distance, METH_VARARGS, NULL},
+    {"square_mirror", (PyCFunction)square_mirror, METH_VARARGS, NULL},
+    {"bb_as_array", (PyCFunction)BB_AsArray, METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_more_then_one", (PyCFunction)BB_MoreThenOne, METH_VARARGS, NULL},
+    {"bb_has_two_bits", (PyCFunction)BB_HasTwoBits, METH_VARARGS, NULL},
+    {"bb_get_tsb", (PyCFunction)BB_GetTSB, METH_VARARGS, NULL},
+    {"bb_get_lsb", (PyCFunction)BB_GetLSB, METH_VARARGS, NULL},
+    {"bb_is_filled", (PyCFunction)BB_IsFilled, METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL}  // Sentinel
 };
 
@@ -43,16 +219,42 @@ static PyModuleDef nchess = {
 // Initialize the module
 PyMODINIT_FUNC PyInit_nchess(void) {
     PyObject* m;
-    if (PyType_Ready(&PyBoardType) < 0) return NULL;
 
+    // Initialize PyBoardType
+    if (PyType_Ready(&PyBoardType) < 0) {
+        return NULL;
+    }
+
+    if (PyType_Ready(&PyMoveType) < 0) {
+        return NULL;
+    }
+
+    // Create the module
     m = PyModule_Create(&nchess);
-    if (m == NULL) return NULL;
+    if (m == NULL) {
+        return NULL;
+    }
 
+    // Add PyBoardType to the module
     Py_INCREF(&PyBoardType);
-    PyModule_AddObject(m, "Board", (PyObject*)&PyBoardType);
+    if (PyModule_AddObject(m, "Board", (PyObject*)&PyBoardType) < 0) {
+        Py_DECREF(&PyBoardType);
+        Py_DECREF(m);
+        return NULL;
+    }
 
+    // Add PyMoveType to the module
+    Py_INCREF(&PyMoveType);
+    if (PyModule_AddObject(m, "Move", (PyObject*)&PyMoveType) < 0) {
+        Py_DECREF(&PyMoveType);
+        Py_DECREF(m);
+        return NULL;
+    }
+
+    // Initialize additional components
     NCH_Init();
     import_array();
 
     return m;
 }
+

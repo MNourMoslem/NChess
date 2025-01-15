@@ -1,8 +1,11 @@
 import os
 from setuptools import setup, Extension
 import numpy
+from setuptools.command.build_ext import build_ext
 
-this_dir = os.getcwd()
+# Get current directory and build path
+this_dir = os.path.dirname(os.path.abspath(__file__))
+build_path = os.path.join(this_dir, 'build')
 
 # Function to collect all .c files in the src directory
 def find_c_files(directory):
@@ -18,6 +21,13 @@ nchess_module = Extension(
     ],
 )
 
+# Custom build_ext command to override the output directory
+class CustomBuildExtCommand(build_ext):
+    def finalize_options(self):
+        super().finalize_options()
+        # Set the build directory for output files
+        self.build_lib = build_path
+
 # Setup configuration
 setup(
     name='nchess',
@@ -25,4 +35,12 @@ setup(
     description='Python wrapper for NChess C library',
     ext_modules=[nchess_module],
     install_requires=['numpy'],  # Ensure NumPy is installed
+    cmdclass={
+        'build_ext': CustomBuildExtCommand,  # Use the custom command
+    },
+    options={
+        'build': {
+            'build_base': build_path,  # Base build directory
+        }
+    }
 )

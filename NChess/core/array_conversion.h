@@ -13,10 +13,14 @@ PyObject*
 create_numpy_array(void* data, int* dims, int ndim, enum NPY_TYPES dtype);
 
 PyObject*
-create_list_array(int* data, int* dims, int ndim);
+create_list_array(int* data, npy_intp* dims, int ndim);
 
 int
-parse_array_conversion_function_args(int nitems, npy_intp* dims, PyObject* args,
+parse_board_conversion_function_args(int nitems, npy_intp* dims, PyObject* args,
                                      PyObject* kwargs, int* reversed, int* as_list);
+
+int
+parse_bb_conversion_function_args(uint64* bb, int nitems, npy_intp* dims,
+                                 PyObject* args, PyObject* kwargs, int* reversed, int* as_list);
 
 #endif // NCHESS_CORE_ARRAY_CONVERSION_H

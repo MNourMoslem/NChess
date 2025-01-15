@@ -191,9 +191,7 @@ undo_move(Board* board, Side side, Move move, Piece last_captured_piece){
 
 NCH_STATIC_INLINE void
 increase_counter(Board* board){
-    if (Board_IS_WHITETURN(board)){
-        board->nmoves += 1;
-    }
+    board->nmoves += 1;
 
     if (NCH_CHKUNI(board->flags, Board_PAWNMOVED | Board_CAPTURE | Board_CHECK | Board_DOUBLECHECK)){
         board->fifty_counter = 0;
@@ -307,10 +305,7 @@ Board_Undo(Board* board){
     board->castles = MoveNode_CASTLE_FLAGS(node);
     board->flags = MoveNode_GAME_FLAGS(node);
     board->captured_piece = MoveNode_CAP_PIECE(node);
-
-    if (Board_IS_BLACKTURN(board)){
-        board->nmoves -= 1;
-    }
+    board->nmoves -= 1;
 
     MoveList_Pop(board->movelist);
     Board_Update(board);

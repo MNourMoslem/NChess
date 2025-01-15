@@ -5,3 +5,4 @@ obj
 .vscode
 build
 *.pyd
+__pycache__

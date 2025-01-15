@@ -5,7 +5,7 @@
 #include "types.h"
 
 
-NCH_STATIC_INLINE uint64
+NCH_STATIC_INLINE int
 count_bits(uint64 x){
     #if NCH_GCC
         return __builtin_popcountll(x);
@@ -21,7 +21,7 @@ count_bits(uint64 x){
     #endif
 };
 
-NCH_STATIC_INLINE uint64
+NCH_STATIC_INLINE int
 count_lbits(uint64 x){
     #if NCH_GCC
         return __builtin_clzll(x);
@@ -40,7 +40,7 @@ count_lbits(uint64 x){
     #endif 
 };
 
-NCH_STATIC_INLINE uint64
+NCH_STATIC_INLINE int
 count_tbits(uint64 x){
     #if NCH_GCC
         return __builtin_ctzll(x);

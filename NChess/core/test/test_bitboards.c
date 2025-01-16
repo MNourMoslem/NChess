@@ -17,7 +17,7 @@ test_bitboard_1(){
 
 void test_bitboard_main(int init_bb){
     if (init_bb)
-        NCH_InitBitboards();
+        NCH_Init();
 
     testfunc funcs[] = {
         test_bitboard_1

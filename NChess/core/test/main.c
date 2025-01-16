@@ -5,7 +5,7 @@
 #include "nchess.h"
 
 int main(){
-    InitBitboards();
+    NCH_Init();
 
     // test_io_main(0);
     test_bitboard_main(0);

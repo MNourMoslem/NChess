@@ -3,26 +3,36 @@
 #include "types.h"
 #include <stdio.h>
 
-void*
-MoveList_New(){
-    MoveList* movelist = malloc(sizeof(MoveList));
-    if (!movelist){
-        return NULL;
-    }
-
-    movelist->first = NULL;
-    movelist->last = NULL;
+void
+MoveList_Init(MoveList* movelist){
+    movelist->extra = NULL;
+    movelist->last_extra = NULL;
     movelist->len = 0;
-
-    return movelist;
 }
 
 int MoveList_Append(MoveList* movelist, Move move, Square enp_sqr, Piece captured_piece,
                      int fifty_count, uint8 castle_flags, int flags){
-    MoveNode* node = (MoveNode*)malloc(sizeof(MoveNode));
-    if (!node) {
-        return -1;
+    MoveNode* node;
+    if (movelist->len < NCH_MOVELIST_SIZE){
+        node = movelist->nodes + movelist->len;
     }
+    else{
+        node = (MoveNode*)malloc(sizeof(MoveNode));
+        if (!node) {
+            return -1;
+        }
+
+        if (movelist->len == NCH_MOVELIST_SIZE) {
+            node->prev = NULL;
+            movelist->extra = node;
+            movelist->last_extra = node;
+        } else {
+            movelist->last_extra->next = node;
+            node->prev = movelist->last_extra;
+            movelist->last_extra = node;
+        }
+    }
+    
     node->next = NULL;
     node->move = move;
     node->fifty_count = fifty_count;
@@ -31,52 +41,63 @@ int MoveList_Append(MoveList* movelist, Move move, Square enp_sqr, Piece capture
     node->enp_sqr = enp_sqr;
     node->captured_piece = captured_piece;
 
-    if (movelist->len < 1) {
-        node->prev = NULL;
-        movelist->first = node;
-        movelist->last = node;
-    } else {
-        movelist->last->next = node;
-        node->prev = movelist->last;
-        movelist->last = node;
-    }
-
     movelist->len++;
     return 0;
 }
 
 void MoveList_Pop(MoveList* movelist) {
-    if (movelist->len < 1) {
+    movelist->len--;
+    if (movelist->len < NCH_MOVELIST_SIZE){
         return;
     }
 
-    MoveNode* node = movelist->last;
+    MoveNode* node = movelist->last_extra;
 
-    if (movelist->len == 1){
-        movelist->first = NULL;
-        movelist->last = NULL;
+    if (movelist->len == NCH_MOVELIST_SIZE) {
+        movelist->extra = NULL;
+        movelist->last_extra = NULL;
     }
     else{
-        movelist->last = node->prev;
-        movelist->last->next = NULL;
+        movelist->last_extra = node->prev;
+        movelist->last_extra->next = NULL;
     }
 
-    movelist->len--;
     free(node);
 }
 
+MoveNode*
+MoveList_Get(MoveList* movelist, int idx){
+    if (idx >= movelist->len)
+        return NULL;
+    
+    if (idx < NCH_MOVELIST_SIZE){
+        return movelist->nodes + idx;
+    }
+
+    int temp = NCH_MOVELIST_SIZE;
+    MoveNode* node = movelist->extra;
+    while (temp != idx){
+        if (node){
+            node = node->next;
+            temp++;
+        }
+        else{
+            return NULL;
+        }
+    }
+    
+    return node;    
+}
 
 void
 MoveList_Free(MoveList* movelist){
-    if (movelist){
+    if (movelist->extra){
         MoveNode* node;
-        while (movelist->len > 0)
+        while (movelist->last_extra)
         {
-            node = movelist->last;
-            movelist->last = node->prev;
-            movelist->len--;
+            node = movelist->last_extra;
+            movelist->last_extra = node->prev;
             free(node);
         }
-        free(movelist);
     }
 }

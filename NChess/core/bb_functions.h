@@ -33,5 +33,19 @@ PyObject* BB_GetTSB(PyObject* self, PyObject* args);
 PyObject* BB_GetLSB(PyObject* self, PyObject* args);
 PyObject* BB_CountBits(PyObject* self, PyObject* args);
 PyObject* BB_IsFilled(PyObject* self, PyObject* args, PyObject* kwargs);
+PyObject* BB_FromArray(PyObject* self, PyObject* args, PyObject* kwargs);
+PyObject* BB_RookAttacks(PyObject* self, PyObject* args, PyObject* kwargs);
+PyObject* BB_BishopAttacks(PyObject* self, PyObject* args, PyObject* kwargs);
+PyObject* BB_QueenAttacks(PyObject* self, PyObject* args, PyObject* kwargs);
+PyObject* BB_KingAttacks(PyObject* self, PyObject* args, PyObject* kwargs);
+PyObject* BB_KnightAttacks(PyObject* self, PyObject* args, PyObject* kwargs);
+PyObject* BB_PawnAttacks(PyObject* self, PyObject* args, PyObject* kwargs);
+PyObject* BB_RookMask(PyObject* self, PyObject* args, PyObject* kwargs);
+PyObject* BB_BishopMask(PyObject* self, PyObject* args, PyObject* kwargs);
+PyObject* BB_RookRelevant(PyObject* self, PyObject* args, PyObject* kwargs);
+PyObject* BB_BishopRelevant(PyObject* self, PyObject* args, PyObject* kwargs);
+PyObject* BB_RookMagic(PyObject* self, PyObject* args, PyObject* kwargs);
+PyObject* BB_BishopMagic(PyObject* self, PyObject* args, PyObject* kwargs);
+
 
 #endif // NCHESS_CORE_BB_FUNCTIONS_H

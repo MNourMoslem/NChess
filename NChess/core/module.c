@@ -184,14 +184,6 @@ _bb_as_array(PyObject* self, PyObject* args, PyObject* kwargs){
     return list;
 }
 
-PyObject* BB_AsArray(PyObject* self, PyObject* args, PyObject* kwargs);
-PyObject* BB_MoreThenOne(PyObject* self, PyObject* args);
-PyObject* BB_HasTwoBits(PyObject* self, PyObject* args);
-PyObject* BB_GetTSB(PyObject* self, PyObject* args);
-PyObject* BB_GetLSB(PyObject* self, PyObject* args);
-PyObject* BB_CountBits(PyObject* self, PyObject* args);
-PyObject* BB_IsFilled(PyObject* self, PyObject* args, PyObject* kwargs);
-
 // Method definitions
 static PyMethodDef nchess_methods[] = {
     {"uci_as_square", (PyCFunction)uci_as_square, METH_VARARGS, NULL},
@@ -205,6 +197,19 @@ static PyMethodDef nchess_methods[] = {
     {"bb_get_tsb", (PyCFunction)BB_GetTSB, METH_VARARGS, NULL},
     {"bb_get_lsb", (PyCFunction)BB_GetLSB, METH_VARARGS, NULL},
     {"bb_is_filled", (PyCFunction)BB_IsFilled, METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_from_array", (PyCFunction)BB_FromArray, METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_rook_attacks", (PyCFunction)BB_RookAttacks, METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_bishop_attacks", (PyCFunction)BB_BishopAttacks, METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_queen_attacks", (PyCFunction)BB_QueenAttacks, METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_king_attacks", (PyCFunction)BB_KingAttacks, METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_knight_attacks", (PyCFunction)BB_KnightAttacks, METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_pawn_attacks", (PyCFunction)BB_PawnAttacks, METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_rook_mask", (PyCFunction)BB_RookMask, METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_bishop_mask", (PyCFunction)BB_BishopMask, METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_rook_relevant", (PyCFunction)BB_RookRelevant, METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_bishop_relevant", (PyCFunction)BB_BishopRelevant, METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_rook_magic", (PyCFunction)BB_RookMagic, METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_bishop_magic", (PyCFunction)BB_BishopMagic, METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL}  // Sentinel
 };
 

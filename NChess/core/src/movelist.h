@@ -5,6 +5,9 @@
 #include "config.h"
 #include "core.h"
 #include "move.h"
+#include <stdlib.h>
+
+#define NCH_MOVELIST_SIZE 400
 
 typedef struct MoveNode
 {
@@ -21,13 +24,15 @@ typedef struct MoveNode
 
 typedef struct
 {
-    MoveNode* first;
-    MoveNode* last;
+    MoveNode nodes[NCH_MOVELIST_SIZE];
     int len;
+
+    MoveNode* extra;
+    MoveNode* last_extra;
 }MoveList;
 
-void*
-MoveList_New();
+void
+MoveList_Init(MoveList* movelist);
 
 int
 MoveList_Append(MoveList* movelist, Move move, Square enp_sqr, Piece captured_piece,
@@ -36,15 +41,21 @@ MoveList_Append(MoveList* movelist, Move move, Square enp_sqr, Piece captured_pi
 void
 MoveList_Pop(MoveList* movelist);
 
+MoveNode*
+MoveList_Get(MoveList* movelist, int idx);
+
 void
 MoveList_Free(MoveList* movelist);
 
 NCH_STATIC_INLINE MoveNode*
 MoveList_Last(MoveList* movelist){
-    if (movelist->len > 0){
-        return movelist->last;
-    }
-    return 0;
+    if (movelist->len <= 0)
+        return NULL;
+
+    if (movelist->len <= NCH_MOVELIST_SIZE)
+        return movelist->nodes + movelist->len - 1;
+
+    return movelist->last_extra;
 }
 
 #define MoveNode_FROM(node) Move_FROM((node)->move)

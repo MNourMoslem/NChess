@@ -34,7 +34,7 @@ typedef struct
     uint64 en_passant_map;
     uint64 en_passant_trg;
 
-    MoveList* movelist;
+    MoveList movelist;
     BoardDict* dict;
 
     int nmoves;
@@ -68,6 +68,8 @@ typedef struct
 #define Board_BLACK_PIECE(board, idx) (board)->piecetables[NCH_Black][idx]
 
 #define Board_CASTLE_RIGHTS(board) (board)->castles
+#define Board_NMOVES(board) (board)->nmoves
+#define Board_FIFTY_COUNTER(board) (board)->fifty_counter
 
 #define Board_ON_SQUARE(board, idx) Board_WHITE_PIECE(board, idx) != NCH_NO_PIECE ?\
                                     Board_WHITE_PIECE(board, idx) : Board_BLACK_PIECE(board, idx)

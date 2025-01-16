@@ -40,15 +40,10 @@ new_board(){
         return NULL;
     }
 
-    board->movelist = MoveList_New();
-    if (!board->movelist){
-        free(board);
-        return NULL;
-    }
+    MoveList_Init(&board->movelist);
 
     board->dict = BoardDict_New();
     if (!board->dict){
-        MoveList_Free(board->movelist);
         free(board);
         return NULL;
     }
@@ -80,7 +75,6 @@ Board_NewEmpty(){
 void
 Board_Free(Board* board){
     if (board){
-        MoveList_Free(board->movelist);
         BoardDict_Free(board->dict);
         free(board);
     }

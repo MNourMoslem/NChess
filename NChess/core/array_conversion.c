@@ -56,7 +56,7 @@ check_shape(PyObject* shape, int nitems, npy_intp* dims){
 }
 
 PyObject*
-create_numpy_array(void* data, int* dims, int ndim, enum NPY_TYPES dtype){
+create_numpy_array(void* data, npy_intp* dims, int ndim, enum NPY_TYPES dtype){
     import_array();
 
     PyObject* numpy_array = PyArray_SimpleNewFromData(ndim, dims, dtype, data);

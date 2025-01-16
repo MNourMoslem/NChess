@@ -141,9 +141,10 @@ Move_AsString(Move move, char* dst){
             dst[4] = 'n';
         else if (promotion == NCH_Bishop)
             dst[4] = 'b';
-        else
+        else{
             dst[4] = '\0';
             return 0;
+        }
 
         dst[5] = '\0';
     }

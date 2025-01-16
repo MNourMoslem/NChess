@@ -322,6 +322,36 @@ board_owned_by(PyObject* self, PyObject* args){
     return side_to_pyobject(side);
 }
 
+PyObject*
+board_played_moves(PyObject* self, PyObject* args){
+    int nmoves = Board_NMOVES(board(self));
+    
+
+    PyObject* list = PyList_New(nmoves);
+    PyMove* pymove;
+
+    MoveList* ml = &board(self)->movelist;
+    MoveNode* node;
+
+    for (int i = 0; i < nmoves; i++){
+        node = MoveList_Get(ml, i);
+        if (!node){
+            Py_DECREF(list);
+            return NULL;
+        }
+
+        pymove = PyMove_New(node->move);
+        if (!pymove){
+            Py_DECREF(list);
+            return NULL;
+        }
+
+        PyList_SetItem(list, i, pymove);
+    }
+
+    return list;
+}
+
 NCH_STATIC PyMethodDef methods[] = {
     {"step",
      (PyCFunction)board_step,
@@ -362,6 +392,11 @@ NCH_STATIC PyMethodDef methods[] = {
     {"owned_by",
      (PyCFunction)board_owned_by,
       METH_VARARGS,
+      NULL},
+
+    {"played_moves",
+     (PyCFunction)board_played_moves,
+      METH_NOARGS,
       NULL},
 
     {NULL, NULL, 0, NULL},
@@ -468,6 +503,16 @@ board_castles_str(PyObject* self, void* something){
     return PyUnicode_FromString(buffer);
 }
 
+PyObject*
+board_nmoves(PyObject* self, void* something){
+    return PyLong_FromLong(Board_NMOVES(board(self)));
+}
+
+PyObject*
+board_fifty_counter(PyObject* self, void* something){
+    return PyLong_FromLong(Board_FIFTY_COUNTER(board(self)));
+}
+
 NCH_STATIC PyGetSetDef getset[] = {
     {"white_pawns", (getter)board_get_white_pawns, NULL, NULL, NULL},
     {"black_pawns", (getter)board_get_black_pawns, NULL, NULL, NULL},
@@ -486,6 +531,8 @@ NCH_STATIC PyGetSetDef getset[] = {
     {"all_occ", (getter)board_get_all_occ, NULL, NULL, NULL},
     {"castles", (getter)board_castles, NULL, NULL, NULL},
     {"castles_str", (getter)board_castles_str, NULL, NULL, NULL},
+    {"nmoves", (getter)board_nmoves, NULL, NULL, NULL},
+    {"fifty_counter", (getter)board_fifty_counter, NULL, NULL, NULL},
     {NULL, NULL, NULL, NULL, NULL}
 };
 

@@ -75,7 +75,6 @@ play_pawn_move(Board* board, Side side, Move move){
        to_ = side == NCH_White ? to_ - 8 : to_ + 8; 
     }
 
-    Piece captured_piece = capture_piece_if_possible(board, TARGET_SIDE(side), to_);
     NCH_SETFLG(board->flags, Board_PAWNMOVED);
 
     if (to_ - from_ == 16 || from_ - to_ == 16){
@@ -88,7 +87,7 @@ play_pawn_move(Board* board, Side side, Move move){
     if (to_ <= NCH_A1 || to_ >= NCH_H8){
         make_promotion(board, side, to_, Move_PRO_PIECE(move));
     }
-    return captured_piece;
+    return capture_piece_if_possible(board, TARGET_SIDE(side), to_);
 }
 
 NCH_STATIC_INLINE Piece
@@ -229,12 +228,9 @@ Board_IsMoveLegal(Board* board, Move move){
     int available = 0;
     Move ps;
     for (int i = 0; i < len; i++){
-        ps = pseudo_moves[i];
-        if (Move_FROM(move) == Move_FROM(ps) && Move_TO(move) == Move_TO(ps)){
-            move = Move_New(Move_FROM(move), Move_TO(move),
-                             Move_PRO_PIECE(move), Move_CASTLE(move),
-                              Move_IS_ENP(ps), Move_IS_PRO(ps));
-
+        ps = pseudo_moves[i] &~ (Move_ASSIGN_IS_ENP(1) | Move_ASSIGN_IS_PRO(1));
+        if (move == ps){
+            move = ps;
             available = 1;
             break;
         }
@@ -252,13 +248,12 @@ Board_IsMoveLegal(Board* board, Move move){
 
 void
 _Board_MakeMove(Board* board, Move move){
-    MoveList_Append(board->movelist, move,
+    MoveList_Append(&board->movelist, move,
                      board->en_passant_idx, board->captured_piece,
                      board->fifty_counter, board->castles, board->flags);
     
     reset_every_turn_states(board);
-    Piece captured_piece = make_move(board, move);
-    board->captured_piece = captured_piece;
+    board->captured_piece = make_move(board, move);
 
     BoardDict_Add(board->dict, board->bitboards);
 
@@ -277,23 +272,19 @@ Board_StepByMove(Board* board, Move move){
 void
 Board_Step(Board* board, char* move){
     Move m = Move_FromString(move);
-    if (!m)
-        return;
-
-    if (Board_IsMoveLegal(board, m))
+    if (m && Board_IsMoveLegal(board, m))
         _Board_MakeMove(board, m);
 }
 
 void
 Board_Undo(Board* board){
-    MoveNode* node = MoveList_Last(board->movelist);
-    if (!node){
+    MoveNode* node = MoveList_Last(&board->movelist);
+    if (!node)
         return;
-    }
+
     BoardDict_Remove(board->dict, board->bitboards);
 
-    undo_move(board, Board_GET_OP_SIDE(board),
-             node->move, board->captured_piece);
+    undo_move(board, Board_GET_OP_SIDE(board), node->move, board->captured_piece);
 
     if (MoveNode_ENP_SQR(node)){
         set_board_enp_settings(board, Board_GET_SIDE(board), MoveNode_ENP_SQR(node));
@@ -301,12 +292,12 @@ Board_Undo(Board* board){
     else{
         reset_enpassant_variable(board);
     }
-    board->fifty_counter = MoveNode_FIFTY_COUNT(node);
-    board->castles = MoveNode_CASTLE_FLAGS(node);
-    board->flags = MoveNode_GAME_FLAGS(node);
+    board->fifty_counter  = MoveNode_FIFTY_COUNT(node);
+    board->castles        = MoveNode_CASTLE_FLAGS(node);
+    board->flags          = MoveNode_GAME_FLAGS(node);
     board->captured_piece = MoveNode_CAP_PIECE(node);
     board->nmoves -= 1;
 
-    MoveList_Pop(board->movelist);
+    MoveList_Pop(&board->movelist);
     Board_Update(board);
 }

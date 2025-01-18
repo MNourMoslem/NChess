@@ -1,6 +1,7 @@
-from ..core import nchess
+from typing import TypeAlias
 
-# sides
+Piece : TypeAlias = int
+
 WHITE = 0
 BLACK = 1
 SIDES_NB = 2

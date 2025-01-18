@@ -1,1 +1,4 @@
-from .build import nchess
+from .build.nchess import (
+    Board,
+    Move,
+)

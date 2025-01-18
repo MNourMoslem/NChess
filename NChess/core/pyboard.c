@@ -85,6 +85,26 @@ board_str(PyObject* pyb){
 }
 
 PyObject*
+board__makemove(PyObject* self, PyObject* args){
+    PyObject* step;
+
+    if (!PyArg_ParseTuple(args, "O", &step)){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(PyExc_ValueError, "failed to parse the step argument");
+        }
+        return NULL;
+    }
+
+    Move move = pyobject_as_move(step);
+    if (!move)
+        return NULL;
+
+    _Board_MakeMove(board(self), move);
+
+    Py_RETURN_NONE;
+}
+
+PyObject*
 board_step(PyObject* self, PyObject* args, PyObject* kwargs){
     PyObject* step;
     static char* kwlist[] = {"step", NULL};
@@ -96,24 +116,9 @@ board_step(PyObject* self, PyObject* args, PyObject* kwargs){
         return NULL;
     }
 
-    Move move;
-    if (PyMove_Check(step)){
-        move = ((PyMove*)step)->move;
-    }
-    else if (PyUnicode_Check(step)) {
-        const char* step_str = PyUnicode_AsUTF8(step);
-        if (step_str == NULL) {
-            PyErr_SetString(PyExc_ValueError, "failed to convert step to string");
-            return NULL;
-        }
-
-        move = Move_FromString(step_str);
-    } else if (PyLong_Check(step)) {
-        Move move = PyLong_AsUnsignedLong(step);
-    } else {
-        PyErr_Format(PyExc_TypeError, "step must be a Move object, string or int, got %s", Py_TYPE(step)->tp_name);
+    Move move = pyobject_as_move(step);
+    if (!move)
         return NULL;
-    }
 
     Board_StepByMove(board(self), move);
 
@@ -507,6 +512,12 @@ board_find(PyObject* self, PyObject* args, PyObject* kwargs){
 }
 
 NCH_STATIC PyMethodDef methods[] = {
+    {"_makemove",
+     (PyCFunction)board__makemove,
+      METH_VARARGS,
+      NULL},
+
+    
     {"step",
      (PyCFunction)board_step,
       METH_VARARGS | METH_KEYWORDS,

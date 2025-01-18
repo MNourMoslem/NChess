@@ -7,8 +7,27 @@
 #include "pymove.h"
 #include "bb_functions.h"
 #include "array_conversion.h"
+#include "src/generate_utils.h"
 
 #define board(pyb) ((PyBoard*)pyb)->board
+
+PyObject*
+moves_to_list(Move* moves, int nmoves){
+    PyObject* list = PyList_New(nmoves);
+    PyMove* pymove;
+
+    for (int i = 0; i < nmoves; i++){
+        pymove = PyMove_New(moves[i]);
+        if (!pymove){
+            Py_DECREF(list);
+            return NULL;
+        }
+
+        PyList_SetItem(list, i, pymove);
+    }
+
+    return list;
+}
 
 PyObject*
 PyBoard_New(PyTypeObject *self, PyObject *args, PyObject *kwargs){
@@ -323,9 +342,8 @@ board_owned_by(PyObject* self, PyObject* args){
 }
 
 PyObject*
-board_played_moves(PyObject* self, PyObject* args){
+board_get_played_moves(PyObject* self, PyObject* args){
     int nmoves = Board_NMOVES(board(self));
-    
 
     PyObject* list = PyList_New(nmoves);
     PyMove* pymove;
@@ -352,6 +370,142 @@ board_played_moves(PyObject* self, PyObject* args){
     return list;
 }
 
+PyObject*
+board_reset(PyObject* self, PyObject* args){
+    Board_Reset(board(self));
+    Py_RETURN_NONE;
+}
+
+PyObject*
+board_is_check(PyObject* self, PyObject* args){
+    return PyBool_FromLong(Board_IsCheck(board(self)));
+}
+
+PyObject*
+board_is_insufficient_material(PyObject* self, PyObject* args){
+    return PyBool_FromLong(Board_IsInsufficientMaterial(board(self)));
+}
+
+PyObject*
+board_is_threefold(PyObject* self, PyObject* args){
+    return PyBool_FromLong(Board_IsThreeFold(board(self)));
+}
+
+PyObject*
+board_is_fifty_moves(PyObject* self, PyObject* args){
+    return PyBool_FromLong(Board_IsFiftyMoves(board(self)));
+}
+
+PyObject*
+board_get_attackers_map(PyObject* self, PyObject* args, PyObject* kwargs){
+    PyObject* sqr;
+    static char* kwlist[] = {"square", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &sqr)){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(PyExc_ValueError, "failed to parse the arguments");
+        }
+        return NULL;
+    }
+
+    Square s = pyobject_as_square(sqr);
+    if (s == NCH_NO_SQR)
+        return NULL;
+
+    Board* b = board(self);
+    Side side = Board_GET_SIDE(b);
+    uint64 all_occ = Board_ALL_OCC(b);
+
+    return PyLong_FromUnsignedLongLong(get_checkmap(b, side, s, all_occ));
+}
+
+PyObject*
+board_get_moves_of(PyObject* self, PyObject* args, PyObject* kwargs){
+    PyObject* sqr;
+    static char* kwlist[] = {"square", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &sqr)){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(PyExc_ValueError, "failed to parse the arguments");
+        }
+        return NULL;
+    }
+
+    Square s = pyobject_as_square(sqr);
+    if (s == NCH_NO_SQR)
+        return NULL;
+
+    Board* b = board(self);
+    Move moves[30];
+    int nmoves = Board_GetMovesOf(b, s, moves);
+    return moves_to_list(moves, nmoves);
+}
+
+PyObject*
+board_copy(PyObject* self, PyObject* args){
+    Board* src = board(self);
+    Board* dst = Board_Copy(src);
+    if (!dst){
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    PyBoard* pyb = PyObject_New(PyBoard, &PyBoardType);
+    if (pyb == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+    pyb->board = dst;
+    return pyb;
+}
+
+PyObject*
+board_state(PyObject* self, PyObject* args, PyObject* kwargs){
+    int can_move;
+    static char* kwlist[] = {"can_move", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "p", kwlist, &can_move)){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(PyExc_ValueError, "failed to parse the arguments");
+        }
+        return NULL;
+    }
+
+    return PyLong_FromUnsignedLong(Board_State(board(self), can_move));
+}
+
+PyObject*
+board_find(PyObject* self, PyObject* args, PyObject* kwargs){
+    PyObject* p_obj;
+    static char* kwlist[] = {"piece", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &p_obj)){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(PyExc_ValueError, "failed to parse the arguments");
+        }
+        return NULL;
+    }
+
+    Piece p = pyobject_as_piece(p_obj);
+    if (p == NCH_NO_PIECE)
+        return NULL;
+
+    Side side = Board_GET_SIDE(board(self));
+    uint64 bb = board(self)->bitboards[side][p];
+
+    PyObject* list = PyList_New(count_bits(bb));
+    if (!list)
+        return NULL;
+
+    int idx;
+    Py_ssize_t i = 0;
+    LOOP_U64_T(bb){
+        PyList_SetItem(list, i++, PyLong_FromLong(idx));
+    }
+
+    return list;
+}
+
 NCH_STATIC PyMethodDef methods[] = {
     {"step",
      (PyCFunction)board_step,
@@ -359,7 +513,7 @@ NCH_STATIC PyMethodDef methods[] = {
       NULL},
 
     {"undo",
-     (PyCFunction)board_undo,  
+     (PyCFunction)board_undo,
      METH_NOARGS,
      NULL,
     },
@@ -394,9 +548,59 @@ NCH_STATIC PyMethodDef methods[] = {
       METH_VARARGS,
       NULL},
 
-    {"played_moves",
-     (PyCFunction)board_played_moves,
+    {"get_played_moves",
+     (PyCFunction)board_get_played_moves,
       METH_NOARGS,
+      NULL},
+
+    {"reset",
+     (PyCFunction)board_reset,
+      METH_NOARGS,
+      NULL},
+
+    {"is_check",
+     (PyCFunction)board_is_check,
+      METH_NOARGS,
+      NULL},
+
+    {"get_attackers_map",
+     (PyCFunction)board_get_attackers_map,
+      METH_VARARGS | METH_KEYWORDS,
+      NULL},
+
+    {"get_moves_of",
+     (PyCFunction)board_get_moves_of,
+      METH_VARARGS | METH_KEYWORDS,
+      NULL},
+
+    {"is_insufficient_material",
+     (PyCFunction)board_is_insufficient_material,
+      METH_NOARGS,
+      NULL},
+
+    {"is_threefold",
+     (PyCFunction)board_is_threefold,
+      METH_NOARGS,
+      NULL},
+
+    {"is_fifty_moves",
+     (PyCFunction)board_is_fifty_moves,
+      METH_NOARGS,
+      NULL},
+
+    {"copy",
+     (PyCFunction)board_copy,
+      METH_NOARGS,
+      NULL},
+
+    {"state",
+     (PyCFunction)board_state,
+      METH_VARARGS | METH_KEYWORDS,
+      NULL},
+
+    {"find",
+     (PyCFunction)board_find,
+      METH_VARARGS | METH_KEYWORDS,
       NULL},
 
     {NULL, NULL, 0, NULL},
@@ -513,6 +717,15 @@ board_fifty_counter(PyObject* self, void* something){
     return PyLong_FromLong(Board_FIFTY_COUNTER(board(self)));
 }
 
+PyObject*
+board_en_passant_square(PyObject* self, void* something){
+    Board* b = board(self);
+    if (!b->en_passant_idx)
+        Py_RETURN_NONE;
+
+    return PyLong_FromLong(NCH_SQR(b->en_passant_trg));
+}
+
 NCH_STATIC PyGetSetDef getset[] = {
     {"white_pawns", (getter)board_get_white_pawns, NULL, NULL, NULL},
     {"black_pawns", (getter)board_get_black_pawns, NULL, NULL, NULL},
@@ -533,6 +746,7 @@ NCH_STATIC PyGetSetDef getset[] = {
     {"castles_str", (getter)board_castles_str, NULL, NULL, NULL},
     {"nmoves", (getter)board_nmoves, NULL, NULL, NULL},
     {"fifty_counter", (getter)board_fifty_counter, NULL, NULL, NULL},
+    {"en_passant_sqr", (getter)board_en_passant_square, NULL, NULL, NULL},
     {NULL, NULL, NULL, NULL, NULL}
 };
 

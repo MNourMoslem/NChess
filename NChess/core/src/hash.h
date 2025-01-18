@@ -38,4 +38,7 @@ BoardDict_Remove(BoardDict* dict, uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]);
 void
 BoardDict_Reset(BoardDict* dict);
 
+BoardDict*
+BoardDict_Copy(const BoardDict* src);
+
 #endif

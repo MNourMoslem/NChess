@@ -37,7 +37,17 @@ typedef enum {
     NCH_PIECE_NB,
     NCH_NO_PIECE
 }Piece;
- 
+
+typedef enum{
+    NCH_GS_Playing = 0,
+    NCH_GS_WhiteWin,
+    NCH_GS_BlackWin,
+    NCH_GS_Draw_Stalemate,
+    NCH_GS_Draw_ThreeFold,
+    NCH_GS_Draw_FiftyMoves,
+    NCH_GS_Draw_InsufficientMaterial
+}GameState;
+
 #define NCH_ROW1 0x00000000000000FFULL
 #define NCH_ROW2 0x000000000000FF00ULL
 #define NCH_ROW3 0x0000000000FF0000ULL
@@ -129,6 +139,8 @@ extern Diractions NCH_DIRACTION_TABLE[NCH_SQUARE_NB][NCH_SQUARE_NB];
 
 #define NCH_SQR_MIRROR_V(idx) (idx ^ 0x38)
 #define NCH_SQR_MIRROR_H(idx) (idx ^ 0x07)
+#define NCH_SQR_SAME_COLOR(idx1, idx2)\
+ ((NCH_GET_DIGMAINIDX(idx1) & 1) == (1 & NCH_GET_DIGMAINIDX(idx2)))
 
 void
 NCH_InitTables();

@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include "pymove.h"
 #include "bb_functions.h"
+#include "bb_module.h"
 
 PyObject*
 uci_as_square(PyObject* self, PyObject* args){
@@ -191,25 +192,6 @@ static PyMethodDef nchess_methods[] = {
     {"square_rank", (PyCFunction)square_rank, METH_VARARGS, NULL},
     {"square_distance", (PyCFunction)square_distance, METH_VARARGS, NULL},
     {"square_mirror", (PyCFunction)square_mirror, METH_VARARGS, NULL},
-    {"bb_as_array", (PyCFunction)BB_AsArray, METH_VARARGS | METH_KEYWORDS, NULL},
-    {"bb_more_then_one", (PyCFunction)BB_MoreThenOne, METH_VARARGS, NULL},
-    {"bb_has_two_bits", (PyCFunction)BB_HasTwoBits, METH_VARARGS, NULL},
-    {"bb_get_tsb", (PyCFunction)BB_GetTSB, METH_VARARGS, NULL},
-    {"bb_get_lsb", (PyCFunction)BB_GetLSB, METH_VARARGS, NULL},
-    {"bb_is_filled", (PyCFunction)BB_IsFilled, METH_VARARGS | METH_KEYWORDS, NULL},
-    {"bb_from_array", (PyCFunction)BB_FromArray, METH_VARARGS | METH_KEYWORDS, NULL},
-    {"bb_rook_attacks", (PyCFunction)BB_RookAttacks, METH_VARARGS | METH_KEYWORDS, NULL},
-    {"bb_bishop_attacks", (PyCFunction)BB_BishopAttacks, METH_VARARGS | METH_KEYWORDS, NULL},
-    {"bb_queen_attacks", (PyCFunction)BB_QueenAttacks, METH_VARARGS | METH_KEYWORDS, NULL},
-    {"bb_king_attacks", (PyCFunction)BB_KingAttacks, METH_VARARGS | METH_KEYWORDS, NULL},
-    {"bb_knight_attacks", (PyCFunction)BB_KnightAttacks, METH_VARARGS | METH_KEYWORDS, NULL},
-    {"bb_pawn_attacks", (PyCFunction)BB_PawnAttacks, METH_VARARGS | METH_KEYWORDS, NULL},
-    {"bb_rook_mask", (PyCFunction)BB_RookMask, METH_VARARGS | METH_KEYWORDS, NULL},
-    {"bb_bishop_mask", (PyCFunction)BB_BishopMask, METH_VARARGS | METH_KEYWORDS, NULL},
-    {"bb_rook_relevant", (PyCFunction)BB_RookRelevant, METH_VARARGS | METH_KEYWORDS, NULL},
-    {"bb_bishop_relevant", (PyCFunction)BB_BishopRelevant, METH_VARARGS | METH_KEYWORDS, NULL},
-    {"bb_rook_magic", (PyCFunction)BB_RookMagic, METH_VARARGS | METH_KEYWORDS, NULL},
-    {"bb_bishop_magic", (PyCFunction)BB_BishopMagic, METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL}  // Sentinel
 };
 
@@ -240,10 +222,23 @@ PyMODINIT_FUNC PyInit_nchess(void) {
         return NULL;
     }
 
+    PyObject *bb = PyInit_bb_module();
+    if (bb == NULL) {
+        Py_DECREF(m);
+        return NULL;
+    }
+
+    if (PyModule_AddObject(m, "bb", bb) < 0) {
+        Py_DECREF(bb);
+        Py_DECREF(m);
+        return NULL;
+    }
+
     // Add PyBoardType to the module
     Py_INCREF(&PyBoardType);
     if (PyModule_AddObject(m, "Board", (PyObject*)&PyBoardType) < 0) {
         Py_DECREF(&PyBoardType);
+        Py_DECREF(bb);
         Py_DECREF(m);
         return NULL;
     }
@@ -252,13 +247,13 @@ PyMODINIT_FUNC PyInit_nchess(void) {
     Py_INCREF(&PyMoveType);
     if (PyModule_AddObject(m, "Move", (PyObject*)&PyMoveType) < 0) {
         Py_DECREF(&PyMoveType);
+        Py_DECREF(bb);
         Py_DECREF(m);
         return NULL;
     }
 
     // Initialize additional components
     NCH_Init();
-    import_array();
 
     return m;
 }

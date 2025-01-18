@@ -6,6 +6,9 @@
 #include <Python.h>
 
 
+uint64
+bb_from_object(PyObject* obj);
+
 NCH_STATIC_INLINE void
 bb2array(uint64 bb, int* arr, int reverse){
     // memset(arr, 0, sizeof(sizeof(int) * NCH_SQUARE_NB));
@@ -46,6 +49,7 @@ PyObject* BB_RookRelevant(PyObject* self, PyObject* args, PyObject* kwargs);
 PyObject* BB_BishopRelevant(PyObject* self, PyObject* args, PyObject* kwargs);
 PyObject* BB_RookMagic(PyObject* self, PyObject* args, PyObject* kwargs);
 PyObject* BB_BishopMagic(PyObject* self, PyObject* args, PyObject* kwargs);
+PyObject* BB_ToIndeices(PyObject* self, PyObject* args, PyObject* kwargs);
 
 
 #endif // NCHESS_CORE_BB_FUNCTIONS_H

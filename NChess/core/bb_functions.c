@@ -262,7 +262,7 @@ npy2bb(PyArrayObject* arr, uint64* bb) {
     return 0;
 }
 
-NCH_STATIC uint64
+uint64
 bb_from_object(PyObject* obj) {
     uint64 bb = 0;
 
@@ -555,4 +555,22 @@ BB_BishopMagic(PyObject* self, PyObject* args, PyObject* kwargs){
         return NULL;
 
     return PyLong_FromUnsignedLongLong(bb_bishop_magic(s));
+}
+
+PyObject* BB_ToIndeices(PyObject* self, PyObject* args, PyObject* kwargs){
+    uint64 bb;
+    if (parse_bb(&bb, args) < 0)
+        return NULL;
+
+    PyObject* list = PyList_New(count_bits(bb));
+    if (!list)
+        return NULL;
+
+    int idx;
+    Py_ssize_t i = 0;
+    LOOP_U64_T(bb){
+        PyList_SetItem(list, i++, PyLong_FromLong(idx));
+    }
+
+    return list;
 }

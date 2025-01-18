@@ -3,6 +3,8 @@
 
 #include "src/nchess.h"
 #include "src/utils.h"
+#include "src/move.h"
+#include "pymove.h"
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
@@ -58,6 +60,30 @@ pyobject_as_piece(PyObject* p){
         return NCH_NO_PIECE;
     }
     return (Piece)PyLong_AsUnsignedLong(p);
+}
+
+NCH_STATIC_INLINE Move
+pyobject_as_move(PyObject* m){
+    Move move;
+    if (PyMove_Check(m)){
+        move = ((PyMove*)m)->move;
+    }
+    else if (PyUnicode_Check(m)) {
+        const char* move_str = PyUnicode_AsUTF8(m);
+        if (move_str == NULL) {
+            PyErr_SetString(PyExc_ValueError, "failed to convert step to string");
+            return 0;
+        }
+
+        move = Move_FromString(move_str);
+    } else if (PyLong_Check(m)) {
+        Move move = PyLong_AsUnsignedLong(m);
+    } else {
+        PyErr_Format(PyExc_TypeError, "step must be a Move object, string or int, got %s", Py_TYPE(m)->tp_name);
+        return 0;
+    }
+
+    return move;
 }
 
 #endif // NCHESS_CORE_COMMON_H

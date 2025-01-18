@@ -145,4 +145,26 @@ Board_IsCheck(Board* board);
 void
 Board_Update(Board* board);
 
+void
+Board_Reset(Board* board);
+
+int
+Board_IsInsufficientMaterial(Board* board);
+
+int
+Board_IsThreeFold(Board* board);
+
+int
+Board_IsFiftyMoves(Board* board);
+
+int
+Board_GetMovesOf(Board* board, Square s, Move* moves);
+
+Board*
+Board_Copy(const Board* src_board);
+
+GameState
+Board_State(const Board* board, int can_move);
+
+
 #endif

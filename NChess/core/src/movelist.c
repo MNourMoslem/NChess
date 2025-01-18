@@ -101,3 +101,54 @@ MoveList_Free(MoveList* movelist){
         }
     }
 }
+
+void
+MoveList_Reset(MoveList* movelist){
+    MoveList_Free(movelist);
+    movelist->len = 0;
+}
+
+int
+MoveList_CopyExtra(const MoveList* src, MoveList* dst){
+    if (!src->extra || dst->extra)
+        return 0;
+
+    MoveNode* dst_node = (MoveNode*)malloc(sizeof(MoveNode));
+    if (!dst_node)
+        return -1;
+
+    MoveNode* node = src->extra;
+    *dst_node = *node; 
+    dst_node->prev = NULL;
+
+    dst->extra = dst_node;
+    dst->last_extra = dst_node;
+    node = node->next;
+
+    while (node)
+    {
+        dst_node->next = (MoveNode*)malloc(sizeof(MoveNode));
+        if (!dst_node->next)
+            goto fail;
+
+        dst_node->next->prev = dst_node;
+        *(dst_node->next) = *node;
+        node = node->next;
+        dst_node = dst_node->next;
+    }
+
+    dst->last_extra = dst_node;
+    return 0;
+
+    fail:
+        MoveNode *temp;
+        node = dst->extra;
+        while (node)
+        {
+            temp = node->next;
+            free(node);
+            node = temp;
+        }
+        
+        return -1;
+}

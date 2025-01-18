@@ -47,6 +47,12 @@ MoveList_Get(MoveList* movelist, int idx);
 void
 MoveList_Free(MoveList* movelist);
 
+void
+MoveList_Reset(MoveList* movelist);
+
+int
+MoveList_CopyExtra(const MoveList* src, MoveList* dst);
+
 NCH_STATIC_INLINE MoveNode*
 MoveList_Last(MoveList* movelist){
     if (movelist->len <= 0)

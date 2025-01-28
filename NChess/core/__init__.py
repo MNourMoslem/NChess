@@ -1,4 +1,4 @@
-from .build.nchess import (
+from .nchess import (
     Board,
     Move,
 )

@@ -1,4 +1,4 @@
-from ..core.build.nchess import (
+from ..core.nchess import (
     uci_as_square,
     square_file,
     square_rank,

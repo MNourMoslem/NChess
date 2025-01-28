@@ -24,7 +24,7 @@ uci_as_square(PyObject* self, PyObject* args){
 
     const char* s_str = PyUnicode_AsUTF8(uni);
     if (s_str == NULL) {
-        PyErr_SetString(PyExc_ValueError, "failed to convert square to string to get the square");
+        PyErr_SetString(PyExc_ValueError, "failed to string to square");
         return NULL;
     }
     return square_to_pyobject(str_to_square(s_str));

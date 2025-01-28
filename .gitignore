@@ -7,3 +7,5 @@ build
 *.pyd
 __pycache__
 test.py
+dist
+NChess.egg-info

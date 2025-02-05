@@ -1,7 +1,7 @@
 #ifndef NCHESS_CORE_BB_FUNCTIONS_H
 #define NCHESS_CORE_BB_FUNCTIONS_H
 
-#include "src/nchess.h"
+#include "nchess/nchess.h"
 #define PY_SSIZE_CLEAN_T
 #include <Python.h>
 

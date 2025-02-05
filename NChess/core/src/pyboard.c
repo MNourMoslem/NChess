@@ -1,13 +1,13 @@
 #include "pyboard.h"
-#include "src/nchess.h"
-#include "src/utils.h"
+#include "nchess/nchess.h"
+#include "nchess/utils.h"
 #include <stdio.h>
 #include <numpy/arrayobject.h>
 #include "common.h"
 #include "pymove.h"
 #include "bb_functions.h"
 #include "array_conversion.h"
-#include "src/generate_utils.h"
+#include "nchess/generate_utils.h"
 
 #define board(pyb) ((PyBoard*)pyb)->board
 

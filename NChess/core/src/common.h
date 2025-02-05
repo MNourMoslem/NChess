@@ -1,9 +1,9 @@
 #ifndef NCHESS_CORE_COMMON_H
 #define NCHESS_CORE_COMMON_H
 
-#include "src/nchess.h"
-#include "src/utils.h"
-#include "src/move.h"
+#include "nchess/nchess.h"
+#include "nchess/utils.h"
+#include "nchess/move.h"
 #include "pymove.h"
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>

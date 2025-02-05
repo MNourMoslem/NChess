@@ -1,5 +1,5 @@
 #include "pyboard.h"
-#include "src/nchess.h"
+#include "nchess/nchess.h"
 #include <numpy/arrayobject.h>
 #include "common.h"
 #include <stdio.h>

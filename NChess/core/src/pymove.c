@@ -1,6 +1,6 @@
 #include "pymove.h"
 #include "common.h"
-#include "src/nchess.h"
+#include "nchess/nchess.h"
 
 #define M(obj) ((PyMove*)obj)
 

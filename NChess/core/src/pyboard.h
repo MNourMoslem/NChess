@@ -4,7 +4,7 @@
 #define PY_SSIZE_CLEAN_H
 #include <python.h>
 
-#include "src/board.h"
+#include "nchess/board.h"
 
 typedef struct
 {

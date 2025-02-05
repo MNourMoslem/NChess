@@ -1,5 +1,5 @@
 #include "bb_functions.h"
-#include "src/bit_operations.h"
+#include "nchess/bit_operations.h"
 #include "array_conversion.h"
 #include "common.h"
 #include <numpy/arrayobject.h>

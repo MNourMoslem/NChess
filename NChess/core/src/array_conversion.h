@@ -1,7 +1,7 @@
 #ifndef NCHESS_CORE_ARRAY_CONVERSION_H
 #define NCHESS_CORE_ARRAY_CONVERSION_H
 
-#include "src/nchess.h"
+#include "nchess/nchess.h"
 #define PY_SSIZE_CLEAN_T
 #include <Python.h>
 #include <numpy/arrayobject.h>

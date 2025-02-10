@@ -1,31 +1,28 @@
 import os
 import numpy
 from setuptools import setup, find_packages, Extension
+import setuptools as st
 
-this_dir = '.'
-core_dir = os.path.join(this_dir, "NChess/core")
-build_path = os.path.join(core_dir, "build")
+python_src = "nchess/core/src"
+c_src = "c-nchess"
 
 def find_c_files(directory):
     c_files = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith('.c')]
     return c_files
 
 nchess_module = Extension(
-    'NChess.core.nchess',
-    sources=[
-        *find_c_files(os.path.join(core_dir, 'src')),
-        *find_c_files(os.path.join(core_dir, 'src/nchess')),
-    ],
+    'nchess.core.nchess_core',
+    sources = find_c_files(python_src) + find_c_files(c_src + "/nchess"),
     include_dirs=[
-        "NChess/core/src",
-        "NChess/core/src/nchess",
+        python_src,
+        c_src,
         numpy.get_include(),
     ],
 )
 
 setup(
-    name='NChess',
-    version='1.0.24',
+    name='nchess',
+    version='1.1.11',
     ext_modules=[
             nchess_module
         ],

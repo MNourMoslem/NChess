@@ -2,7 +2,7 @@
 #define NCHESS_CORE_PYBOARD_H
 
 #define PY_SSIZE_CLEAN_H
-#include <python.h>
+#include <Python.h>
 
 #include "nchess/board.h"
 

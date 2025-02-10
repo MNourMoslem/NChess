@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 NCH_STATIC_INLINE int
-board_to_key(uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]){
+board_to_key(const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]){
     uint64 maps = 0ull;
     maps = ~bitboards[NCH_White][NCH_Pawn]
          ^ ~bitboards[NCH_White][NCH_Knight]
@@ -23,24 +23,24 @@ board_to_key(uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]){
 }
 
 NCH_STATIC_INLINE int
-get_idx(uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]){
+get_idx(const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]){
     return board_to_key(bitboards) % NCH_BOARD_DICT_SIZE;
 }
 
 NCH_STATIC_INLINE int
-is_same_board(uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB], BoardNode* node){
+is_same_board(const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB], const BoardNode* node){
     return (0 == memcmp(bitboards[NCH_White], node->bitboards[NCH_White], sizeof(node->bitboards[NCH_White])))
         && (0 == memcmp(bitboards[NCH_Black], node->bitboards[NCH_Black], sizeof(node->bitboards[NCH_Black])));
 }
 
 NCH_STATIC_INLINE void
-set_bitboards(uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB], BoardNode* node){
+set_bitboards(const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB], BoardNode* node){
     memcpy(node->bitboards[NCH_White], bitboards[NCH_White], sizeof(node->bitboards[NCH_White]));
     memcpy(node->bitboards[NCH_Black], bitboards[NCH_Black], sizeof(node->bitboards[NCH_Black]));
 }
 
 NCH_STATIC int
-set_node(uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB], BoardNode* node){
+set_node(const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB], BoardNode* node){
     if (node->empty || is_same_board(bitboards, node)){
         set_bitboards(bitboards, node);
         if (node->empty){
@@ -73,7 +73,7 @@ set_node(uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB], BoardNode* node){
 }
 
 NCH_STATIC BoardNode*
-get_node(uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB], BoardNode* node){
+get_node(const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB], const BoardNode* node){
     if (node->empty){
         return NULL;
     }
@@ -124,7 +124,7 @@ BoardDict_Free(BoardDict* dict){
 }
 
 int
-BoardDict_GetCount(BoardDict* dict, uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]){
+BoardDict_GetCount(const BoardDict* dict, const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]){
     int idx = get_idx(bitboards);
     BoardNode* node = get_node(bitboards, &dict->nodes[idx]);
     if (!node){
@@ -134,13 +134,13 @@ BoardDict_GetCount(BoardDict* dict, uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]
 }
 
 int
-BoardDict_Add(BoardDict* dict, uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]){
+BoardDict_Add(BoardDict* dict, const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]){
     int idx = get_idx(bitboards);
     return set_node(bitboards, &dict->nodes[idx]);
 }
 
 int
-BoardDict_Remove(BoardDict* dict, uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]){
+BoardDict_Remove(BoardDict* dict, const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]){
     int idx = get_idx(bitboards);
     BoardNode* node = get_node(bitboards, &dict->nodes[idx]);
     if (!node){
@@ -203,7 +203,7 @@ BoardDict_Copy(const BoardDict* src){
         return NULL;
 
     *dst = *src;
-    BoardNode *node, *dst_node, *temp;
+    BoardNode *node, *dst_node;
     for (int i = 0; i < NCH_BOARD_DICT_SIZE; i++){
         node = &src->nodes[i];
         if (!node->empty && node->next){

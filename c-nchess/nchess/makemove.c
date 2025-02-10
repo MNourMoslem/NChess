@@ -6,6 +6,7 @@
 #include "hash.h"
 #include "generate.h"
 #include "generate_utils.h"
+#include "board_utils.h"
 
 #include <stdlib.h>
 
@@ -260,20 +261,26 @@ _Board_MakeMove(Board* board, Move move){
     reset_castle_rigths(board);
     flip_turn(board);
     increase_counter(board);
-    Board_Update(board);
+    update_check(board);
 }
 
-void
+int
 Board_StepByMove(Board* board, Move move){
-    if (Board_IsMoveLegal(board, move))
+    if (Board_IsMoveLegal(board, move)){
         _Board_MakeMove(board, move);
+        return 1;
+    }
+    return 0;
 }
 
-void
+int
 Board_Step(Board* board, char* move){
     Move m = Move_FromString(move);
-    if (m && Board_IsMoveLegal(board, m))
+    if (m && Board_IsMoveLegal(board, m)){
         _Board_MakeMove(board, m);
+        return 1;
+    }
+    return 0;
 }
 
 void
@@ -299,5 +306,41 @@ Board_Undo(Board* board){
     board->nmoves -= 1;
 
     MoveList_Pop(&board->movelist);
-    Board_Update(board);
+    update_check(board);
+}
+
+int
+Board_GetMovesOf(Board* board, Square s, Move* moves){
+    Piece p = Board_ON_SQUARE(board, s);
+    if (p == NCH_NO_PIECE)
+        return 0;
+
+    Move pseudo_moves[30];
+    Move* tail = pseudo_moves;
+
+    if (p == NCH_King){
+        tail = generate_castle_moves(board, tail);
+        tail = generate_king_moves(board, tail);
+    }
+    else{
+        uint64 allowed_squares = Board_IS_WHITETURN(board) ? ~Board_WHITE_OCC(board) : ~Board_BLACK_OCC(board);
+        tail = generate_any_move(board, Board_GET_SIDE(board),
+                                s, Board_ALL_OCC(board),
+                                allowed_squares, pseudo_moves);
+    }
+
+    int len = (int)(tail - pseudo_moves);
+    int nmoves = 0;
+    for (int i = 0; i < len; i++){
+        Piece captured = make_move(board, pseudo_moves[i]);
+        int is_check = Board_IsCheck(board);
+        if (!is_check){
+            moves[nmoves] = pseudo_moves[i];
+            nmoves++;
+        }
+
+        undo_move(board, Board_GET_SIDE(board), pseudo_moves[i], captured);
+    }
+
+    return nmoves;
 }

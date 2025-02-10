@@ -12,7 +12,7 @@
 #include <stdio.h>
 
 NCH_STATIC_INLINE uint64
-get_checkmap(Board* board, Side side, int king_idx, uint64 all_occ){
+get_checkmap(const Board* board, Side side, int king_idx, uint64 all_occ){
     uint64 occupancy;
     if (side == NCH_White){
         occupancy = all_occ & ~Board_WHITE_KING(board);
@@ -33,7 +33,7 @@ get_checkmap(Board* board, Side side, int king_idx, uint64 all_occ){
 }
 
 NCH_STATIC_INLINE uint64
-get_allowed_squares(Board* board){
+get_allowed_squares(const Board* board){
     if (!Board_IS_CHECK(board))
         return NCH_UINT64_MAX;
 
@@ -50,7 +50,7 @@ get_allowed_squares(Board* board){
 }
 
 NCH_STATIC_INLINE uint64
-get_pinned_pieces(Board* board, uint64* pinned_allowed_squares){
+get_pinned_pieces(const Board* board, uint64* pinned_allowed_squares){
     int king_idx = Board_IS_WHITETURN(board) ? NCH_SQRIDX(Board_WHITE_KING(board)) : 
                                                NCH_SQRIDX(Board_BLACK_KING(board)) ;
 

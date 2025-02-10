@@ -17,7 +17,7 @@ extern uint64 KingAttacks[NCH_SQUARE_NB];                  // 64
 extern uint64 BetweenTable[NCH_SQUARE_NB][NCH_SQUARE_NB];  // 4,096
 
 extern uint64 Magics[2][NCH_SQUARE_NB];                    // 128
-extern int ReleventSquares[2][NCH_SQUARE_NB];           // 128
+extern int ReleventSquares[2][NCH_SQUARE_NB];              // 128
 extern uint64 SlidersAttackMask[2][NCH_SQUARE_NB];         // 128
 
 extern uint64 RookTable[NCH_SQUARE_NB][4096];              // 262,144

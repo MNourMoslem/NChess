@@ -1,13 +1,13 @@
 #include "bitboard.h"
 #include "config.h"
 #include "types.h"
-#include <stdio.h>
 #include "magics.h"
 #include "magic_utils.h"
+#include <stdio.h>
 
-uint64 PawnAttacks[2][NCH_SQUARE_NB];
-uint64 KnightAttacks[NCH_SQUARE_NB];
-uint64 KingAttacks[NCH_SQUARE_NB];
+uint64 PawnAttacks[2][NCH_SQUARE_NB];               // 128
+uint64 KnightAttacks[NCH_SQUARE_NB];                // 64
+uint64 KingAttacks[NCH_SQUARE_NB];                  // 64
 
 uint64 BetweenTable[NCH_SQUARE_NB][NCH_SQUARE_NB];  // 4,096
 
@@ -24,13 +24,13 @@ init_pawn_attacks(){
     for (int i = 0; i < NCH_SQUARE_NB; i++){
         sqr = NCH_SQR(i);
         PawnAttacks[NCH_White][i] = (NCH_NXTSQR_UPRIGHT(sqr) & 0x7F7F7F7F7F7F7F7F)
-                                  | (NCH_NXTSQR_UPLEFT(sqr) & 0xFeFeFeFeFeFeFeFe);
+                                  | (NCH_NXTSQR_UPLEFT(sqr)  & 0xFeFeFeFeFeFeFeFe);
     }
 
     for (int i = 0; i < NCH_SQUARE_NB; i++){
         sqr = NCH_SQR(i);
         PawnAttacks[NCH_Black][i] = (NCH_NXTSQR_DOWNRIGHT(sqr) & 0x7F7F7F7F7F7F7F7F)
-                                  | (NCH_NXTSQR_DOWNLEFT(sqr) & 0xFeFeFeFeFeFeFeFe);
+                                  | (NCH_NXTSQR_DOWNLEFT(sqr)  & 0xFeFeFeFeFeFeFeFe);
     }
 }
 

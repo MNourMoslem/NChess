@@ -1,5 +1,6 @@
 #include "fen.h"
 #include "utils.h"
+#include "board_utils.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -206,7 +207,7 @@ Board_FromFen(char* fen){
     set_board_occupancy(board);
     init_piecetables(board);
 
-    Board_Update(board);
+    update_check(board);
 
     return board;
 }

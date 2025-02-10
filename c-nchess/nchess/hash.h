@@ -27,13 +27,13 @@ void
 BoardDict_Free(BoardDict* dict);
 
 int
-BoardDict_GetCount(BoardDict* dict, uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]);
+BoardDict_GetCount(const BoardDict* dict, const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]);
 
 int
-BoardDict_Add(BoardDict* dict, uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]);
+BoardDict_Add(BoardDict* dict, const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]);
 
 int
-BoardDict_Remove(BoardDict* dict, uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]);
+BoardDict_Remove(BoardDict* dict, const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]);
 
 void
 BoardDict_Reset(BoardDict* dict);

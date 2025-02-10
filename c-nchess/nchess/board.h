@@ -140,25 +140,19 @@ void
 Board_InitEmpty(Board* board);
 
 int
-Board_IsCheck(Board* board);
-
-void
-Board_Update(Board* board);
+Board_IsCheck(const Board* board);
 
 void
 Board_Reset(Board* board);
 
 int
-Board_IsInsufficientMaterial(Board* board);
+Board_IsInsufficientMaterial(const Board* board);
 
 int
-Board_IsThreeFold(Board* board);
+Board_IsThreeFold(const Board* board);
 
 int
-Board_IsFiftyMoves(Board* board);
-
-int
-Board_GetMovesOf(Board* board, Square s, Move* moves);
+Board_IsFiftyMoves(const Board* board);
 
 Board*
 Board_Copy(const Board* src_board);

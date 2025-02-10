@@ -30,7 +30,7 @@ _init_board(Board* board){
     set_board_occupancy(board);
     init_piecetables(board);
     _init_board_flags_and_states(board);
-    Board_Update(board);
+    update_check(board);
 }
 
 NCH_STATIC_FINLINE Board*
@@ -120,50 +120,13 @@ Board_InitEmpty(Board* board){
 }
 
 int
-Board_IsCheck(Board* board){
+Board_IsCheck(const Board* board){
     return get_checkmap(
             board,
             Board_IS_WHITETURN(board) ? NCH_White : NCH_Black,
             NCH_SQRIDX( Board_IS_WHITETURN(board) ? Board_WHITE_KING(board) : Board_BLACK_KING(board)),
             Board_ALL_OCC(board)
         ) != 0ULL;
-}
-
-NCH_STATIC_FINLINE void
-update_check(Board* board){
-    uint64 check_map = get_checkmap(
-        board,
-        Board_GET_SIDE(board),
-        NCH_SQRIDX( Board_IS_WHITETURN(board) ? Board_WHITE_KING(board) : Board_BLACK_KING(board)),
-        Board_ALL_OCC(board)
-    );
-
-    if (check_map)
-        NCH_SETFLG(board->flags, more_then_one(check_map) ? Board_CHECK | Board_DOUBLECHECK : Board_CHECK);
-}
-
-void
-Board_Update(Board* board){
-    update_check(board);
-
-    if (BoardDict_GetCount(board->dict, board->bitboards) > 2){
-        end_game_by_draw(board, Board_THREEFOLD);
-        return;
-    }
-
-    if (board->fifty_counter > 49){
-        end_game_by_draw(board, Board_FIFTYMOVES);
-        return;
-    }
-
-    if (!at_least_one_move(board)){
-        if (Board_IS_CHECK(board)){
-            end_game_by_wl(board);
-        }
-        else{
-            end_game_by_draw(board, Board_STALEMATE);
-        }
-    }
 }
 
 void
@@ -174,7 +137,7 @@ Board_Reset(Board* board){
 }
 
 int
-Board_IsInsufficientMaterial(Board* board){
+Board_IsInsufficientMaterial(const Board* board){
     uint64 enough = Board_WHITE_QUEENS(board)
                   | Board_BLACK_QUEENS(board)
                   | Board_WHITE_PAWNS(board)
@@ -236,49 +199,13 @@ Board_IsInsufficientMaterial(Board* board){
 }
 
 int
-Board_IsThreeFold(Board* board){
+Board_IsThreeFold(const Board* board){
     return BoardDict_GetCount(board->dict, board->bitboards) > 2;
 }
 
 int
-Board_IsFiftyMoves(Board* board){
+Board_IsFiftyMoves(const Board* board){
     return board->fifty_counter >= 50;
-}
-
-int
-Board_GetMovesOf(Board* board, Square s, Move* moves){
-    Piece p = Board_ON_SQUARE(board, s);
-    if (p == NCH_NO_PIECE)
-        return 0;
-
-    Move pseudo_moves[30];
-    Move* tail = pseudo_moves;
-
-    if (p == NCH_King){
-        tail = generate_castle_moves(board, tail);
-        tail = generate_king_moves(board, tail);
-    }
-    else{
-        uint64 allowed_squares = Board_IS_WHITETURN(board) ? ~Board_WHITE_OCC(board) : ~Board_BLACK_OCC(board);
-        tail = generate_any_move(board, Board_GET_SIDE(board),
-                                s, Board_ALL_OCC(board),
-                                allowed_squares, pseudo_moves);
-    }
-
-    int len = (int)(tail - pseudo_moves);
-    int nmoves = 0;
-    for (int i = 0; i < len; i++){
-        Piece captured = make_move(board, pseudo_moves[i]);
-        int is_check = Board_IsCheck(board);
-        if (!is_check){
-            moves[nmoves] = pseudo_moves[i];
-            nmoves++;
-        }
-
-        undo_move(board, Board_GET_SIDE(board), pseudo_moves[i], captured);
-    }
-
-    return nmoves;
 }
 
 Board*
@@ -297,8 +224,8 @@ Board_Copy(const Board* src_board){
     
     BoardDict* new_dict = BoardDict_Copy(src_board->dict);
     if (!new_dict){
-        free(dst_board);
         MoveList_Free(&dst_board->movelist);
+        free(dst_board);
         return NULL;
     }
 

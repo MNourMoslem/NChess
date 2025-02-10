@@ -9,10 +9,10 @@
 void
 _Board_MakeMove(Board* board, Move move);
 
-void
+int
 Board_StepByMove(Board* board, Move move);
 
-void
+int
 Board_Step(Board* board, char* move);
 
 void
@@ -20,5 +20,8 @@ Board_Undo(Board* board);
 
 int 
 Board_IsMoveLegal(Board* board, Move move);
+
+int
+Board_GetMovesOf(Board* board, Square s, Move* moves);
 
 #endif

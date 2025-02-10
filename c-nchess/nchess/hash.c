@@ -127,9 +127,9 @@ int
 BoardDict_GetCount(const BoardDict* dict, const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]){
     int idx = get_idx(bitboards);
     BoardNode* node = get_node(bitboards, &dict->nodes[idx]);
-    if (!node){
+    if (!node)
         return -1;
-    }
+    
     return node->count;
 }
 

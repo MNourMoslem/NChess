@@ -133,7 +133,7 @@ parse_bb_conversion_function_args(uint64* bb, int nitems, npy_intp* dims,
         if (!PyErr_Occurred()){
             PyErr_SetString(PyExc_ValueError, "failed to parse the arguments");
         }
-        return NULL;
+        return -1;
     }
 
     int ndim = 0;

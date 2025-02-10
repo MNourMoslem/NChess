@@ -186,7 +186,7 @@ _bb_as_array(PyObject* self, PyObject* args, PyObject* kwargs){
 }
 
 // Method definitions
-static PyMethodDef nchess_methods[] = {
+static PyMethodDef nchess_core_methods[] = {
     {"uci_as_square", (PyCFunction)uci_as_square, METH_VARARGS, NULL},
     {"square_file", (PyCFunction)square_file, METH_VARARGS, NULL},
     {"square_rank", (PyCFunction)square_rank, METH_VARARGS, NULL},
@@ -195,16 +195,16 @@ static PyMethodDef nchess_methods[] = {
     {NULL, NULL, 0, NULL}  // Sentinel
 };
 
-static PyModuleDef nchess = {
+static PyModuleDef nchess_core = {
     PyModuleDef_HEAD_INIT,
-    .m_name = "nchess",
-    .m_doc = "NChess module",
+    .m_name = "nchess_core",
+    .m_doc = "core module of nchess library",
     .m_size = -1,
-    .m_methods = &nchess_methods
+    .m_methods = &nchess_core_methods
 };
 
 // Initialize the module
-PyMODINIT_FUNC PyInit_nchess(void) {
+PyMODINIT_FUNC PyInit_nchess_core(void) {
     PyObject* m;
 
     // Initialize PyBoardType
@@ -217,7 +217,7 @@ PyMODINIT_FUNC PyInit_nchess(void) {
     }
 
     // Create the module
-    m = PyModule_Create(&nchess);
+    m = PyModule_Create(&nchess_core);
     if (m == NULL) {
         return NULL;
     }

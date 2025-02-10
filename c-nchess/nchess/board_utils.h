@@ -8,23 +8,8 @@
 #include "generate_utils.h"
 
 NCH_STATIC_INLINE void
-end_game_by_draw(Board* board, int state){
-    NCH_SETFLG(board->flags, Board_GAMEEND | Board_DRAW | state);
-}
-
-NCH_STATIC_INLINE void
-end_game_by_wl(Board* board){
-    NCH_SETFLG(board->flags, Board_GAMEEND | (Board_IS_WHITETURN(board) ? 0 : Board_WIN));
-}
-
-NCH_STATIC_INLINE void
 flip_turn(Board* board){
     NCH_FLPFLG(board->flags, Board_TURN);
-}
-
-NCH_STATIC_INLINE void
-reset_state_flags(Board* board){
-    NCH_RMVFLG(board->flags, Board_CHECK | Board_DOUBLECHECK);
 }
 
 NCH_STATIC_INLINE void

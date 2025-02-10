@@ -120,9 +120,8 @@ board_step(PyObject* self, PyObject* args, PyObject* kwargs){
     if (!move)
         return NULL;
 
-    Board_StepByMove(board(self), move);
-
-    Py_RETURN_NONE;
+    int out = Board_StepByMove(board(self), move);
+    return PyBool_FromLong(out);
 }
 
 PyObject*

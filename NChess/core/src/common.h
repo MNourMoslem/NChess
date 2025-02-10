@@ -77,7 +77,7 @@ pyobject_as_move(PyObject* m){
 
         move = Move_FromString(move_str);
     } else if (PyLong_Check(m)) {
-        Move move = PyLong_AsUnsignedLong(m);
+        move = PyLong_AsUnsignedLong(m);
     } else {
         PyErr_Format(PyExc_TypeError, "step must be a Move object, string or int, got %s", Py_TYPE(m)->tp_name);
         return 0;

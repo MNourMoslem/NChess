@@ -1,16 +1,14 @@
 #include "board.h"
 #include "config.h"
-#include "io.h"
 #include "bitboard.h"
 #include "generate_utils.h"
-#include "generate.h"
-#include <stdlib.h>
-#include <string.h>
-#include "move.h"
-#include <stdio.h>
 #include "utils.h"
 #include "hash.h"
 #include "board_utils.h"
+
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
 NCH_STATIC_FINLINE void
 _init_board_flags_and_states(Board* board){
@@ -30,7 +28,6 @@ _init_board(Board* board){
     set_board_occupancy(board);
     init_piecetables(board);
     _init_board_flags_and_states(board);
-    update_check(board);
 }
 
 NCH_STATIC_FINLINE Board*
@@ -40,13 +37,13 @@ new_board(){
         return NULL;
     }
 
-    MoveList_Init(&board->movelist);
-
     board->dict = BoardDict_New();
     if (!board->dict){
         free(board);
         return NULL;
     }
+    
+    MoveList_Init(&board->movelist);
 
     return board;
 }
@@ -97,6 +94,7 @@ Board_Init(Board* board){
     board->bitboards[NCH_Black][NCH_King] = NCH_BOARD_B_KING_STARTPOS;
 
     _init_board(board);
+    update_check(board);
 }
 
 void
@@ -151,51 +149,30 @@ Board_IsInsufficientMaterial(const Board* board){
     uint64 bishops = Board_WHITE_BISHOPS(board)
                    | Board_BLACK_BISHOPS(board);
 
+    uint64 knights = Board_WHITE_KNIGHTS(board)
+                    | Board_BLACK_KNIGHTS(board); 
+    
     if (!bishops){
-        uint64 knights = Board_WHITE_KNIGHTS(board)
-                       | Board_BLACK_KNIGHTS(board); 
-
-        if (more_then_one(knights) && !has_two_bits(knights))
+        if (more_then_two(knights) || (Board_WHITE_KNIGHTS(board) && Board_BLACK_KNIGHTS(board)))
             return 0;
-
         return 1;
     }
 
-    if (more_then_one(bishops)){
-        if (has_two_bits(bishops) && Board_WHITE_BISHOPS(board) && Board_BLACK_BISHOPS(board)){
-            int b1 =  NCH_SQRIDX(Board_WHITE_BISHOPS(board));
-            int b2 =  NCH_SQRIDX(Board_BLACK_BISHOPS(board));
-
-            if (NCH_SQR_SAME_COLOR(b1, b2))
-                return 0;
-            return 1;
-        }
-        return 0;
-    }
-
-    uint64 knights = Board_WHITE_KNIGHTS(board)
-                   | Board_BLACK_KNIGHTS(board); 
+    if (!knights){
+        if (more_then_one(bishops)){
+            if (has_two_bits(bishops) && Board_WHITE_BISHOPS(board) && Board_BLACK_BISHOPS(board)){
+                int b1 =  NCH_SQRIDX(Board_WHITE_BISHOPS(board));
+                int b2 =  NCH_SQRIDX(Board_BLACK_BISHOPS(board));
     
-    if (more_then_one(knights))
-        return 0;
-
-    uint64 kb = knights | bishops;
-
-    uint64 w_kb = Board_WHITE_OCC(board) & kb;
-    if (w_kb){
-        if (more_then_one(w_kb))
-            return 1;
-        return 0;
+                if (NCH_SQR_SAME_COLOR(b1, b2))
+                    return 0;
+                return 1;
+            }
+            return 0;
+        }
+        return 1;
     }
-
-    uint64 b_kb = Board_BLACK_OCC(board) & kb;
-    if (b_kb){
-        if (more_then_one(b_kb))
-            return 1;
-        return 0;
-    }
-
-    return 1;
+    return 0;
 }
 
 int
@@ -247,7 +224,7 @@ Board_State(const Board* board, int can_move){
             return NCH_GS_Draw_InsufficientMaterial;
     }
     else{
-        if (!Board_IsCheck(board))
+        if (!Board_IS_CHECK(board))
             return NCH_GS_Draw_Stalemate;
 
         if (Board_IS_WHITETURN(board))

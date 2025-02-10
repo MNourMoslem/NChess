@@ -75,6 +75,13 @@ more_then_one(uint64 x){
 }
 
 NCH_STATIC_INLINE int
+more_then_two(uint64 x){
+    x = x & (x - 1);
+    x = x & (x - 1);
+    return x != 0;
+}
+
+NCH_STATIC_INLINE int
 has_two_bits(uint64 x){
     return !more_then_one(x & (x-1));
 }

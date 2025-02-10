@@ -1,1 +1,1 @@
-from ..core.nchess import bb
+from ..core.nchess_core import bb

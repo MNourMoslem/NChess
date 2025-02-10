@@ -301,14 +301,14 @@ generate_castle_moves(Board* board, Move* moves){
             && !get_checkmap(board, NCH_White, NCH_G1, Board_ALL_OCC(board)) 
             && !get_checkmap(board, NCH_White, NCH_F1, Board_ALL_OCC(board))){
             
-            *moves++ = Move_New(0, 0, 0, Board_CASTLE_WK, 0, 0);
+            *moves++ = Move_New(NCH_E1, NCH_G1, 0, Board_CASTLE_WK, 0, 0);
         }
 
         if (Board_IS_CASTLE_WQ(board) && !NCH_CHKUNI(Board_ALL_OCC(board), (NCH_SQR(NCH_D1) | NCH_SQR(NCH_C1) | NCH_SQR(NCH_B1)))
             && !get_checkmap(board, NCH_White, NCH_D1, Board_ALL_OCC(board)) 
             && !get_checkmap(board, NCH_White, NCH_C1, Board_ALL_OCC(board))){
             
-            *moves++ = Move_New(0, 0, 0, Board_CASTLE_WQ, 0, 0);
+            *moves++ = Move_New(NCH_E1, NCH_C1, 0, Board_CASTLE_WQ, 0, 0);
         }
     }
     else{
@@ -316,14 +316,14 @@ generate_castle_moves(Board* board, Move* moves){
             && !get_checkmap(board, NCH_Black, NCH_G8, Board_ALL_OCC(board)) 
             && !get_checkmap(board, NCH_Black, NCH_F8, Board_ALL_OCC(board))){
             
-            *moves++ = Move_New(0, 0, 0, Board_CASTLE_BK, 0, 0);
+            *moves++ = Move_New(NCH_E8, NCH_G8, 0, Board_CASTLE_BK, 0, 0);
         }
 
         if (Board_IS_CASTLE_BQ(board) && !NCH_CHKUNI(Board_ALL_OCC(board), (NCH_SQR(NCH_D8) | NCH_SQR(NCH_C8) | NCH_SQR(NCH_B8)))
             && !get_checkmap(board, NCH_Black, NCH_D8, Board_ALL_OCC(board)) 
             && !get_checkmap(board, NCH_Black, NCH_C8, Board_ALL_OCC(board))){
             
-            *moves++ = Move_New(0, 0, 0, Board_CASTLE_BQ, 0, 0);
+            *moves++ = Move_New(NCH_E8, NCH_C8, 0, Board_CASTLE_BQ, 0, 0);
         }
     }
 

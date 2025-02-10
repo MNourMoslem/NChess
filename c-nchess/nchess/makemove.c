@@ -306,7 +306,6 @@ Board_Undo(Board* board){
     board->nmoves -= 1;
 
     MoveList_Pop(&board->movelist);
-    update_check(board);
 }
 
 int

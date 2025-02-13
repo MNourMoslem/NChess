@@ -256,7 +256,7 @@ _Board_MakeMove(Board* board, Move move){
     reset_every_turn_states(board);
     board->captured_piece = make_move(board, move);
 
-    BoardDict_Add(board->dict, board->bitboards);
+    BoardDict_Add(&board->dict, board->bitboards);
 
     reset_castle_rigths(board);
     flip_turn(board);
@@ -289,7 +289,7 @@ Board_Undo(Board* board){
     if (!node)
         return;
 
-    BoardDict_Remove(board->dict, board->bitboards);
+    BoardDict_Remove(&board->dict, board->bitboards);
 
     undo_move(board, Board_GET_OP_SIDE(board), node->move, board->captured_piece);
 

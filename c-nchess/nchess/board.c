@@ -1,3 +1,9 @@
+/*
+    board.c
+
+    This file contains the function definitions for the board functions.
+*/
+
 #include "board.h"
 #include "config.h"
 #include "bitboard.h"
@@ -5,6 +11,7 @@
 #include "utils.h"
 #include "hash.h"
 #include "board_utils.h"
+#include "makemove.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -37,6 +44,9 @@ new_board(){
         return NULL;
     }
 
+    // the dictionary would change in the future to be allocated
+    // with the board instead of being a pointer. this would be helpful
+    // to be able to create the board at the stack.
     board->dict = BoardDict_New();
     if (!board->dict){
         free(board);
@@ -58,7 +68,6 @@ Board_New(){
     return board;
 }
 
-
 Board*
 Board_NewEmpty(){
     Board* board = new_board();
@@ -73,27 +82,31 @@ void
 Board_Free(Board* board){
     if (board){
         BoardDict_Free(board->dict);
+        MoveList_Free(&board->movelist);
         free(board);
     }
 }
 
 void
 Board_Init(Board* board){
-    board->bitboards[NCH_White][NCH_Pawn] = NCH_BOARD_W_PAWNS_STARTPOS;
+    board->bitboards[NCH_White][NCH_Pawn]   = NCH_BOARD_W_PAWNS_STARTPOS;
     board->bitboards[NCH_White][NCH_Knight] = NCH_BOARD_W_KNIGHTS_STARTPOS;
     board->bitboards[NCH_White][NCH_Bishop] = NCH_BOARD_W_BISHOPS_STARTPOS;
-    board->bitboards[NCH_White][NCH_Rook] = NCH_BOARD_W_ROOKS_STARTPOS;
-    board->bitboards[NCH_White][NCH_Queen] = NCH_BOARD_W_QUEEN_STARTPOS;
-    board->bitboards[NCH_White][NCH_King] = NCH_BOARD_W_KING_STARTPOS;
+    board->bitboards[NCH_White][NCH_Rook]   = NCH_BOARD_W_ROOKS_STARTPOS;
+    board->bitboards[NCH_White][NCH_Queen]  = NCH_BOARD_W_QUEEN_STARTPOS;
+    board->bitboards[NCH_White][NCH_King]   = NCH_BOARD_W_KING_STARTPOS;
 
-    board->bitboards[NCH_Black][NCH_Pawn] = NCH_BOARD_B_PAWNS_STARTPOS;
+    board->bitboards[NCH_Black][NCH_Pawn]   = NCH_BOARD_B_PAWNS_STARTPOS;
     board->bitboards[NCH_Black][NCH_Knight] = NCH_BOARD_B_KNIGHTS_STARTPOS;
     board->bitboards[NCH_Black][NCH_Bishop] = NCH_BOARD_B_BISHOPS_STARTPOS;
-    board->bitboards[NCH_Black][NCH_Rook] = NCH_BOARD_B_ROOKS_STARTPOS;
-    board->bitboards[NCH_Black][NCH_Queen] = NCH_BOARD_B_QUEEN_STARTPOS;
-    board->bitboards[NCH_Black][NCH_King] = NCH_BOARD_B_KING_STARTPOS;
+    board->bitboards[NCH_Black][NCH_Rook]   = NCH_BOARD_B_ROOKS_STARTPOS;
+    board->bitboards[NCH_Black][NCH_Queen]  = NCH_BOARD_B_QUEEN_STARTPOS;
+    board->bitboards[NCH_Black][NCH_King]   = NCH_BOARD_B_KING_STARTPOS;
 
     _init_board(board);
+
+    // starting position does not cause a check to any side but it is better to call
+    // the update_check function to make sure that the board is in a valid state.
     update_check(board);
 }
 
@@ -114,6 +127,11 @@ Board_InitEmpty(Board* board){
     board->bitboards[NCH_Black][NCH_King] = 0ULL;
 
     _init_board(board);
+
+    // the _init_board sets the castles to the initial state and here we reset them
+    // because the board is empty. Considereblt this is not the best way to do this
+    // setting the value of the same variable twice like this but it is the easiest way
+    // for now and it a new desing would be implemented in the future.
     board->castles = 0;
 }
 
@@ -129,13 +147,15 @@ Board_IsCheck(const Board* board){
 
 void
 Board_Reset(Board* board){
-    BoardDict_Reset(board->dict);
-    MoveList_Reset(&board->movelist);
-    Board_Init(board);
+    int nmoves = Board_NMOVES(board);
+    for (int i = 0; i < nmoves; i++)
+        Board_Undo(board);
 }
 
 int
 Board_IsInsufficientMaterial(const Board* board){
+    // if there are pawns, rooks or queens on the board then it is not
+    // in a state of insufficient material.
     uint64 enough = Board_WHITE_QUEENS(board)
                   | Board_BLACK_QUEENS(board)
                   | Board_WHITE_PAWNS(board)
@@ -153,12 +173,21 @@ Board_IsInsufficientMaterial(const Board* board){
                     | Board_BLACK_KNIGHTS(board); 
     
     if (!bishops){
+        // if there are no bishops on the board there is two ways to be not it a state of
+        // insufficient material.
+        // if there are more then two knights and if there are two knights but not on the
+        // same color.
         if (more_then_two(knights) || (Board_WHITE_KNIGHTS(board) && Board_BLACK_KNIGHTS(board)))
             return 0;
         return 1;
     }
 
     if (!knights){
+        // if there are no bishops on the board what we do first is to check if there are
+        // more then one bishop on the board. if not it is a insufficient material.
+        // other ways we need to check if check if there is only two bishops on the board
+        // and those bishop are on different sides of the board. if so the result is insufficient
+        // material if bishops are on the same color. other ways it is not. 
         if (more_then_one(bishops)){
             if (has_two_bits(bishops) && Board_WHITE_BISHOPS(board) && Board_BLACK_BISHOPS(board)){
                 int b1 =  NCH_SQRIDX(Board_WHITE_BISHOPS(board));
@@ -187,6 +216,12 @@ Board_IsFiftyMoves(const Board* board){
 
 Board*
 Board_Copy(const Board* src_board){
+    // the way how this function behaves would be replaces in the future
+    // the board needs to support the stack allocation and the copy function
+    // should be able to copy the board to the stack.
+    // This function would take trg_board as a parameter and copy the src_board
+    // in the future.
+
     Board* dst_board = malloc(sizeof(Board));
     if (!dst_board)
         return NULL;

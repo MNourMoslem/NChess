@@ -191,7 +191,7 @@ undo_move(Board* board, Side side, Move move, Piece last_captured_piece){
 
 NCH_STATIC_INLINE void
 increase_counter(Board* board){
-    board->nmoves += 1;
+    board->nmoves++;
 
     if (NCH_CHKUNI(board->flags, Board_PAWNMOVED | Board_CAPTURE | Board_CHECK | Board_DOUBLECHECK)){
         board->fifty_counter = 0;
@@ -226,12 +226,14 @@ Board_IsMoveLegal(Board* board, Move move){
         return 0;
 
     int len = tail - pseudo_moves;
+    if (!len)
+        return 0;
+
     int available = 0;
     Move ps;
     for (int i = 0; i < len; i++){
-        ps = pseudo_moves[i] &~ (Move_ASSIGN_IS_ENP(1) | Move_ASSIGN_IS_PRO(1));
-        if (move == ps){
-            move = ps;
+        ps = pseudo_moves[i];
+        if (Move_FROM(move) == Move_FROM(ps) && Move_TO(move) == Move_TO(ps)){
             available = 1;
             break;
         }

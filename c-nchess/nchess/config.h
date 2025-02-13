@@ -1,3 +1,10 @@
+/*
+    config.h
+
+    This file contains the configuration macros for the project.
+    The macros are used to define the inline functions, static functions.
+*/
+
 #ifndef NCHESS_SRC_CONFIG_H
 #define NCHESS_SRC_CONFIG_H
 

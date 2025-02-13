@@ -1,3 +1,17 @@
+/*
+    core.h
+
+    This file contains the core definitions and functions of the project.
+    Main enums and constants are defined here.
+    Side, Piece, Square, Diractions enums are defined here.
+    Row, column, diagonal bitboards and tabels are defined here.
+    Macros for square manipulation are defined here.
+
+    This file would be depercated in the future and all macros, tables,
+    enums and stuff would be moved to board.h, types.h, and other files.
+*/
+
+
 #ifndef NCHESS_SRC_CORE_H
 #define NCHESS_SRC_CORE_H
 
@@ -48,6 +62,7 @@ typedef enum{
     NCH_GS_Draw_InsufficientMaterial
 }GameState;
 
+// rows starts from bottom to top (row '1' to '8' of the board)
 #define NCH_ROW1 0x00000000000000FFULL
 #define NCH_ROW2 0x000000000000FF00ULL
 #define NCH_ROW3 0x0000000000FF0000ULL
@@ -57,6 +72,7 @@ typedef enum{
 #define NCH_ROW7 0x00FF000000000000ULL
 #define NCH_ROW8 0xFF00000000000000ULL
 
+// columns starts from right to left (column 'h' to 'a' of the board)
 #define NCH_COL1 0x0101010101010101ULL
 #define NCH_COL2 0x0202020202020202ULL
 #define NCH_COL3 0x0404040404040404ULL
@@ -72,6 +88,7 @@ typedef enum{
 #define NCH_CHKUNI(flag, x) (((flag) & (x)) != 0)
 #define NCH_FLPFLG(flag, x) ((flag) ^= (x))
 
+// square manipulation macros. square here is a bitboard
 #define NCH_NXTSQR_UP(square) (square << 8)
 #define NCH_NXTSQR_UP2(square) (square << 16)
 #define NCH_NXTSQR_DOWN(square) (square >> 8)
@@ -92,12 +109,20 @@ typedef enum{
 #define NCH_NXTSQR_K_LEFTUP(square) (square << 10)
 #define NCH_NXTSQR_K_LEFTDOWN(square) (square >> 6)
 
-extern const int NCH_ROW_TABLE[64];
-extern const int NCH_COL_TABLE[64];
-extern const uint64 NCH_DIAGONAL_MAIN[15];
-extern const int NCH_DIAGONAL_MAIN_IDX[64];
-extern const uint64 NCH_DIAGONAL_ANTI[15];
-extern const int NCH_DIAGONAL_ANTI_IDX[64];
+extern const int NCH_ROW_TABLE[64];         // stores the row index of the square
+extern const int NCH_COL_TABLE[64];         // stores the column index of the square
+extern const uint64 NCH_DIAGONAL_MAIN[15];  // stores the main diagonal bitboards
+extern const int NCH_DIAGONAL_MAIN_IDX[64]; // stores the index of the main diagonal
+extern const uint64 NCH_DIAGONAL_ANTI[15];  // stores the anti diagonal bitboards
+extern const int NCH_DIAGONAL_ANTI_IDX[64]; // stores the index of the anti diagonal
+/*
+    Note:
+
+    row and columns could be calculated bt mod and division operations
+    but it is much faster to use a table to get the row and column.
+    same thing for diagonals they could be found throw mod and division
+    but it is much faster to use a table to get the diagonal index.
+*/
 
 typedef enum{
     NCH_Up = 0,
@@ -112,11 +137,16 @@ typedef enum{
     NCH_DIR_NB,
 
     NCH_NO_DIR
-}Diractions;
+}Diractions; // the type name must be replaced with Diraction.
 
+// a table of size NCH_SQUARE_NB * NCH_SQUARE_NB that stores the direction
+// from one square to another. if the source square and the target are not
+// on the same row, column or diagonal the value would be NCH_NO_DIR
 extern Diractions NCH_DIRACTION_TABLE[NCH_SQUARE_NB][NCH_SQUARE_NB];
 
 
+// macros ends with IDX returns the index and other macros return bitboards.
+// macro naming is awful and would be changed in the future.
 #define NCH_SQR(idx) (1ULL << (idx))
 #define NCH_SQRIDX(square) count_tbits(square)
 #define NCH_GET_COLIDX(idx) NCH_COL_TABLE[idx]
@@ -141,7 +171,12 @@ extern Diractions NCH_DIRACTION_TABLE[NCH_SQUARE_NB][NCH_SQUARE_NB];
 #define NCH_SQR_MIRROR_H(idx) (idx ^ 0x07)
 #define NCH_SQR_SAME_COLOR(idx1, idx2)\
  ((NCH_GET_DIGMAINIDX(idx1) & 1) == (1 & NCH_GET_DIGMAINIDX(idx2)))
+// if the main diagonal index is even then the square is white
+// if the main diagonal index is odd then the square is black
+// if both squares are on the same color both indexes would be even or odd
+// we check if the number is even by anding it with 1.
 
+// this function is used to initialize the all the core tables
 void
 NCH_InitTables();
 

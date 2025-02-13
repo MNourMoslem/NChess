@@ -37,12 +37,7 @@ new_board(){
         return NULL;
     }
 
-    board->dict = BoardDict_New();
-    if (!board->dict){
-        free(board);
-        return NULL;
-    }
-    
+    BoardDict_Init(&board->dict);
     MoveList_Init(&board->movelist);
 
     return board;
@@ -51,9 +46,9 @@ new_board(){
 Board*
 Board_New(){
     Board* board = new_board();
-    if (!board){
+    if (!board)
         return NULL;
-    }
+    
     Board_Init(board);
     return board;
 }
@@ -62,9 +57,9 @@ Board_New(){
 Board*
 Board_NewEmpty(){
     Board* board = new_board();
-    if (!board){
+    if (!board)
         return NULL;
-    }
+    
     Board_InitEmpty(board);
     return board;
 }
@@ -72,7 +67,8 @@ Board_NewEmpty(){
 void
 Board_Free(Board* board){
     if (board){
-        BoardDict_Free(board->dict);
+        BoardDict_Free(&board->dict);
+        MoveList_Free(&board->movelist);
         free(board);
     }
 }
@@ -129,7 +125,7 @@ Board_IsCheck(const Board* board){
 
 void
 Board_Reset(Board* board){
-    BoardDict_Reset(board->dict);
+    BoardDict_Reset(&board->dict);
     MoveList_Reset(&board->movelist);
     Board_Init(board);
 }
@@ -177,7 +173,7 @@ Board_IsInsufficientMaterial(const Board* board){
 
 int
 Board_IsThreeFold(const Board* board){
-    return BoardDict_GetCount(board->dict, board->bitboards) > 2;
+    return BoardDict_GetCount(&board->dict, board->bitboards) > 2;
 }
 
 int
@@ -199,14 +195,15 @@ Board_Copy(const Board* src_board){
         return NULL;
     }
     
-    BoardDict* new_dict = BoardDict_Copy(src_board->dict);
+    BoardDict* new_dict = BoardDict_Copy(&src_board->dict);
     if (!new_dict){
         MoveList_Free(&dst_board->movelist);
         free(dst_board);
         return NULL;
     }
 
-    dst_board->dict = new_dict;
+    dst_board->dict = *new_dict;
+    free(new_dict);
 
     return dst_board;
 }

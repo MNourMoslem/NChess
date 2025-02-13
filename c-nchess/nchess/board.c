@@ -35,6 +35,9 @@ _init_board(Board* board){
     set_board_occupancy(board);
     init_piecetables(board);
     _init_board_flags_and_states(board);
+
+    BoardDict_Init(&board->dict);
+    MoveList_Init(&board->movelist);
 }
 
 NCH_STATIC_FINLINE Board*
@@ -43,9 +46,6 @@ new_board(){
     if (!board){
         return NULL;
     }
-
-    BoardDict_Init(&board->dict);
-    MoveList_Init(&board->movelist);
 
     return board;
 }
@@ -104,19 +104,19 @@ Board_Init(Board* board){
 
 void
 Board_InitEmpty(Board* board){
-    board->bitboards[NCH_White][NCH_Pawn] = 0ULL;
+    board->bitboards[NCH_White][NCH_Pawn]   = 0ULL;
     board->bitboards[NCH_White][NCH_Knight] = 0ULL;
     board->bitboards[NCH_White][NCH_Bishop] = 0ULL;
-    board->bitboards[NCH_White][NCH_Rook] = 0ULL;
-    board->bitboards[NCH_White][NCH_Queen] = 0ULL;
-    board->bitboards[NCH_White][NCH_King] = 0ULL;
+    board->bitboards[NCH_White][NCH_Rook]   = 0ULL;
+    board->bitboards[NCH_White][NCH_Queen]  = 0ULL;
+    board->bitboards[NCH_White][NCH_King]   = 0ULL;
 
-    board->bitboards[NCH_Black][NCH_Pawn] = 0ULL;
+    board->bitboards[NCH_Black][NCH_Pawn]   = 0ULL;
     board->bitboards[NCH_Black][NCH_Knight] = 0ULL;
     board->bitboards[NCH_Black][NCH_Bishop] = 0ULL;
-    board->bitboards[NCH_Black][NCH_Rook] = 0ULL;
-    board->bitboards[NCH_Black][NCH_Queen] = 0ULL;
-    board->bitboards[NCH_Black][NCH_King] = 0ULL;
+    board->bitboards[NCH_Black][NCH_Rook]   = 0ULL;
+    board->bitboards[NCH_Black][NCH_Queen]  = 0ULL;
+    board->bitboards[NCH_Black][NCH_King]   = 0ULL;
 
     _init_board(board);
 
@@ -139,9 +139,9 @@ Board_IsCheck(const Board* board){
 
 void
 Board_Reset(Board* board){
-    BoardDict_Reset(&board->dict);
-    MoveList_Reset(&board->movelist);
-    Board_Init(board);
+    for (int i = i; i < Board_NMOVES(board); i++){
+        Board_Undo(board);
+    }
 }
 
 int
@@ -226,15 +226,12 @@ Board_Copy(const Board* src_board){
         return NULL;
     }
     
-    BoardDict* new_dict = BoardDict_Copy(&src_board->dict);
-    if (!new_dict){
+    res = BoardDict_CopyExtra(&src_board->dict, &dst_board->dict);
+    if (res < 0){
         MoveList_Free(&dst_board->movelist);
         free(dst_board);
         return NULL;
     }
-
-    dst_board->dict = *new_dict;
-    free(new_dict);
 
     return dst_board;
 }

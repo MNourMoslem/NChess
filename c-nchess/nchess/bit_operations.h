@@ -1,3 +1,18 @@
+/*
+    bit_operations.h
+
+    this file contains bit operations functions and macros
+    used in the project.
+    it is too obvious that these functions are used to manipulate
+    bits but it is kind of a habit to write this explenation in every
+    file.
+
+    future updates:
+        - get_ls1b would be deleted and get_ts1b would be renamed something like
+          get_last_bit.
+*/
+
+
 #ifndef NCHESS_SRC_BIT_OPERATIONS_H
 #define NCHESS_SRC_BIT_OPERATIONS_H
 

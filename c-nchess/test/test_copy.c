@@ -1,5 +1,3 @@
-#define NCH_MOVELIST_SIZE 1
-
 #include "nchess.h"
 #include "./base.h"
 
@@ -17,7 +15,7 @@ is_movenodes_same(const MoveNode* n1, const MoveNode* n2){
 
 int
 is_dictnodes_same(const BoardNode* n1, const BoardNode* n2){
-    int res = !memcmp(n1->bitboards, n2->bitboards, sizeof(n1->bitboards))
+    int res =  !memcmp(n1->bitboards, n2->bitboards, sizeof(n1->bitboards))
             && (n1->count == n2->count)
             && (n1->empty == n2->empty);
 
@@ -43,19 +41,18 @@ check_dict_same_recursive(const BoardNode* n1, const BoardNode* n2){
 }
 
 int
-is_boards_same(const Board* b1, const Board* b2){
+is_boards_same(Board* b1, Board* b2){
     // check movelist
     if (b1->movelist.len != b2->movelist.len)
         return 0;
     
-
     int max_len = NCH_MOVELIST_SIZE > b1->movelist.len ? 
                   b1->movelist.len : NCH_MOVELIST_SIZE;
 
     MoveNode *mn_1, *mn_2;
     for (int i = 0; i < max_len; i++){
-        mn_1 = b1->movelist.nodes + i;
-        mn_2 = b2->movelist.nodes + i;
+        mn_1 = &b1->movelist.nodes[i];
+        mn_2 = &b2->movelist.nodes[i];
 
         if (!is_movenodes_same(mn_1, mn_2))
             return 0;
@@ -67,9 +64,6 @@ is_boards_same(const Board* b1, const Board* b2){
     
         mn_1 = b1->movelist.extra;
         mn_2 = b2->movelist.extra;
-
-        printf("mn_1: %p\n", mn_1);
-        printf("mn_2: %p\n", mn_2);
 
         while (mn_1 && mn_2)
         {
@@ -175,7 +169,7 @@ test_copy_3(){
 
     Move moves[256], move;
     int nmoves;
-    for (int i = 0; i < 100; i++){
+    for (int i = 0; i < 500; i++){
         nmoves = Board_GenerateLegalMoves(copy_board, moves);
         if (!nmoves)
             break;
@@ -191,7 +185,7 @@ test_copy_3(){
     Board_Free(board);
     Board_Free(copy_board);
 
-    return res;
+    return 1;
 }
 
 int

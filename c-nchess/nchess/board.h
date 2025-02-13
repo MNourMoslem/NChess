@@ -35,7 +35,7 @@ typedef struct
     uint64 en_passant_trg;
 
     MoveList movelist;
-    BoardDict* dict;
+    BoardDict dict;
 
     int nmoves;
     int fifty_counter;

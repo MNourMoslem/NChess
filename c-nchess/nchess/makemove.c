@@ -258,7 +258,7 @@ _Board_MakeMove(Board* board, Move move){
 
     BoardDict_Add(&board->dict, board->bitboards);
 
-    reset_castle_rigths(board);
+    reset_castle_rights(board);
     flip_turn(board);
     increase_counter(board);
     update_check(board);

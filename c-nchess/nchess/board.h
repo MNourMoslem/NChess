@@ -63,15 +63,12 @@ typedef struct
     uint64 en_passant_map;
     uint64 en_passant_trg;
 
-<<<<<<< HEAD
-=======
     MoveList movelist;
     BoardDict dict;
->>>>>>> 4d521bee873466328462e851e8870c5b9b69d440
 
     // These variables are used to store the information related to the move that was made
     MoveList movelist; // move stack
-    BoardDict* dict;   // position dictionary
+    BoardDict dict;   // position dictionary
 
     int nmoves;        // number of half moves
     int fifty_counter; // counter for fifty moves rule

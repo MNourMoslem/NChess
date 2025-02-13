@@ -44,19 +44,7 @@ new_board(){
         return NULL;
     }
 
-<<<<<<< HEAD
-    // the dictionary would change in the future to be allocated
-    // with the board instead of being a pointer. this would be helpful
-    // to be able to create the board at the stack.
-    board->dict = BoardDict_New();
-    if (!board->dict){
-        free(board);
-        return NULL;
-    }
-    
-=======
     BoardDict_Init(&board->dict);
->>>>>>> 4d521bee873466328462e851e8870c5b9b69d440
     MoveList_Init(&board->movelist);
 
     return board;
@@ -85,11 +73,7 @@ Board_NewEmpty(){
 void
 Board_Free(Board* board){
     if (board){
-<<<<<<< HEAD
-        BoardDict_Free(board->dict);
-=======
         BoardDict_Free(&board->dict);
->>>>>>> 4d521bee873466328462e851e8870c5b9b69d440
         MoveList_Free(&board->movelist);
         free(board);
     }
@@ -155,15 +139,9 @@ Board_IsCheck(const Board* board){
 
 void
 Board_Reset(Board* board){
-<<<<<<< HEAD
-    int nmoves = Board_NMOVES(board);
-    for (int i = 0; i < nmoves; i++)
-        Board_Undo(board);
-=======
     BoardDict_Reset(&board->dict);
     MoveList_Reset(&board->movelist);
     Board_Init(board);
->>>>>>> 4d521bee873466328462e851e8870c5b9b69d440
 }
 
 int

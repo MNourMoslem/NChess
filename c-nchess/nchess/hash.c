@@ -187,42 +187,46 @@ BoardDict_Reset(BoardDict* dict){
     }
 }
 
-BoardDict*
-BoardDict_Copy(const BoardDict* src){
-    BoardDict* dst = malloc(sizeof(BoardDict));
-    if (!dst)
-        return NULL;
-
-    *dst = *src;
-    BoardNode *node, *dst_node;
+int
+BoardDict_CopyExtra(const BoardDict* src, BoardDict* dst){
+    BoardNode* dn;
+    int last;
     for (int i = 0; i < NCH_BOARD_DICT_SIZE; i++){
-        node = &src->nodes[i];
-        if (!node->empty && node->next){
-            node = src->nodes[i].next;
-            dst_node = (BoardNode*)malloc(sizeof(BoardNode));
-            if (!dst_node)
-                return NULL;
-
-            *dst_node = *node;
-            dst->nodes[i].next = dst_node;
-            node = node->next;
-
-            while (node)
+        const BoardNode* sn = src->nodes + i;
+        if (!sn->empty){
+            dn = dst->nodes + i;
+            while (sn->next)
             {
-                dst_node->next = (BoardNode*)malloc(sizeof(BoardNode));
-                if (!dst_node->next)
+                dn->next = (BoardNode*)malloc(sizeof(BoardNode));
+                if (!dn->next){
+                    last = i;
                     goto fail;
+                }
 
-                *dst_node->next = *node;
-                node = node->next;
-                dst_node = dst_node->next;
+                *dn->next = *sn->next;
+                
+                sn = sn->next;
+                dn = dn->next;
             }
         }
     }
 
-    return dst;
+    return 0;
 
     fail:
-        return NULL;
+        BoardNode* temp;
+        for (int i = 0; i < last + 1; i++){
+            dn = dst->nodes + i;
+            if (!dn->empty && dn->next){
+                dn = dn->next;
+                while (dn)
+                {
+                    temp = dn;
+                    dn = dn->next;
+                    free(temp);
+                }
+            }
+        }
+        return -1;
 }
 

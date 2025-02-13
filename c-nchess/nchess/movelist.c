@@ -110,7 +110,7 @@ MoveList_Reset(MoveList* movelist){
 
 int
 MoveList_CopyExtra(const MoveList* src, MoveList* dst){
-    if (!src->extra || dst->extra)
+    if (!src->extra)
         return 0;
 
     MoveNode* dst_node = (MoveNode*)malloc(sizeof(MoveNode));

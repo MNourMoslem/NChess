@@ -4,9 +4,7 @@
 #include "types.h"
 #include "core.h"
 
-#ifndef NCH_BOARD_DICT_SIZE
-    #define NCH_BOARD_DICT_SIZE 100
-#endif
+#define NCH_BOARD_DICT_SIZE 100
 
 typedef struct BoardNode
 {
@@ -40,7 +38,7 @@ BoardDict_Remove(BoardDict* dict, const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE
 void
 BoardDict_Reset(BoardDict* dict);
 
-BoardDict*
-BoardDict_Copy(const BoardDict* src);
+int
+BoardDict_CopyExtra(const BoardDict* src, BoardDict* dst);
 
 #endif

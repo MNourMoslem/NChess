@@ -76,7 +76,7 @@ MoveList_Get(MoveList* movelist, int idx){
 
     int temp = NCH_MOVELIST_SIZE;
     MoveNode* node = movelist->extra;
-    while (temp != idx){
+    while (temp < idx){
         if (node){
             node = node->next;
             temp++;
@@ -113,41 +113,42 @@ MoveList_CopyExtra(const MoveList* src, MoveList* dst){
     if (!src->extra)
         return 0;
 
-    MoveNode* dst_node = (MoveNode*)malloc(sizeof(MoveNode));
-    if (!dst_node)
+    dst->extra = (MoveNode*)malloc(sizeof(MoveNode));
+    if (!dst->extra)
         return -1;
 
-    MoveNode* node = src->extra;
-    *dst_node = *node; 
-    dst_node->prev = NULL;
+    *dst->extra = *src->extra;
 
-    dst->extra = dst_node;
-    dst->last_extra = dst_node;
-    node = node->next;
+    MoveNode* sn = src->extra;
+    MoveNode* dn = dst->extra;
 
-    while (node)
+    while (sn->next)
     {
-        dst_node->next = (MoveNode*)malloc(sizeof(MoveNode));
-        if (!dst_node->next)
+        dn->next = (MoveNode*)malloc(sizeof(MoveNode));
+        if (dn->next){
+            dn->next = NULL;
             goto fail;
+        }
 
-        dst_node->next->prev = dst_node;
-        *(dst_node->next) = *node;
-        node = node->next;
-        dst_node = dst_node->next;
+        *dn->next = *sn->next;
+        dn->next->prev = dn;
+        
+        sn = sn->next;
+        dn = dn->next;
     }
-
-    dst->last_extra = dst_node;
+    
+    dst->last_extra = dn;
+    
     return 0;
 
     fail:
         MoveNode *temp;
-        node = dst->extra;
-        while (node)
+        dn = dst->extra;
+        while (dn)
         {
-            temp = node->next;
-            free(node);
-            node = temp;
+            temp = dn;
+            dn = dn->next;
+            free(temp);
         }
         
         return -1;

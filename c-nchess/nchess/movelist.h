@@ -7,9 +7,7 @@
 #include "move.h"
 #include <stdlib.h>
 
-#ifndef NCH_MOVELIST_SIZE
-    #define NCH_MOVELIST_SIZE 400
-#endif
+#define NCH_MOVELIST_SIZE 400
 
 typedef struct MoveNode
 {

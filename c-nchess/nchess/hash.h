@@ -4,7 +4,9 @@
 #include "types.h"
 #include "core.h"
 
-#define NCH_BOARD_DICT_SIZE 100
+#ifndef NCH_BOARD_DICT_SIZE
+    #define NCH_BOARD_DICT_SIZE 100
+#endif
 
 typedef struct BoardNode
 {
@@ -20,8 +22,8 @@ typedef struct
     BoardNode nodes[NCH_BOARD_DICT_SIZE];
 }BoardDict;
 
-BoardDict*
-BoardDict_New();
+void
+BoardDict_Init(BoardDict* dict);
 
 void
 BoardDict_Free(BoardDict* dict);

@@ -89,19 +89,11 @@ get_node(const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB], const BoardNode* no
     }
 }
 
-
-BoardDict*
-BoardDict_New(){
-    BoardDict* dict = malloc(sizeof(BoardDict));
-    if (!dict){
-        return NULL;
-    }
-
+void
+BoardDict_Init(BoardDict* dict){
     for (int i = 0; i < NCH_BOARD_DICT_SIZE; i++){
         dict->nodes[i].empty = 1;
     }
-
-    return dict;
 }
 
 void
@@ -119,7 +111,6 @@ BoardDict_Free(BoardDict* dict){
                 }
             }
         }
-        free(dict);
     }
 }
 

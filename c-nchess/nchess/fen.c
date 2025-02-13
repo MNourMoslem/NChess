@@ -1,3 +1,9 @@
+/*
+    fen.c
+
+    This file containes the definition of fen.h functions.
+*/
+
 #include "fen.h"
 #include "utils.h"
 #include "board_utils.h"
@@ -86,7 +92,16 @@ char2number(char c){
 
 NCH_STATIC_INLINE Square
 str2square(char* s){
-    return ('h' - s[0]) + (char2number(s[1]) * 8); 
+    #if NCH_H1 == 0
+        return ('h' - s[0]) + (char2number(s[1]) * 8); 
+    #else
+        return (s[0] - 'a') + ((8 - char2number(s[1])) * 8);
+    #endif
+}
+
+int
+parse_bitboards(Board* board, char* fen){
+    
 }
 
 int

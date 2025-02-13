@@ -1,3 +1,10 @@
+/*
+    bitboard.c
+
+    This file initialization functions for the bitboards used in the nchess.
+*/
+
+
 #include "bitboard.h"
 #include "config.h"
 #include "types.h"
@@ -112,7 +119,10 @@ init_between_table(){
                 bet &= (-s1) & (s2-1);
             }
 
-            BetweenTable[i][j] = ( bet | s2 ) & ~s1;
+            bet |= s2;    // include s2
+            bet &= ~s1;   // exclude s1
+
+            BetweenTable[i][j] = bet;
         }
     }
 }
@@ -334,7 +344,7 @@ NCH_InitBitboards(){
     init_knight_attacks();
     init_king_attacks();
     init_between_table();
-    init_rook_mask();
+    init_rook_mask();     // order matters here
     init_bishop_mask();
     init_relevant_bits();
     init_magics();

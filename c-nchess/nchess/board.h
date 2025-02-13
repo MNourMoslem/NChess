@@ -1,3 +1,12 @@
+/*
+    board.h
+
+    This file contains the Board struct and its functions.
+    functions in this files all are creation, initialization, copying
+    and checking state functions. Other functions realted to move generation,
+    move making, move undoing and perft search exist in files with related names.
+*/
+
 #ifndef NCHESS_SRC_BOARD_H
 #define NCHESS_SRC_BOARD_H
 
@@ -7,6 +16,9 @@
 #include "movelist.h"
 #include "hash.h"
 
+/*
+    Starting position bitboards of each piece
+*/
 #define NCH_BOARD_W_PAWNS_STARTPOS 0x000000000000FF00
 #define NCH_BOARD_W_KNIGHTS_STARTPOS 0x0000000000000042
 #define NCH_BOARD_W_BISHOPS_STARTPOS 0x0000000000000024
@@ -21,27 +33,51 @@
 #define NCH_BOARD_B_QUEEN_STARTPOS 0x1000000000000000
 #define NCH_BOARD_B_KING_STARTPOS 0x0800000000000000
 
+/*
+    Board struct
+*/
 typedef struct
 {
-    uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB];
-    uint64 occupancy[NCH_SIDES_NB + 1];
-    Piece piecetables[NCH_SIDES_NB][NCH_SQUARE_NB];
+    uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB];    // bitboards for each piece type
+    uint64 occupancy[NCH_SIDES_NB + 1];              // occupancy bitboards for each
+                                                     // side and both sides
+    
+    // piece table for each side.
+    // لإhe table is an array of size NCH_SQUARE_NB
+    // each index in the array represents a square on the board
+    // and the value at that index represents the piece on that square
+    // This is useful to retrieve the piece on a square quickly instead of
+    // searching through the bitboards.
+    Piece piecetables[NCH_SIDES_NB][NCH_SQUARE_NB];  
 
-    uint8 castles;
-    int flags;
+    uint8 castles; // castle rights
+    int flags;     // board flags
 
+
+    // These variables are used to store the information realted to en passant
+    // The idx is the square of the pawn that moved twice and not the square that
+    // the enemy pawn is attacking. The name is misleading and would be changed later.
+    // The map is a bitboard where the target pawn and the attacker pawns are set to 1.
+    // The trg is a bitboard where the target square the attacker would go to is set to 1.
     Square en_passant_idx;
     uint64 en_passant_map;
     uint64 en_passant_trg;
 
-    MoveList movelist;
-    BoardDict* dict;
 
-    int nmoves;
-    int fifty_counter;
+    // These variables are used to store the information related to the move that was made
+    MoveList movelist; // move stack
+    BoardDict* dict;   // position dictionary
 
-    Piece captured_piece;
+    int nmoves;        // number of half moves
+    int fifty_counter; // counter for fifty moves rule
+
+    Piece captured_piece; // last captured piece. used for undoing moves
 }Board;
+
+/*
+    Macros below used to access the fields of the board struct
+    it is more efficient to use these macros instead of accessing the fields directly
+*/
 
 #define Board_WHITE_OCC(board) (board)->occupancy[NCH_White]
 #define Board_BLACK_OCC(board) (board)->occupancy[NCH_Black]
@@ -71,13 +107,26 @@ typedef struct
 #define Board_NMOVES(board) (board)->nmoves
 #define Board_FIFTY_COUNTER(board) (board)->fifty_counter
 
+// returns the piece on the square idx
 #define Board_ON_SQUARE(board, idx) Board_WHITE_PIECE(board, idx) != NCH_NO_PIECE ?\
                                     Board_WHITE_PIECE(board, idx) : Board_BLACK_PIECE(board, idx)
 
+// returns the side that owns the piece on the square idx
 #define Board_OWNED_BY(board, idx) Board_WHITE_PIECE(board, idx) != NCH_NO_PIECE ?\
                                    NCH_White : Board_BLACK_PIECE(board, idx) != NCH_NO_PIECE ?\
                                    NCH_Black : NCH_NO_SIDE;
 
+
+/*
+    Board flags.
+
+    These flags are used to store the state of the board.
+    flags realted to the state of the game would be removed like
+    DRAW, WIN, GAMEEND, etc. and would be replaced with a single.
+    the nchess.Board will not be responsible for the state of the game.
+    however the Board_State function would be used to get the state of the game.
+    the flags would be used to store the state of the board like CHECK, CAPTURE, etc.
+*/
 #define Board_PAWNMOVED 0x1
 #define Board_ENPASSANT 0x2
 #define Board_CAPTURE 0x4
@@ -110,10 +159,13 @@ typedef struct
 #define Board_IS_WHITETURN(board) (board->flags & Board_TURN)
 #define Board_IS_BLACKTURN(board) !Board_IS_WHITETURN(board)
 
-#define Board_GAME_ON(board) !Board_IS_GAMEEND(board)
+#define Board_GAME_ON(board) !Board_IS_GAMEEND(board) // would be removed later
 #define Board_GET_SIDE(board) (Board_IS_WHITETURN(board) ? NCH_White : NCH_Black)
 #define Board_GET_OP_SIDE(board) (Board_IS_WHITETURN(board) ? NCH_Black : NCH_White)
 
+/*
+    Castle rights flags
+*/
 #define Board_CASTLE_WK (uint8)1
 #define Board_CASTLE_WQ (uint8)2
 #define Board_CASTLE_BK (uint8)4
@@ -124,39 +176,63 @@ typedef struct
 #define Board_IS_CASTLE_BK(board) (board->castles & Board_CASTLE_BK)
 #define Board_IS_CASTLE_BQ(board) (board->castles & Board_CASTLE_BQ)
 
+/*
+    Board functions.
+    As metions above all functions in this file are creation, initialization, copying
+    and checking state functions.
+*/
+
+// creates a new board and initializes it with the standard starting position
+// no need to call Board_Init after calling this function.
 Board*
 Board_New();
 
+
+// creates a new board and initializes it with no pieces on the board
+// no need to call Board_Init after calling this function.
 Board*
 Board_NewEmpty();
 
+// frees the memory allocated for the board
 void
 Board_Free(Board* board);
 
+// initializes the board with the standard starting position
+// this functions used if the board is already allocated and initialized
 void
 Board_Init(Board* board);
 
+
+// initializes the board with the empty board
+// this functions used if the board is already allocated and initialized
 void
 Board_InitEmpty(Board* board);
 
+// checks if the king of the side that is to move is under attack
 int
 Board_IsCheck(const Board* board);
 
+// resets the board to the initial state
 void
 Board_Reset(Board* board);
 
+// checks if the board is in a state of insufficient material
 int
 Board_IsInsufficientMaterial(const Board* board);
 
+// checks if the board is in a state of threefold repetition
 int
 Board_IsThreeFold(const Board* board);
 
+// checks if the board is in a state of fifty moves rule
 int
 Board_IsFiftyMoves(const Board* board);
 
+// copies the board and returns the new board
 Board*
 Board_Copy(const Board* src_board);
 
+// returns the state of the game
 GameState
 Board_State(const Board* board, int can_move);
 

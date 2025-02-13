@@ -43,7 +43,7 @@ typedef struct
                                                      // side and both sides
     
     // piece table for each side.
-    // لإhe table is an array of size NCH_SQUARE_NB
+    // The table is an array of size NCH_SQUARE_NB
     // each index in the array represents a square on the board
     // and the value at that index represents the piece on that square
     // This is useful to retrieve the piece on a square quickly instead of
@@ -62,9 +62,6 @@ typedef struct
     Square en_passant_idx;
     uint64 en_passant_map;
     uint64 en_passant_trg;
-
-    MoveList movelist;
-    BoardDict dict;
 
     // These variables are used to store the information related to the move that was made
     MoveList movelist; // move stack

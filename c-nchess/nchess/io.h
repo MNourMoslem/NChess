@@ -1,3 +1,9 @@
+/*
+    io.h
+
+    This file containes functions for io purposes such as printing as string conversions.
+*/
+
 #ifndef NCHESS_SRC_IO_H
 #define NCHESS_SRC_IO_H
 

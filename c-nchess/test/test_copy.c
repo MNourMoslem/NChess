@@ -3,11 +3,7 @@
 
 int
 is_movenodes_same(const MoveNode* n1, const MoveNode* n2){
-    int res =  (n1->captured_piece == n2->captured_piece)
-            && (n1->castle == n2->castle)
-            && (n1->enp_sqr == n2->enp_sqr)
-            && (n1->fifty_count == n2->fifty_count)
-            && (n1->gameflags == n2->gameflags)
+    int res =  !memcmp(&n1->pos_info, &n2->pos_info, sizeof(n1->pos_info))
             && (n1->move == n2->move);
 
     return res;
@@ -98,14 +94,8 @@ is_boards_same(Board* b1, Board* b2){
     res  = (!memcmp(b1->bitboards, b2->bitboards, sizeof(b1->bitboards)))
         && (!memcmp(b1->occupancy, b2->occupancy, sizeof(b1->occupancy)))
         && (!memcmp(b1->piecetables, b2->piecetables, sizeof(b1->piecetables)))
-        && (b1->castles == b2->castles)
-        && (b1->flags == b2->flags)
-        && (b1->en_passant_idx == b2->en_passant_idx)
-        && (b1->en_passant_map == b2->en_passant_map)
-        && (b1->en_passant_trg == b2->en_passant_trg)
-        && (b1->nmoves == b2->nmoves)
-        && (b1->fifty_counter == b2->fifty_counter)
-        && (b1->captured_piece == b2->captured_piece);
+        && (!memcmp(&b1->info, &b2->info, sizeof(PositionInfo)))
+        && (b1->nmoves == b2->nmoves);
 
     return res;
 }

@@ -19,15 +19,15 @@
 
 NCH_STATIC_FINLINE void
 _init_board_flags_and_states(Board* board){
-    board->castles = Board_CASTLE_WK | Board_CASTLE_WQ | Board_CASTLE_BK | Board_CASTLE_WQ;
+    board->info.castles = Board_CASTLE_WK | Board_CASTLE_WQ | Board_CASTLE_BK | Board_CASTLE_WQ;
+    board->info.en_passant_idx = 0;
+    board->info.en_passant_map = 0ULL;
+    board->info.en_passant_trg = 0ULL;
+    board->info.flags = Board_TURN;
+    board->info.fifty_counter = 0;
+    board->info.captured_piece = NCH_NO_PIECE;
 
-    board->en_passant_idx = 0;
-    board->en_passant_map = 0ULL;
-    board->en_passant_trg = 0ULL;
-    board->flags = Board_TURN;
     board->nmoves = 0;
-    board->fifty_counter = 0;
-    board->captured_piece = NCH_NO_PIECE;
 }
 
 NCH_STATIC_FINLINE void
@@ -73,7 +73,7 @@ Board_NewEmpty(){
 void
 Board_Free(Board* board){
     if (board){
-        BoardDict_Free(&board->dict);
+        BoardDict_FreeExtra(&board->dict);
         MoveList_Free(&board->movelist);
         free(board);
     }
@@ -124,7 +124,7 @@ Board_InitEmpty(Board* board){
     // because the board is empty. Considereblt this is not the best way to do this
     // setting the value of the same variable twice like this but it is the easiest way
     // for now and it a new desing would be implemented in the future.
-    board->castles = 0;
+    board->info.castles = 0;
 }
 
 int
@@ -203,7 +203,7 @@ Board_IsThreeFold(const Board* board){
 
 int
 Board_IsFiftyMoves(const Board* board){
-    return board->fifty_counter >= 50;
+    return board->info.fifty_counter >= 50;
 }
 
 Board*

@@ -10,8 +10,7 @@ MoveList_Init(MoveList* movelist){
     movelist->len = 0;
 }
 
-int MoveList_Append(MoveList* movelist, Move move, Square enp_sqr, Piece captured_piece,
-                     int fifty_count, uint8 castle_flags, int flags){
+int MoveList_Append(MoveList* movelist, Move move, PositionInfo pos_info){
     MoveNode* node;
     if (movelist->len < NCH_MOVELIST_SIZE){
         node = movelist->nodes + movelist->len;
@@ -35,12 +34,8 @@ int MoveList_Append(MoveList* movelist, Move move, Square enp_sqr, Piece capture
     
     node->next = NULL;
     node->move = move;
-    node->fifty_count = fifty_count;
-    node->castle = castle_flags;
-    node->gameflags = flags;
-    node->enp_sqr = enp_sqr;
-    node->captured_piece = captured_piece;
-
+    node->pos_info = pos_info;
+    
     movelist->len++;
     return 0;
 }

@@ -12,11 +12,7 @@
 typedef struct MoveNode
 {
     Move move;
-    int gameflags;
-    int fifty_count;
-    uint8 castle;
-    Square enp_sqr;
-    Piece captured_piece;
+    PositionInfo pos_info;
 
     struct MoveNode* prev;
     struct MoveNode* next;
@@ -35,8 +31,7 @@ void
 MoveList_Init(MoveList* movelist);
 
 int
-MoveList_Append(MoveList* movelist, Move move, Square enp_sqr, Piece captured_piece,
-                     int fifty_count, uint8 castle_flags, int flags);
+MoveList_Append(MoveList* movelist, Move move, PositionInfo pos_info);
 
 void
 MoveList_Pop(MoveList* movelist);
@@ -68,10 +63,10 @@ MoveList_Last(MoveList* movelist){
 #define MoveNode_TO(node) Move_TO((node)->move)
 #define MoveNode_CASTLE(node) Move_CASTLE((node)->move)
 #define MoveNode_PRO_PIECE(node) Move_PRO_PIECE((node)->move)
-#define MoveNode_ENP_SQR(node) ((node)->enp_sqr)
-#define MoveNode_CAP_PIECE(node) ((node)->captured_piece)
-#define MoveNode_FIFTY_COUNT(node) ((node)->fifty_count)
-#define MoveNode_CASTLE_FLAGS(node) ((node)->castle)
-#define MoveNode_GAME_FLAGS(node) ((node)->gameflags)
+#define MoveNode_ENP_SQR(node) ((node)->pos_info->enp_sqr)
+#define MoveNode_CAP_PIECE(node) ((node)->pos_info->captured_piece)
+#define MoveNode_FIFTY_COUNT(node) ((node)->pos_info->fifty_count)
+#define MoveNode_CASTLE_FLAGS(node) ((node)->pos_info->castle)
+#define MoveNode_GAME_FLAGS(node) ((node)->pos_info->gameflags)
 
 #endif

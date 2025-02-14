@@ -134,10 +134,10 @@ parse_fen(Board* board, char* fen){
     fen++;
 
     if (*fen == 'w'){
-        NCH_SETFLG(board->flags, Board_TURN);
+        NCH_SETFLG(board->info.flags, Board_TURN);
     }
     else if (*fen == 'b'){
-        NCH_RMVFLG(board->flags, Board_TURN);
+        NCH_RMVFLG(board->info.flags, Board_TURN);
     }
     else{
         return -1;
@@ -148,16 +148,16 @@ parse_fen(Board* board, char* fen){
     while (*fen != ' ')
     {
         if (*fen == 'K'){
-            NCH_SETFLG(board->castles, Board_CASTLE_WK);
+            NCH_SETFLG(board->info.castles, Board_CASTLE_WK);
         }
         else if (*fen == 'Q'){
-            NCH_SETFLG(board->castles, Board_CASTLE_WQ);
+            NCH_SETFLG(board->info.castles, Board_CASTLE_WQ);
         }
         else if (*fen == 'k'){
-            NCH_SETFLG(board->castles, Board_CASTLE_BK);
+            NCH_SETFLG(board->info.castles, Board_CASTLE_BK);
         }
         else if (*fen == 'q'){
-            NCH_SETFLG(board->castles, Board_CASTLE_BQ);
+            NCH_SETFLG(board->info.castles, Board_CASTLE_BQ);
         }
         fen++;
     }
@@ -187,7 +187,7 @@ parse_fen(Board* board, char* fen){
     }
 
     if (*fen == '\0'){
-        board->fifty_counter = 0;
+        board->info.fifty_counter = 0;
         board->nmoves = 0;
         return 0;
     }
@@ -195,7 +195,7 @@ parse_fen(Board* board, char* fen){
     if (!is_number(*fen)){
         return -1;
     }
-    board->fifty_counter = char2number(*fen);
+    board->info.fifty_counter = char2number(*fen);
     fen+=2;
     
     if (!is_number(*fen)){

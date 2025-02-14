@@ -1,37 +1,20 @@
+#include <string.h>
 #include <stdio.h>
-#include <time.h>
+#include <stdlib.h>
 
-void func(int N, int num){
-    typedef unsigned char u8;
-    typedef unsigned long long u64;
+typedef unsigned long long uint64;
 
-    clock_t start_time = clock();
+int main(){
 
-    u64 num64 = 0;
-    for (long long i = 0; i < N; i++){
-        num64 &= (u64)num;
-    }
+    uint64 arr1[2][2] = {{1, 2}, {30, 4}};
+    uint64 arr2[2][2];
 
-    clock_t end_time = clock();
-    double time_spent = (double)(end_time - start_time) / CLOCKS_PER_SEC;
+    memcpy(arr2, arr1, sizeof(arr1));
 
-    clock_t start_time_2 = clock();
-
-    int c = 1;
-    for (long long i = 0; i < N; i++){
-        c*=num;
-    }
-
-    clock_t end_time_2 = clock();
-    double time_spent_2 = (double)(end_time_2 - start_time_2) / CLOCKS_PER_SEC;
-
-    printf("time of u64: %f\n", time_spent);
-    printf("time of u8: %f\n", time_spent_2);
-}
-
-int main() {
-    long long N = 2000000000;
-    func(N, 10);
+    printf("%llu ", arr2[0][0]);
+    printf("%llu ", arr2[0][1]);
+    printf("%llu ", arr2[1][0]);
+    printf("%llu ", arr2[1][1]);
 
     return 0;
 }

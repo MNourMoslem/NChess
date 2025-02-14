@@ -62,11 +62,15 @@ get_pinned_pieces(const Board* board, uint64* pinned_allowed_squares){
     all_occ &= ~(around & self_occ);
 
     int special = 0;
-    if (board->en_passant_idx && NCH_SAME_ROW(king_idx, board->en_passant_idx)
-        && (around & board->en_passant_map) && has_two_bits(board->en_passant_map)){
+    
+    int enp_idx = Board_ENP_IDX(board);
+    uint64 enp_map = Board_ENP_MAP(board);
+
+    if (enp_idx && NCH_SAME_ROW(king_idx, enp_idx)
+        && (around & enp_map) && has_two_bits(enp_map)){
             
             special = 1;
-            all_occ &= ~board->en_passant_map;
+            all_occ &= ~enp_map;
 
         }
 
@@ -118,13 +122,13 @@ get_pinned_pieces(const Board* board, uint64* pinned_allowed_squares){
         }
     }
 
-    if (special && (pinned_pieces & board->en_passant_map)){
+    if (special && (pinned_pieces & enp_map)){
         pinned_allowed_squares--;
-        while (!(*pinned_allowed_squares & board->en_passant_map))
+        while (!(*pinned_allowed_squares & enp_map))
         {
             pinned_allowed_squares--;
         }
-        *pinned_allowed_squares = ~(board->en_passant_trg | board->en_passant_map);
+        *pinned_allowed_squares = ~(Board_ENP_TRG(board) | enp_map);
     }
 
     return pinned_pieces;
@@ -178,7 +182,7 @@ generate_pawn_moves(Board* board, int idx, uint64 allowed_squares, Move* moves){
     uint64 op_occ = board->occupancy[Board_GET_OP_SIDE(board)];
     uint64 all_occ = Board_ALL_OCC(board);
 
-    uint64 bb = bb_pawn_attacks(Board_GET_SIDE(board), idx) & (op_occ | board->en_passant_trg);
+    uint64 bb = bb_pawn_attacks(Board_GET_SIDE(board), idx) & (op_occ | Board_ENP_TRG(board));
 
     if (Board_IS_WHITETURN(board)){
         if (could2sqr && NCH_CHKFLG(~all_occ & (NCH_ROW3 | NCH_ROW4), 0x10100ULL << idx))
@@ -193,8 +197,8 @@ generate_pawn_moves(Board* board, int idx, uint64 allowed_squares, Move* moves){
             bb |= NCH_NXTSQR_DOWN(NCH_SQR(idx)) &~ all_occ;
     }
 
-    if (board->en_passant_idx && allowed_squares != NCH_UINT64_MAX && allowed_squares & board->en_passant_map){
-        allowed_squares |= board->en_passant_trg;    
+    if (Board_ENP_IDX(board) && allowed_squares != NCH_UINT64_MAX && allowed_squares & Board_ENP_MAP(board)){
+        allowed_squares |= Board_ENP_TRG(board);    
     }
 
     bb &= allowed_squares;
@@ -202,7 +206,7 @@ generate_pawn_moves(Board* board, int idx, uint64 allowed_squares, Move* moves){
     if (!bb)
         return moves;
 
-    int is_enpassant = (bb & board->en_passant_trg) != 0ULL;
+    int is_enpassant = (bb & Board_ENP_TRG(board)) != 0ULL;
 
     int target;
     
@@ -222,9 +226,9 @@ generate_pawn_moves(Board* board, int idx, uint64 allowed_squares, Move* moves){
     }
 
     if (is_enpassant){
-        target = NCH_SQRIDX(board->en_passant_trg);
+        target = NCH_SQRIDX(Board_ENP_TRG(board));
         *moves++ = Move_New(idx, target, 0, 0, 1, 0);
-        bb &= ~board->en_passant_trg;
+        bb &= ~Board_ENP_TRG(board);
     }
 
     while (bb)
@@ -292,7 +296,7 @@ generate_king_moves(Board* board, Move* moves){
 
 NCH_STATIC_INLINE void*
 generate_castle_moves(Board* board, Move* moves){
-    if (!board->castles || Board_IS_CHECK(board)){
+    if (!Board_CASTLES(board) || Board_IS_CHECK(board)){
         return moves;
     }
 

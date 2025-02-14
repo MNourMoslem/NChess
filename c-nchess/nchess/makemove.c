@@ -60,7 +60,7 @@ capture_piece_if_possible(Board* board, Side trg_side, Square sqr){
         *piece_map &= ~NCH_SQR(sqr);
         Piece captured_piece = board->piecetables[trg_side][sqr];
         board->piecetables[trg_side][sqr] = NCH_NO_PIECE;
-        NCH_SETFLG(board->flags, Board_CAPTURE);
+        NCH_SETFLG(board->info.flags, Board_CAPTURE);
         return captured_piece;
     }    
     return NCH_NO_PIECE;
@@ -72,11 +72,11 @@ play_pawn_move(Board* board, Side side, Move move){
     Square to_ = Move_TO(move);
 
     move_piece(board, side, from_, to_);
-    if (NCH_SQR(to_) == board->en_passant_trg){
+    if (NCH_SQR(to_) == Board_ENP_TRG(board)){
        to_ = side == NCH_White ? to_ - 8 : to_ + 8; 
     }
 
-    NCH_SETFLG(board->flags, Board_PAWNMOVED);
+    NCH_SETFLG(board->info.flags, Board_PAWNMOVED);
 
     if (to_ - from_ == 16 || from_ - to_ == 16){
         set_board_enp_settings(board, side, to_);
@@ -193,11 +193,11 @@ NCH_STATIC_INLINE void
 increase_counter(Board* board){
     board->nmoves++;
 
-    if (NCH_CHKUNI(board->flags, Board_PAWNMOVED | Board_CAPTURE | Board_CHECK | Board_DOUBLECHECK)){
-        board->fifty_counter = 0;
+    if (NCH_CHKUNI(board->info.flags, Board_PAWNMOVED | Board_CAPTURE | Board_CHECK | Board_DOUBLECHECK)){
+        board->info.fifty_counter = 0;
     }
     else{
-        board->fifty_counter += 1;
+        board->info.fifty_counter += 1;
     }
 }
 
@@ -251,12 +251,10 @@ Board_IsMoveLegal(Board* board, Move move){
 
 void
 _Board_MakeMove(Board* board, Move move){
-    MoveList_Append(&board->movelist, move,
-                     board->en_passant_idx, board->captured_piece,
-                     board->fifty_counter, board->castles, board->flags);
+    MoveList_Append(&board->movelist, move, board->info);
     
     reset_every_turn_states(board);
-    board->captured_piece = make_move(board, move);
+    board->info.captured_piece = make_move(board, move);
 
     BoardDict_Add(&board->dict, board->bitboards);
 
@@ -292,19 +290,9 @@ Board_Undo(Board* board){
         return;
 
     BoardDict_Remove(&board->dict, board->bitboards);
+    undo_move(board, Board_GET_OP_SIDE(board), node->move, board->info.captured_piece);
 
-    undo_move(board, Board_GET_OP_SIDE(board), node->move, board->captured_piece);
-
-    if (MoveNode_ENP_SQR(node)){
-        set_board_enp_settings(board, Board_GET_SIDE(board), MoveNode_ENP_SQR(node));
-    }
-    else{
-        reset_enpassant_variable(board);
-    }
-    board->fifty_counter  = MoveNode_FIFTY_COUNT(node);
-    board->castles        = MoveNode_CASTLE_FLAGS(node);
-    board->flags          = MoveNode_GAME_FLAGS(node);
-    board->captured_piece = MoveNode_CAP_PIECE(node);
+    board->info = node->pos_info;
     board->nmoves -= 1;
 
     MoveList_Pop(&board->movelist);

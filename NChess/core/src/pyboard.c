@@ -692,12 +692,12 @@ board_get_all_occ(PyObject* self, void* something){
 
 PyObject*
 board_castles(PyObject* self, void* something){
-    return PyLong_FromUnsignedLongLong(Board_CASTLE_RIGHTS(board(self)));
+    return PyLong_FromUnsignedLongLong(Board_CASTLES(board(self)));
 }
 
 PyObject*
 board_castles_str(PyObject* self, void* something){
-    uint8 castles = Board_CASTLE_RIGHTS(board(self));
+    uint8 castles = Board_CASTLES(board(self));
     if (!castles)
         Py_RETURN_NONE;
 

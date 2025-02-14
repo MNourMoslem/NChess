@@ -1,8 +1,18 @@
+/*
+    hash.c
+
+    This file contains the implementation of the hash functions used in 
+    the chess board dictionary for tracking board positions.
+*/
+
 #include "hash.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
+
+// Computes a hash key for a given board position using bitwise operations.
+// This function combines the bitboards for all pieces and sides into a single value.
 NCH_STATIC_INLINE int
 board_to_key(const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]){
     uint64 maps = 0ull;
@@ -22,73 +32,51 @@ board_to_key(const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]){
     return (int)((((maps) >> 32) ^ maps) & 0x000000007FFFFFFF);
 }
 
+
+// Computes the index of a board position in the hash table.
 NCH_STATIC_INLINE int
 get_idx(const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]){
     return board_to_key(bitboards) % NCH_BOARD_DICT_SIZE;
 }
 
+
+// Checks whether the given bitboards match the stored board node.
 NCH_STATIC_INLINE int
 is_same_board(const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB], const BoardNode* node){
     return (0 == memcmp(bitboards[NCH_White], node->bitboards[NCH_White], sizeof(node->bitboards[NCH_White])))
         && (0 == memcmp(bitboards[NCH_Black], node->bitboards[NCH_Black], sizeof(node->bitboards[NCH_Black])));
 }
 
-NCH_STATIC_INLINE void
-set_bitboards(const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB], BoardNode* node){
-    memcpy(node->bitboards[NCH_White], bitboards[NCH_White], sizeof(node->bitboards[NCH_White]));
-    memcpy(node->bitboards[NCH_Black], bitboards[NCH_Black], sizeof(node->bitboards[NCH_Black]));
-}
 
+// Inserts or updates a board node in the hash table.
+// If the board position already exists, its count is incremented.
+// Otherwise, a new node is allocated and added.
 NCH_STATIC int
 set_node(const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB], BoardNode* node){
-    if (node->empty || is_same_board(bitboards, node)){
-        set_bitboards(bitboards, node);
-        if (node->empty){
-            node->count = 1;
-            node->empty = 0;
-            node->next = NULL;
+    if (!node->empty){
+        if (is_same_board(bitboards, node)){
+            node->count++;
+            return 0;
         }
-        else{
-            node->count += 1;
-        }
-    }
-    else{
-        if (node->next){
-            return set_node(bitboards, node->next);
-        }
-        else{
-            BoardNode* newnode = malloc(sizeof(BoardNode));
-            if (!newnode){
-                return -1;
-            }
 
-            set_bitboards(bitboards, newnode);
-            newnode->empty = 0;
-            newnode->count = 1;
-            newnode->next = NULL;
-            node->next = newnode;
+        if (!node->next){
+            node->next = (BoardNode*)malloc(sizeof(BoardNode));
+            if (!node->next)
+                return -1;
         }
+        
+        return set_node(bitboards, node->next);
     }
+
+    memcpy(node->bitboards, bitboards, sizeof(bitboards));
+    node->count = 1;
+    node->empty = 0;
+    node->next = NULL;
+
     return 0;
 }
 
-NCH_STATIC BoardNode*
-get_node(const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB], const BoardNode* node){
-    if (node->empty){
-        return NULL;
-    }
-    
-    if (is_same_board(bitboards, node)){
-        return node;
-    }
-    else{
-        if (node->next){
-            return get_node(bitboards, node->next);
-        }
-        return NULL;
-    }
-}
-
+// Initializes the board dictionary by setting all nodes to empty.
 void
 BoardDict_Init(BoardDict* dict){
     for (int i = 0; i < NCH_BOARD_DICT_SIZE; i++){
@@ -96,8 +84,10 @@ BoardDict_Init(BoardDict* dict){
     }
 }
 
+
+// Frees all dynamically allocated nodes from the dictionary.
 void
-BoardDict_Free(BoardDict* dict){
+BoardDict_FreeExtra(BoardDict* dict){
     if (dict){
         BoardNode *node, *temp;
         for (int i = 0; i < NCH_BOARD_DICT_SIZE; i++){
@@ -114,61 +104,65 @@ BoardDict_Free(BoardDict* dict){
     }
 }
 
+
+// Retrieves the count of a given board position.
 int
 BoardDict_GetCount(const BoardDict* dict, const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]){
     int idx = get_idx(bitboards);
-    BoardNode* node = get_node(bitboards, &dict->nodes[idx]);
-    if (!node)
+    BoardNode* node = dict->nodes + idx;
+    if (node->empty)
         return -1;
+
+    while (!is_same_board(bitboards, node))
+    {   
+        node = node->next;
+        if (!node)
+            return -1;
+    }
     
     return node->count;
 }
 
+
+// Adds a board position to the dictionary.
 int
 BoardDict_Add(BoardDict* dict, const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]){
     int idx = get_idx(bitboards);
     return set_node(bitboards, &dict->nodes[idx]);
 }
 
+
+// Removes a board position from the dictionary.
 int
 BoardDict_Remove(BoardDict* dict, const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]){
     int idx = get_idx(bitboards);
-    BoardNode* node = get_node(bitboards, &dict->nodes[idx]);
-    if (!node){
+    BoardNode* node = dict->nodes + idx;
+    if (node->empty)
         return -1;
-    }
 
+    BoardNode* prev = NULL;
+    while (!is_same_board(bitboards, node))
+    {
+        if (!node->next)
+            return -1;
+
+        prev = node;
+        node = node->next;
+    }
+    
     if (node->count > 1){
-        node->count -= 1;
+        node->count--;
+    }
+    else if (prev){
+        prev->next = node->next;
+        free(node);
     }
     else{
-        BoardNode* prev = &dict->nodes[idx];
-        if (prev == node){
-            if (!prev->next){
-                prev->empty = 1;
-            }
-            else{
-                BoardNode* temp = prev->next;
-                *prev = *temp;
-                free(temp);
-            }
-        }
-        else{
-            while (prev->next != node)
-            {   
-                if (prev->next){
-                    prev = prev->next;
-                }
-                else{
-                    return -1;
-                }
-            }
-            prev->next = prev->next->next;
-            free(node);
-        }
+        node->empty = 1;
     }
+
     return 0;
-};
+}
 
 void
 BoardDict_Reset(BoardDict* dict){
@@ -229,4 +223,3 @@ BoardDict_CopyExtra(const BoardDict* src, BoardDict* dst){
         }
         return -1;
 }
-

@@ -176,6 +176,27 @@ extern Diractions NCH_DIRACTION_TABLE[NCH_SQUARE_NB][NCH_SQUARE_NB];
 // if both squares are on the same color both indexes would be even or odd
 // we check if the number is even by anding it with 1.
 
+
+typedef struct
+{
+    uint8 castles; // castle rights
+    int flags;     // board flags
+    
+    // These variables are used to store the information realted to en passant
+    // The idx is the square of the pawn that moved twice and not the square that
+    // the enemy pawn is attacking. The name is misleading and would be changed later.
+    // The map is a bitboard where the target pawn and the attacker pawns are set to 1.
+    // The trg is a bitboard where the target square the attacker would go to is set to 1.
+    Square en_passant_idx;
+    uint64 en_passant_map;
+    uint64 en_passant_trg;
+
+    int fifty_counter; // counter for fifty moves rule
+
+    Piece captured_piece; // last captured piece. used for undoing moves
+}PositionInfo;
+
+
 // this function is used to initialize the all the core tables
 void
 NCH_InitTables();

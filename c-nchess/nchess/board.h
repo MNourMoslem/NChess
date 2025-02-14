@@ -50,27 +50,15 @@ typedef struct
     // searching through the bitboards.
     Piece piecetables[NCH_SIDES_NB][NCH_SQUARE_NB];  
 
-    uint8 castles; // castle rights
-    int flags;     // board flags
-
-
-    // These variables are used to store the information realted to en passant
-    // The idx is the square of the pawn that moved twice and not the square that
-    // the enemy pawn is attacking. The name is misleading and would be changed later.
-    // The map is a bitboard where the target pawn and the attacker pawns are set to 1.
-    // The trg is a bitboard where the target square the attacker would go to is set to 1.
-    Square en_passant_idx;
-    uint64 en_passant_map;
-    uint64 en_passant_trg;
+    // stores all variables that gets copied when a step is taken 
+    // like flags, castle rights, etc.
+    PositionInfo info;
 
     // These variables are used to store the information related to the move that was made
     MoveList movelist; // move stack
     BoardDict dict;   // position dictionary
 
     int nmoves;        // number of half moves
-    int fifty_counter; // counter for fifty moves rule
-
-    Piece captured_piece; // last captured piece. used for undoing moves
 }Board;
 
 /*
@@ -102,9 +90,15 @@ typedef struct
 #define Board_WHITE_PIECE(board, idx) (board)->piecetables[NCH_White][idx]
 #define Board_BLACK_PIECE(board, idx) (board)->piecetables[NCH_Black][idx]
 
-#define Board_CASTLE_RIGHTS(board) (board)->castles
+#define Board_FLAGS(board) (board)->info.flags
+#define Board_CASTLES(board) (board)->info.castles
+#define Board_FIFTY_COUNTER(board) (board)->info.fifty_counter
+#define Board_ENP_IDX(board) (board)->info.en_passant_idx
+#define Board_ENP_MAP(board) (board)->info.en_passant_map
+#define Board_ENP_TRG(board) (board)->info.en_passant_trg
+#define Board_CAP_PIECE(board) (board)->info.captured_piece
+
 #define Board_NMOVES(board) (board)->nmoves
-#define Board_FIFTY_COUNTER(board) (board)->fifty_counter
 
 // returns the piece on the square idx
 #define Board_ON_SQUARE(board, idx) Board_WHITE_PIECE(board, idx) != NCH_NO_PIECE ?\
@@ -141,21 +135,21 @@ typedef struct
 #define Board_WIN 0x1000
 #define Board_TURN 0x2000
 
-#define Board_IS_PAWNMOVED(board) (board->flags & Board_PAWNMOVED)
-#define Board_IS_DOUBLECHECK(board) (board->flags & Board_DOUBLECHECK)
-#define Board_IS_ENPASSANT(board) (board->flags & Board_ENPASSANT)
-#define Board_IS_CAPTURE(board) (board->flags & Board_CAPTURE)
-#define Board_IS_PROMOTION(board) (board->flags & Board_PROMOTION)
-#define Board_IS_CHECK(board) (board->flags & Board_CHECK)
-#define Board_IS_CHECKMATE(board) (board->flags & Board_CHECKMATE)
-#define Board_IS_STALEMATE(board) (board->flags & Board_STALEMATE)
-#define Board_IS_THREEFOLD(board) (board->flags & Board_THREEFOLD)
-#define Board_IS_FIFTYMOVES(board) (board->flags & Board_FIFTYMOVES)
-#define Board_IS_GAMEEND(board) (board->flags & Board_GAMEEND)
-#define Board_IS_DRAW(board) (board->flags & Board_DRAW)
-#define Board_IS_WHITEWIN(board) (board->flags & Board_WIN)
+#define Board_IS_PAWNMOVED(board) (board->info.flags & Board_PAWNMOVED)
+#define Board_IS_DOUBLECHECK(board) (board->info.flags & Board_DOUBLECHECK)
+#define Board_IS_ENPASSANT(board) (board->info.flags & Board_ENPASSANT)
+#define Board_IS_CAPTURE(board) (board->info.flags & Board_CAPTURE)
+#define Board_IS_PROMOTION(board) (board->info.flags & Board_PROMOTION)
+#define Board_IS_CHECK(board) (board->info.flags & Board_CHECK)
+#define Board_IS_CHECKMATE(board) (board->info.flags & Board_CHECKMATE)
+#define Board_IS_STALEMATE(board) (board->info.flags & Board_STALEMATE)
+#define Board_IS_THREEFOLD(board) (board->info.flags & Board_THREEFOLD)
+#define Board_IS_FIFTYMOVES(board) (board->info.flags & Board_FIFTYMOVES)
+#define Board_IS_GAMEEND(board) (board->info.flags & Board_GAMEEND)
+#define Board_IS_DRAW(board) (board->info.flags & Board_DRAW)
+#define Board_IS_WHITEWIN(board) (board->info.flags & Board_WIN)
 #define Board_IS_BLACKWIN(board) !Board_IS_WHITEWIN(board)
-#define Board_IS_WHITETURN(board) (board->flags & Board_TURN)
+#define Board_IS_WHITETURN(board) (board->info.flags & Board_TURN)
 #define Board_IS_BLACKTURN(board) !Board_IS_WHITETURN(board)
 
 #define Board_GAME_ON(board) !Board_IS_GAMEEND(board) // would be removed later
@@ -170,10 +164,10 @@ typedef struct
 #define Board_CASTLE_BK (uint8)4
 #define Board_CASTLE_BQ (uint8)8
 
-#define Board_IS_CASTLE_WK(board) (board->castles & Board_CASTLE_WK)
-#define Board_IS_CASTLE_WQ(board) (board->castles & Board_CASTLE_WQ)
-#define Board_IS_CASTLE_BK(board) (board->castles & Board_CASTLE_BK)
-#define Board_IS_CASTLE_BQ(board) (board->castles & Board_CASTLE_BQ)
+#define Board_IS_CASTLE_WK(board) (board->info.castles & Board_CASTLE_WK)
+#define Board_IS_CASTLE_WQ(board) (board->info.castles & Board_CASTLE_WQ)
+#define Board_IS_CASTLE_BK(board) (board->info.castles & Board_CASTLE_BK)
+#define Board_IS_CASTLE_BQ(board) (board->info.castles & Board_CASTLE_BQ)
 
 /*
     Board functions.

@@ -47,35 +47,6 @@ is_same_board(const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB], const BoardNod
         && (0 == memcmp(bitboards[NCH_Black], node->bitboards[NCH_Black], sizeof(node->bitboards[NCH_Black])));
 }
 
-
-// Inserts or updates a board node in the hash table.
-// If the board position already exists, its count is incremented.
-// Otherwise, a new node is allocated and added.
-NCH_STATIC int
-set_node(const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB], BoardNode* node){
-    if (!node->empty){
-        if (is_same_board(bitboards, node)){
-            node->count++;
-            return 0;
-        }
-
-        if (!node->next){
-            node->next = (BoardNode*)malloc(sizeof(BoardNode));
-            if (!node->next)
-                return -1;
-        }
-        
-        return set_node(bitboards, node->next);
-    }
-
-    memcpy(node->bitboards, bitboards, sizeof(bitboards));
-    node->count = 1;
-    node->empty = 0;
-    node->next = NULL;
-
-    return 0;
-}
-
 // Initializes the board dictionary by setting all nodes to empty.
 void
 BoardDict_Init(BoardDict* dict){
@@ -128,7 +99,31 @@ BoardDict_GetCount(const BoardDict* dict, const uint64 bitboards[NCH_SIDES_NB][N
 int
 BoardDict_Add(BoardDict* dict, const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]){
     int idx = get_idx(bitboards);
-    return set_node(bitboards, &dict->nodes[idx]);
+    BoardNode* node = dict->nodes + idx;
+    if (!node->empty){
+        while (!is_same_board(bitboards, node))
+        {
+            node = node->next;
+            if (!node)
+                break;
+        }
+
+        if (node){
+            node->count++;
+            return 0;
+        }
+
+        node = malloc(sizeof(BoardNode));
+        if (!node)
+            return -1;
+    }
+
+    memcpy(node->bitboards, bitboards, sizeof(node->bitboards));
+    node->count = 1;
+    node->empty = 0;
+    node->next = NULL;
+
+    return 0;
 }
 
 

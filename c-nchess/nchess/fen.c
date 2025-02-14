@@ -100,11 +100,6 @@ str2square(char* s){
 }
 
 int
-parse_bitboards(Board* board, char* fen){
-    
-}
-
-int
 parse_fen(Board* board, char* fen){
     Square sqr = NCH_A8;
     Piece piece;

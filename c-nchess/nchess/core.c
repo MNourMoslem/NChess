@@ -131,7 +131,7 @@ init_diractions(){
         
         cur = i - 1;
         temp = NCH_GET_ROWIDX(cur);
-        while (cur > 0 && temp == row)
+        while (cur >= 0 && temp == row)
         {
             NCH_DIRACTION_TABLE[i][cur] = NCH_Right;
             cur -= 1;
@@ -149,7 +149,7 @@ init_diractions(){
 
         cur = i - 7;
         temp = NCH_GET_DIGMAINIDX(cur);
-        while (cur > 0 && temp == main)
+        while (cur >= 0 && temp == main)
         {
             NCH_DIRACTION_TABLE[i][cur] = NCH_DownLeft;
             cur -= 7;
@@ -158,7 +158,7 @@ init_diractions(){
 
         cur = i - 9;
         temp = NCH_GET_DIGANTIIDX(cur);
-        while (cur > 0 && temp == anti)
+        while (cur >= 0 && temp == anti)
         {
             NCH_DIRACTION_TABLE[i][cur] = NCH_DownRight;
             cur -= 9;

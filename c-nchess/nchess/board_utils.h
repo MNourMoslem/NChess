@@ -27,37 +27,37 @@
 
 NCH_STATIC_INLINE void
 flip_turn(Board* board){
-    NCH_FLPFLG(board->flags, Board_TURN);
+    NCH_FLPFLG(board->info.flags, Board_TURN);
 }
 
 NCH_STATIC_INLINE void
 reset_every_turn_states(Board* board){
-    NCH_RMVFLG(board->flags, Board_CHECK | Board_DOUBLECHECK 
+    NCH_RMVFLG(board->info.flags, Board_CHECK | Board_DOUBLECHECK 
                            | Board_CAPTURE | Board_PAWNMOVED 
                            | Board_ENPASSANT | Board_PROMOTION);
 }
 
 NCH_STATIC_INLINE void
 reset_castle_rights(Board* board){
-    if (NCH_CHKFLG(board->castles, Board_CASTLE_WK) &&
+    if (NCH_CHKFLG(board->info.castles, Board_CASTLE_WK) &&
         !NCH_CHKFLG(Board_WHITE_OCC(board), (NCH_SQR(NCH_E1) | NCH_SQR(NCH_H1))))
     {
-        NCH_RMVFLG(board->castles, Board_CASTLE_WK);
+        NCH_RMVFLG(board->info.castles, Board_CASTLE_WK);
     }
-    if (NCH_CHKFLG(board->castles, Board_CASTLE_WQ) && 
+    if (NCH_CHKFLG(board->info.castles, Board_CASTLE_WQ) && 
         !NCH_CHKFLG(Board_WHITE_OCC(board), (NCH_SQR(NCH_E1) | NCH_SQR(NCH_A1))))
     {
-        NCH_RMVFLG(board->castles, Board_CASTLE_WQ);
+        NCH_RMVFLG(board->info.castles, Board_CASTLE_WQ);
     }
-    if (NCH_CHKFLG(board->castles, Board_CASTLE_BK) &&
+    if (NCH_CHKFLG(board->info.castles, Board_CASTLE_BK) &&
         !NCH_CHKFLG(Board_BLACK_OCC(board), (NCH_SQR(NCH_E8) | NCH_SQR(NCH_H8))))
     {
-        NCH_RMVFLG(board->castles, Board_CASTLE_BK);
+        NCH_RMVFLG(board->info.castles, Board_CASTLE_BK);
     }
-    if (NCH_CHKFLG(board->castles, Board_CASTLE_BQ) &&
+    if (NCH_CHKFLG(board->info.castles, Board_CASTLE_BQ) &&
         !NCH_CHKFLG(Board_BLACK_OCC(board), (NCH_SQR(NCH_E8) | NCH_SQR(NCH_A8))))
     {
-        NCH_RMVFLG(board->castles, Board_CASTLE_BQ);
+        NCH_RMVFLG(board->info.castles, Board_CASTLE_BQ);
     }
 }
 
@@ -71,7 +71,7 @@ update_check(Board* board){
     );
 
     if (check_map)
-        NCH_SETFLG(board->flags, more_then_one(check_map) ? Board_CHECK | Board_DOUBLECHECK : Board_CHECK);
+        NCH_SETFLG(board->info.flags, more_then_one(check_map) ? Board_CHECK | Board_DOUBLECHECK : Board_CHECK);
 }
 
 #endif

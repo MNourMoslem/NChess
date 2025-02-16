@@ -48,6 +48,8 @@ extern uint64 KingAttacks[NCH_SQUARE_NB];                  // 64
 // the king is in check.
 extern uint64 BetweenTable[NCH_SQUARE_NB][NCH_SQUARE_NB];  // 4,096
 
+extern uint64 LineBB[NCH_SQUARE_NB][NCH_DIR_NB];  // 4,096
+
 /*
     The rest tabels are for sliding pieces (rooks and bishops).
     Would like to thank Chess Programming youtube channel for the great
@@ -135,6 +137,12 @@ NCH_STATIC_FINLINE uint64
 bb_queen_attacks(int sqr_idx, uint64 block){
     return bb_rook_attacks(sqr_idx, block) | bb_bishop_attacks(sqr_idx, block);
 }
+
+NCH_STATIC_FINLINE uint64
+bb_line(Square sqr, Diractions dir){
+    return LineBB[sqr][dir];
+}
+
 
 void
 NCH_InitBitboards();

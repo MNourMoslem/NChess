@@ -9,8 +9,8 @@ int main(){
     NCH_Init();
 
     // test_io_main(0);
-    // test_bitboard_main(0);
-    // test_perft_main(0, 1);
+    test_bitboard_main(0);
+    test_perft_main(0, 1);
     test_copy_main(0);
 
     return 0;

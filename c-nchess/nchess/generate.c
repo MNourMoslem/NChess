@@ -35,15 +35,17 @@ get_pinned_pieces(const Board* board, uint64* pinned_allowed_squares){
     int     enp_idx = Board_ENP_IDX(board);
     uint64  enp_map = Board_ENP_MAP(board);
     
-    uint64 around = bb_queen_attacks(king_idx, all_occ);
-    all_occ &= ~(around & self_occ);
+    uint64 queen_like = bb_queen_attacks(king_idx, all_occ);
+    uint64 around = (queen_like & self_occ);
+    all_occ &= ~around;
     
     int special = 0;
     if (enp_idx && NCH_SAME_ROW(king_idx, enp_idx)
-        && (around & enp_map) && has_two_bits(enp_map))
+        && (queen_like & enp_map) && has_two_bits(enp_map))
         {
             special = 1;
             all_occ &= ~enp_map;
+            around |= enp_map & self_occ;
         }
 
     uint64 rq = side == NCH_White ? Board_BLACK_ROOKS(board) | Board_BLACK_QUEENS(board)
@@ -51,55 +53,26 @@ get_pinned_pieces(const Board* board, uint64* pinned_allowed_squares){
     uint64 bq = side == NCH_White ? Board_BLACK_BISHOPS(board) | Board_BLACK_QUEENS(board)
                                   : Board_WHITE_BISHOPS(board) | Board_WHITE_QUEENS(board);
 
-    around = (bb_rook_attacks(king_idx, all_occ) & rq)
-           | (bb_bishop_attacks(king_idx, all_occ) & bq);
-
-    if (!around)
-        return 0ULL;
-
-    uint64 pinned_pieces;
-    uint64 between;
+    uint64 snipers = ((bb_rook_attacks(king_idx, all_occ) & rq)
+                    | (bb_bishop_attacks(king_idx, all_occ) & bq))
+                    &~ queen_like;
+    
+    if (!snipers)
+    return 0ULL;
+    
+    uint64 pinned_pieces = 0ULL;
+    uint64 line, bet;
     int idx;
-    if (!more_then_one(around)){
-        idx = NCH_SQRIDX(around);
-        between = bb_between(king_idx, idx);
-        pinned_pieces = between & self_occ;
-        *pinned_allowed_squares++ = between;
-    }
-    else{
-        uint64 map[NCH_DIR_NB];
-
-        pinned_pieces = 0ULL;
-        int pinned_idx, dir;
-        uint64 pinned_map;
-        while (around)
-        {
-            idx = NCH_SQRIDX(around);
-            between = bb_between(king_idx, idx);
-
-            pinned_map = between & self_occ;
-            if (pinned_map){
-                pinned_idx = NCH_SQRIDX(pinned_map);
-                
-                dir = NCH_GET_DIRACTION(king_idx, pinned_idx);
-
-                pinned_pieces |= pinned_map;
-                map[dir] = between;
-            }
-            around &= around - 1;
-        }
-
-        uint64 cpy = pinned_pieces;
-        while (cpy)
-        {
-            idx = NCH_SQRIDX(cpy);
-            dir = NCH_GET_DIRACTION(king_idx, idx);
-
-            *pinned_allowed_squares++ = map[dir];
-            cpy &= cpy - 1;
+    LOOP_U64_T(around){
+        line = bb_line(king_idx, NCH_GET_DIRACTION(king_idx, idx));
+        line &= snipers;
+        if (line){
+            bet = bb_between(king_idx, NCH_SQRIDX(line));
+            *pinned_allowed_squares++ = bet;
+            pinned_pieces |= bet & self_occ;
         }
     }
-
+    
     if (special && (pinned_pieces & enp_map)){
         pinned_allowed_squares--;
         while (!(*pinned_allowed_squares & enp_map))

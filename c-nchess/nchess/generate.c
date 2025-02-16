@@ -124,25 +124,28 @@ bb_to_moves(uint64 bb, int idx, Move* moves){
 }
 
 NCH_STATIC_INLINE void*
-generate_queen_moves(int idx, uint64 occ, uint64 allowed_squares, Move* moves){
+generate_queen_moves(Board* board, int idx, uint64 allowed_squares, Move* moves){
+    uint64 occ = Board_ALL_OCC(board);
     uint64 bb = bb_queen_attacks(idx, occ) & allowed_squares;
     return bb_to_moves(bb, idx, moves);
 }
 
 NCH_STATIC_INLINE void*
-generate_rook_moves(int idx, uint64 occ, uint64 allowed_squares, Move* moves){
+generate_rook_moves(Board* board, int idx, uint64 allowed_squares, Move* moves){
+    uint64 occ = Board_ALL_OCC(board);
     uint64 bb = bb_rook_attacks(idx, occ) & allowed_squares;
     return bb_to_moves(bb, idx, moves);
 }
 
 NCH_STATIC_INLINE void*
-generate_bishop_moves(int idx, uint64 occ, uint64 allowed_squares, Move* moves){
+generate_bishop_moves(Board* board, int idx, uint64 allowed_squares, Move* moves){
+    uint64 occ = Board_ALL_OCC(board);
     uint64 bb = bb_bishop_attacks(idx, occ) & allowed_squares;
     return bb_to_moves(bb, idx, moves);
 }
 
 NCH_STATIC_INLINE void*
-generate_knight_moves(int idx, NCH_UNUSED(uint64 occ), uint64 allowed_squares, Move* moves){
+generate_knight_moves(NCH_UNUSED(Board* board), int idx, uint64 allowed_squares, Move* moves){
     uint64 bb = bb_knight_attacks(idx) & allowed_squares;
     return bb_to_moves(bb, idx, moves);
 }
@@ -223,34 +226,21 @@ generate_pawn_moves(Board* board, int idx, uint64 allowed_squares, Move* moves){
     return moves;
 }
 
+typedef void* (*MoveGenFunction) (Board* board, int idx, uint64 allowed_squares, Move* moves);
+
+NCH_STATIC MoveGenFunction MoveGenFunctionTable[] = {
+    generate_pawn_moves,
+    generate_knight_moves,
+    generate_bishop_moves,
+    generate_rook_moves,
+    generate_queen_moves,
+};
+
 NCH_STATIC_INLINE void*
 generate_any_move(Board* board, Side side, int idx, uint64 occ, uint64 allowed_squares, Move* moves){
-    switch (board->piecetables[side][idx])
-        {
-        case NCH_Queen:
-            return generate_queen_moves(idx, occ, allowed_squares, moves);
-            break;
-
-        case NCH_Rook:
-            return generate_rook_moves(idx, occ, allowed_squares, moves);
-            break;
-
-        case NCH_Bishop:
-            return generate_bishop_moves(idx, occ, allowed_squares, moves);
-            break;
-        
-        case NCH_Knight:
-            return generate_knight_moves(idx, 0ULL, allowed_squares, moves);
-            break;
-        
-        case NCH_Pawn:
-            return generate_pawn_moves(board, idx, allowed_squares, moves);
-
-        default:
-            break;
-        }
-
-    return moves;
+    Piece p = Board_PIECE(board, side, idx);
+    MoveGenFunction func = MoveGenFunctionTable[p];
+    return func(board, idx, allowed_squares, moves);
 }
 
 NCH_STATIC_INLINE void*
@@ -356,8 +346,9 @@ Board_GenerateLegalMoves(Board* board, Move* moves){
     uint64 self_occ = board->occupancy[side];
     
     uint64 allowed_sqaures = get_allowed_squares(board) &~ self_occ;
+
     uint64 pinned_pieces = get_pinned_pieces(board, pinned_allowed_square);
-    uint64 not_pinned_pieces = self_occ &~ pinned_pieces;
+    uint64 not_pinned_pieces = self_occ &~ (pinned_pieces | Board_BB(board, side, NCH_King));
 
     if (allowed_sqaures){
         moves = generate_non_pinned_moves(board, not_pinned_pieces, allowed_sqaures, moves);

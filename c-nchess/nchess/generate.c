@@ -28,31 +28,32 @@ get_allowed_squares(const Board* board){
 
 NCH_STATIC_INLINE uint64
 get_pinned_pieces(const Board* board, uint64* pinned_allowed_squares){
-    int king_idx = Board_IS_WHITETURN(board) ? NCH_SQRIDX(Board_WHITE_KING(board)) : 
-                                               NCH_SQRIDX(Board_BLACK_KING(board)) ;
-
-    uint64 self_occ = Board_IS_WHITETURN(board) ? Board_WHITE_OCC(board)
-                                                : Board_BLACK_OCC(board);
-    uint64 all_occ = Board_ALL_OCC(board);
-
+    Side       side = Board_GET_SIDE(board);
+    int    king_idx = NCH_SQRIDX(Board_BB(board, side, NCH_King));
+    uint64 self_occ = Board_OCC(board, side);
+    uint64  all_occ = Board_ALL_OCC(board);
+    int     enp_idx = Board_ENP_IDX(board);
+    uint64  enp_map = Board_ENP_MAP(board);
+    
     uint64 around = bb_queen_attacks(king_idx, all_occ);
     all_occ &= ~(around & self_occ);
-
-    int special = 0;
     
-    int enp_idx = Board_ENP_IDX(board);
-    uint64 enp_map = Board_ENP_MAP(board);
-
+    int special = 0;
     if (enp_idx && NCH_SAME_ROW(king_idx, enp_idx)
-        && (around & enp_map) && has_two_bits(enp_map)){
-            
+        && (around & enp_map) && has_two_bits(enp_map))
+        {
             special = 1;
             all_occ &= ~enp_map;
-
         }
 
+    uint64 rq = side == NCH_White ? Board_BLACK_ROOKS(board) | Board_BLACK_QUEENS(board)
+                                  : Board_WHITE_ROOKS(board) | Board_WHITE_QUEENS(board);
+    uint64 bq = side == NCH_White ? Board_BLACK_BISHOPS(board) | Board_BLACK_QUEENS(board)
+                                  : Board_WHITE_BISHOPS(board) | Board_WHITE_QUEENS(board);
 
-    around = get_checkmap(board, Board_GET_SIDE(board), king_idx, all_occ);
+    around = (bb_rook_attacks(king_idx, all_occ) & rq)
+           | (bb_bishop_attacks(king_idx, all_occ) & bq);
+
     if (!around)
         return 0ULL;
 

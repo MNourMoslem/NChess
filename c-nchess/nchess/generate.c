@@ -60,3 +60,18 @@ Board_GenerateLegalMoves(Board* board, Move* moves){
 
     return moves - mh;
 }
+
+Move*
+Board_GeneratePseudoMovesMapOf(Board* board, Move* moves, int idx){
+    Side side = Board_GET_SIDE(board);
+    Piece p = Board_PIECE(board, side, idx);
+
+    if (p == NCH_King){
+        moves = generate_castle_moves(board, moves);
+        moves = generate_king_moves(board, moves);
+    }
+    else{
+        moves = generate_any_move(board, side, idx, Board_ALL_OCC(board), NCH_UINT64_MAX, moves);
+    }
+    return moves;
+}

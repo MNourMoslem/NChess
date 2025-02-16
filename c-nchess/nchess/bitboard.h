@@ -90,6 +90,11 @@ bb_bishop_mask(int sqr_idx){
     return SlidersAttackMask[NCH_BS][sqr_idx];
 }
 
+NCH_STATIC_FINLINE uint64
+bb_queen_mask(int sqr_idx){
+    return bb_rook_mask(sqr_idx) | bb_bishop_mask(sqr_idx);
+}
+
 NCH_STATIC_FINLINE int
 bb_rook_relevant(int sqr_idx){
     return ReleventSquares[NCH_RS][sqr_idx];

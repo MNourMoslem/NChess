@@ -39,4 +39,10 @@
 #define NCH_STATIC_INLINE NCH_STATIC NCH_INLINE
 #define NCH_STATIC_FINLINE NCH_STATIC NCH_FINLINE
 
+#if defined(__GNUC__) || defined(__ICC) || defined(__clang__)
+    #define NCH_UNUSED(x) __attribute__((unused)) x
+#else
+    #define NCH_UNUSED(x) x
+#endif
+
 #endif // NCHESS_SRC_CONFIG_H

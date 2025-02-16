@@ -5,42 +5,20 @@
 #include "config.h"
 #include "types.h"
 #include "board.h"
-
-#include "generate_utils.h"
+#include "utils.h"
 #include "bitboard.h"
 
 #include <stdio.h>
-
-NCH_STATIC_INLINE uint64
-get_checkmap(const Board* board, Side side, int king_idx, uint64 all_occ){
-    uint64 occupancy;
-    if (side == NCH_White){
-        occupancy = all_occ & ~Board_WHITE_KING(board);
-
-        return    (bb_rook_attacks(king_idx, occupancy)   & (Board_BLACK_ROOKS(board)   | Board_BLACK_QUEENS(board))) 
-                | (bb_bishop_attacks(king_idx, occupancy) & (Board_BLACK_BISHOPS(board) | Board_BLACK_QUEENS(board)))
-                | (bb_knight_attacks(king_idx)            & Board_BLACK_KNIGHTS(board))
-                | (bb_pawn_attacks(NCH_White, king_idx)   & Board_BLACK_PAWNS(board)  );
-    }
-    else{
-        occupancy = all_occ & ~Board_BLACK_KING(board);
-
-        return    (bb_rook_attacks(king_idx, occupancy)   & (Board_WHITE_ROOKS(board)   | Board_WHITE_QUEENS(board))) 
-                | (bb_bishop_attacks(king_idx, occupancy) & (Board_WHITE_BISHOPS(board) | Board_WHITE_QUEENS(board)))
-                | (bb_knight_attacks(king_idx)            & Board_WHITE_KNIGHTS(board))
-                | (bb_pawn_attacks(NCH_Black, king_idx)   & Board_WHITE_PAWNS(board)  );
-    }
-}
 
 NCH_STATIC_INLINE uint64
 get_allowed_squares(const Board* board){
     if (!Board_IS_CHECK(board))
         return NCH_UINT64_MAX;
 
-    int king_idx = Board_IS_WHITETURN(board) ? NCH_SQRIDX(Board_WHITE_KING(board)) : 
-                                               NCH_SQRIDX(Board_BLACK_KING(board)) ;
+    Side side = Board_GET_SIDE(board);
+    int king_idx = NCH_SQRIDX(Board_BB(board, side, NCH_King));
 
-    uint64 attackers_map = get_checkmap(board, Board_GET_SIDE(board), king_idx, Board_ALL_OCC(board));
+    uint64 attackers_map = get_checkmap(board, side, king_idx, Board_ALL_OCC(board));
     if (!attackers_map)
         return NCH_UINT64_MAX;
 
@@ -165,40 +143,45 @@ generate_bishop_moves(int idx, uint64 occ, uint64 allowed_squares, Move* moves){
 }
 
 NCH_STATIC_INLINE void*
-generate_knight_moves(int idx, uint64 allowed_squares, Move* moves){
+generate_knight_moves(int idx, NCH_UNUSED(uint64 occ), uint64 allowed_squares, Move* moves){
     uint64 bb = bb_knight_attacks(idx) & allowed_squares;
     return bb_to_moves(bb, idx, moves);
 }
 
 NCH_STATIC_INLINE void*
 generate_pawn_moves(Board* board, int idx, uint64 allowed_squares, Move* moves){
-    int could2sqr = Board_IS_WHITETURN(board) ? NCH_GET_ROWIDX(idx) == 1
-                                              : NCH_GET_ROWIDX(idx) == 6;
+    Side ply_side = Board_GET_SIDE(board);
+    Side op_side = Board_GET_OP_SIDE(board);
 
-    int couldpromote = Board_IS_WHITETURN(board) ? NCH_GET_ROWIDX(idx) == 6
-                                                 : NCH_GET_ROWIDX(idx) == 1;
+    int could2sqr = ply_side == NCH_White ? NCH_GET_ROWIDX(idx) == 1
+                                          : NCH_GET_ROWIDX(idx) == 6;
+
+    int couldpromote = ply_side == NCH_White ? NCH_GET_ROWIDX(idx) == 6
+                                             : NCH_GET_ROWIDX(idx) == 1;
 
 
-    uint64 op_occ = board->occupancy[Board_GET_OP_SIDE(board)];
+    uint64 op_occ = Board_OCC(board, op_side);
     uint64 all_occ = Board_ALL_OCC(board);
 
-    uint64 bb = bb_pawn_attacks(Board_GET_SIDE(board), idx) & (op_occ | Board_ENP_TRG(board));
+    uint64 bb = bb_pawn_attacks(ply_side, idx) & (op_occ | Board_ENP_TRG(board));
 
-    if (Board_IS_WHITETURN(board)){
-        if (could2sqr && NCH_CHKFLG(~all_occ & (NCH_ROW3 | NCH_ROW4), 0x10100ULL << idx))
-            bb |= 0x10100ULL << idx;
-        else
-            bb |= NCH_NXTSQR_UP(NCH_SQR(idx)) &~ all_occ;
+    if (could2sqr){
+        int trg_idx = ply_side == NCH_White ? idx + 16
+                                            : idx - 16;
+                                            
+        uint64 twoSqrPath = bb_between(idx, trg_idx);
+
+        bb |= (all_occ & twoSqrPath) ? twoSqrPath &~ (all_occ | NCH_ROW4 | NCH_ROW5)
+                                     : twoSqrPath;
+
     }
     else{
-        if (could2sqr && NCH_CHKFLG(~all_occ & (NCH_ROW5 | NCH_ROW6), 0x0080800000000000ULL >> (63 - idx)))
-            bb |= 0x0080800000000000ULL >> (63 - idx);
-        else
-            bb |= NCH_NXTSQR_DOWN(NCH_SQR(idx)) &~ all_occ;
+        bb |= ~all_occ & (ply_side == NCH_White ? NCH_NXTSQR_UP(NCH_SQR(idx))
+                                                : NCH_NXTSQR_DOWN(NCH_SQR(idx)));
     }
-
-    if (Board_ENP_IDX(board) && allowed_squares != NCH_UINT64_MAX && allowed_squares & Board_ENP_MAP(board)){
-        allowed_squares |= Board_ENP_TRG(board);    
+    
+    if (allowed_squares & Board_ENP_MAP(board)){
+        allowed_squares |= Board_ENP_TRG(board);
     }
 
     bb &= allowed_squares;
@@ -258,7 +241,7 @@ generate_any_move(Board* board, Side side, int idx, uint64 occ, uint64 allowed_s
             break;
         
         case NCH_Knight:
-            return generate_knight_moves(idx, allowed_squares, moves);
+            return generate_knight_moves(idx, 0ULL, allowed_squares, moves);
             break;
         
         case NCH_Pawn:

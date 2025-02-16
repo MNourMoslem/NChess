@@ -15,7 +15,8 @@
 #include "board.h"
 #include "types.h"
 #include "config.h"
-#include "generate_utils.h"
+#include "utils.h"
+ 
 
 /*
     The flip_turn and reset functions run every time a move is made on the board,  

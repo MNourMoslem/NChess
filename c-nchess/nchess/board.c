@@ -7,7 +7,6 @@
 #include "board.h"
 #include "config.h"
 #include "bitboard.h"
-#include "generate_utils.h"
 #include "utils.h"
 #include "hash.h"
 #include "board_utils.h"

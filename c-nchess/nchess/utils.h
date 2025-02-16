@@ -5,8 +5,30 @@
 #include "board.h"
 #include "config.h"
 #include "loops.h"
+#include "bitboard.h"
 
 #define TARGET_SIDE(side) (side == NCH_White ? NCH_Black : NCH_White)
+
+NCH_STATIC_INLINE uint64
+get_checkmap(const Board* board, Side side, int king_idx, uint64 all_occ){
+    uint64 occupancy;
+    if (side == NCH_White){
+        occupancy = all_occ & ~Board_WHITE_KING(board);
+
+        return    (bb_rook_attacks(king_idx, occupancy)   & (Board_BLACK_ROOKS(board)   | Board_BLACK_QUEENS(board))) 
+                | (bb_bishop_attacks(king_idx, occupancy) & (Board_BLACK_BISHOPS(board) | Board_BLACK_QUEENS(board)))
+                | (bb_knight_attacks(king_idx)            & Board_BLACK_KNIGHTS(board))
+                | (bb_pawn_attacks(NCH_White, king_idx)   & Board_BLACK_PAWNS(board)  );
+    }
+    else{
+        occupancy = all_occ & ~Board_BLACK_KING(board);
+
+        return    (bb_rook_attacks(king_idx, occupancy)   & (Board_WHITE_ROOKS(board)   | Board_WHITE_QUEENS(board))) 
+                | (bb_bishop_attacks(king_idx, occupancy) & (Board_WHITE_BISHOPS(board) | Board_WHITE_QUEENS(board)))
+                | (bb_knight_attacks(king_idx)            & Board_WHITE_KNIGHTS(board))
+                | (bb_pawn_attacks(NCH_Black, king_idx)   & Board_WHITE_PAWNS(board)  );
+    }
+}
 
 NCH_STATIC_INLINE void
 set_board_enp_settings(Board* board, Side side, Square enp_sqr){

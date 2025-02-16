@@ -5,7 +5,6 @@
 #include "movelist.h"
 #include "hash.h"
 #include "generate.h"
-#include "generate_utils.h"
 #include "board_utils.h"
 
 #include <stdlib.h>
@@ -203,7 +202,9 @@ increase_counter(Board* board){
 
 int 
 Board_IsMoveLegal(Board* board, Move move){
-    Piece p = board->piecetables[Board_GET_SIDE(board)][Move_FROM(move)];
+    Side side = Board_GET_SIDE(board);
+    Square from_ = Move_FROM(move);
+    Piece p = Board_PIECE(board, side, from_);
     if (p == NCH_NO_PIECE)
         return 0;
 
@@ -212,15 +213,7 @@ Board_IsMoveLegal(Board* board, Move move){
     Move pseudo_moves[30];
     Move* tail;
 
-    if (Move_CASTLE(move)){
-        tail = generate_castle_moves(board, pseudo_moves);
-    }
-    else if (p == NCH_King){
-        tail = generate_king_moves(board, pseudo_moves);
-    }
-    else{
-        tail = generate_any_move(board, Board_GET_SIDE(board), Move_FROM(move), Board_ALL_OCC(board), allowed_squares, pseudo_moves);
-    }
+    tail = Board_GeneratePseudoMovesMapOf(board, pseudo_moves, from_);
 
     if (tail == pseudo_moves)
         return 0;
@@ -307,16 +300,7 @@ Board_GetMovesOf(Board* board, Square s, Move* moves){
     Move pseudo_moves[30];
     Move* tail = pseudo_moves;
 
-    if (p == NCH_King){
-        tail = generate_castle_moves(board, tail);
-        tail = generate_king_moves(board, tail);
-    }
-    else{
-        uint64 allowed_squares = Board_IS_WHITETURN(board) ? ~Board_WHITE_OCC(board) : ~Board_BLACK_OCC(board);
-        tail = generate_any_move(board, Board_GET_SIDE(board),
-                                s, Board_ALL_OCC(board),
-                                allowed_squares, pseudo_moves);
-    }
+    tail = Board_GeneratePseudoMovesMapOf(board, pseudo_moves, s);
 
     int len = (int)(tail - pseudo_moves);
     int nmoves = 0;

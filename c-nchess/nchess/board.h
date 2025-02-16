@@ -66,29 +66,34 @@ typedef struct
     it is more efficient to use these macros instead of accessing the fields directly
 */
 
-#define Board_WHITE_OCC(board) (board)->occupancy[NCH_White]
-#define Board_BLACK_OCC(board) (board)->occupancy[NCH_Black]
-#define Board_ALL_OCC(board) (board)->occupancy[NCH_SIDES_NB]
+#define Board_OCC(board, side) (board)->occupancy[side]
+
+#define Board_WHITE_OCC(board) Board_OCC(board, NCH_White)
+#define Board_BLACK_OCC(board) Board_OCC(board, NCH_Black)
+#define Board_ALL_OCC(board) Board_OCC(board, NCH_SIDES_NB)
 
 #define Board_WHITE_TABLE(board) (board)->piecetables[NCH_White]
 #define Board_BLACK_TABLE(board) (board)->piecetables[NCH_Black]
 
-#define Board_WHITE_PAWNS(board) (board)->bitboards[NCH_White][NCH_Pawn]
-#define Board_WHITE_KNIGHTS(board) (board)->bitboards[NCH_White][NCH_Knight]
-#define Board_WHITE_BISHOPS(board) (board)->bitboards[NCH_White][NCH_Bishop]
-#define Board_WHITE_ROOKS(board) (board)->bitboards[NCH_White][NCH_Rook]
-#define Board_WHITE_QUEENS(board) (board)->bitboards[NCH_White][NCH_Queen]
-#define Board_WHITE_KING(board) (board)->bitboards[NCH_White][NCH_King]
+#define Board_BB(board, side, piece) (board)->bitboards[side][piece]
 
-#define Board_BLACK_PAWNS(board) (board)->bitboards[NCH_Black][NCH_Pawn]
-#define Board_BLACK_KNIGHTS(board) (board)->bitboards[NCH_Black][NCH_Knight]
-#define Board_BLACK_BISHOPS(board) (board)->bitboards[NCH_Black][NCH_Bishop]
-#define Board_BLACK_ROOKS(board) (board)->bitboards[NCH_Black][NCH_Rook]
-#define Board_BLACK_QUEENS(board) (board)->bitboards[NCH_Black][NCH_Queen]
-#define Board_BLACK_KING(board) (board)->bitboards[NCH_Black][NCH_King]
+#define Board_WHITE_PAWNS(board) Board_BB(board, NCH_White, NCH_Pawn)
+#define Board_WHITE_KNIGHTS(board) Board_BB(board, NCH_White, NCH_Knight)
+#define Board_WHITE_BISHOPS(board) Board_BB(board, NCH_White, NCH_Bishop)
+#define Board_WHITE_ROOKS(board) Board_BB(board, NCH_White, NCH_Rook)
+#define Board_WHITE_QUEENS(board) Board_BB(board, NCH_White, NCH_Queen)
+#define Board_WHITE_KING(board) Board_BB(board, NCH_White, NCH_King)
 
-#define Board_WHITE_PIECE(board, idx) (board)->piecetables[NCH_White][idx]
-#define Board_BLACK_PIECE(board, idx) (board)->piecetables[NCH_Black][idx]
+#define Board_BLACK_PAWNS(board) Board_BB(board, NCH_Black, NCH_Pawn)
+#define Board_BLACK_KNIGHTS(board) Board_BB(board, NCH_Black, NCH_Knight)
+#define Board_BLACK_BISHOPS(board) Board_BB(board, NCH_Black, NCH_Bishop)
+#define Board_BLACK_ROOKS(board) Board_BB(board, NCH_Black, NCH_Rook)
+#define Board_BLACK_QUEENS(board) Board_BB(board, NCH_Black, NCH_Queen)
+#define Board_BLACK_KING(board) Board_BB(board, NCH_Black, NCH_King)
+
+#define Board_PIECE(board, side, idx) (board)->piecetables[side][idx]
+#define Board_WHITE_PIECE(board, idx) Board_PIECE(board, NCH_White, idx)
+#define Board_BLACK_PIECE(board, idx) Board_PIECE(board, NCH_Black, idx)
 
 #define Board_FLAGS(board) (board)->info.flags
 #define Board_CASTLES(board) (board)->info.castles

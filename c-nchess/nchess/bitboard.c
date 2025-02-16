@@ -10,6 +10,7 @@
 #include "types.h"
 #include "magics.h"
 #include "magic_utils.h"
+#include "loops.h"
 #include <stdio.h>
 
 uint64 PawnAttacks[2][NCH_SQUARE_NB];               // 128
@@ -17,6 +18,7 @@ uint64 KnightAttacks[NCH_SQUARE_NB];                // 64
 uint64 KingAttacks[NCH_SQUARE_NB];                  // 64
 
 uint64 BetweenTable[NCH_SQUARE_NB][NCH_SQUARE_NB];  // 4,096
+uint64 LineBB[NCH_SQUARE_NB][NCH_DIR_NB];
 
 uint64 Magics[2][NCH_SQUARE_NB];                    // 128
 uint64 SlidersAttackMask[2][NCH_SQUARE_NB];         // 128
@@ -337,6 +339,19 @@ init_sliders_table(){
     }
 }
 
+NCH_STATIC void
+init_linebb(){
+    Diractions dir;
+    int idx;
+    uint64 queen_mask;
+    for (Square sqr = 0; sqr < NCH_SQUARE_NB; sqr++){
+        queen_mask = bb_queen_attacks(sqr, 0ULL) &~ bb_queen_mask(sqr);
+        LOOP_U64_T(queen_mask){
+            dir = NCH_GET_DIRACTION(sqr, idx);
+            LineBB[sqr][dir] = bb_between(sqr, idx);
+        }
+    }
+}
 
 void
 NCH_InitBitboards(){
@@ -349,4 +364,5 @@ NCH_InitBitboards(){
     init_relevant_bits();
     init_magics();
     init_sliders_table();
+    init_linebb();
 }

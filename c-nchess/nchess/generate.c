@@ -91,7 +91,7 @@ bb_to_moves(uint64 bb, int idx, Move* moves){
     while (bb)
     {
         target = NCH_SQRIDX(bb);
-        *moves++ = Move_New(idx, target, 0, 0, 0, 0);
+        *moves++ = Move_New(idx, target, 1, MoveType_Normal);
         bb &= bb - 1;
     }
     return moves;
@@ -174,10 +174,10 @@ generate_pawn_moves(Board* board, int idx, uint64 allowed_squares, Move* moves){
         {
             target = NCH_SQRIDX(bb);
 
-            *moves++ = Move_New(idx, target, NCH_Queen, 0, 0, 1);
-            *moves++ = Move_New(idx, target, NCH_Rook, 0, 0, 1);
-            *moves++ = Move_New(idx, target, NCH_Bishop, 0, 0, 1);
-            *moves++ = Move_New(idx, target, NCH_Knight, 0, 0, 1);
+            *moves++ = Move_New(idx, target, NCH_Queen, MoveType_Promotion);
+            *moves++ = Move_New(idx, target, NCH_Rook, MoveType_Promotion);
+            *moves++ = Move_New(idx, target, NCH_Bishop, MoveType_Promotion);
+            *moves++ = Move_New(idx, target, NCH_Knight, MoveType_Promotion);
         
             bb &= bb - 1;
         }
@@ -186,14 +186,14 @@ generate_pawn_moves(Board* board, int idx, uint64 allowed_squares, Move* moves){
 
     if (is_enpassant){
         target = NCH_SQRIDX(Board_ENP_TRG(board));
-        *moves++ = Move_New(idx, target, 0, 0, 1, 0);
+        *moves++ = Move_New(idx, target, 1, MoveType_Enpassant);
         bb &= ~Board_ENP_TRG(board);
     }
 
     while (bb)
     {
         target = NCH_SQRIDX(bb);
-        *moves++ = Move_New(idx, target, 0, 0, 0, 0);
+        *moves++ = Move_New(idx, target, 1, MoveType_Normal);
         bb &= bb - 1;
     }
 
@@ -211,7 +211,7 @@ NCH_STATIC MoveGenFunction MoveGenFunctionTable[] = {
 };
 
 NCH_STATIC_INLINE void*
-generate_any_move(Board* board, Side side, int idx, uint64 occ, uint64 allowed_squares, Move* moves){
+generate_any_move(Board* board, Side side, int idx, uint64 allowed_squares, Move* moves){
     Piece p = Board_PIECE(board, side, idx);
     MoveGenFunction func = MoveGenFunctionTable[p];
     return func(board, idx, allowed_squares, moves);
@@ -233,7 +233,7 @@ generate_king_moves(Board* board, Move* moves){
     {
         target = NCH_SQRIDX(bb);
         if (!get_checkmap(board, side, target, Board_ALL_OCC(board)))
-            *moves++ = Move_New(king_idx, target, 0, 0, 0, 0);
+            *moves++ = Move_New(king_idx, target, 1, MoveType_Normal);
         bb &= bb - 1;
     }
 
@@ -251,14 +251,14 @@ generate_castle_moves(Board* board, Move* moves){
             && !get_checkmap(board, NCH_White, NCH_G1, Board_ALL_OCC(board)) 
             && !get_checkmap(board, NCH_White, NCH_F1, Board_ALL_OCC(board))){
             
-            *moves++ = Move_New(NCH_E1, NCH_G1, 0, Board_CASTLE_WK, 0, 0);
+            *moves++ = Move_New(NCH_E1, NCH_G1, 1, MoveType_Castle);
         }
 
         if (Board_IS_CASTLE_WQ(board) && !NCH_CHKUNI(Board_ALL_OCC(board), (NCH_SQR(NCH_D1) | NCH_SQR(NCH_C1) | NCH_SQR(NCH_B1)))
             && !get_checkmap(board, NCH_White, NCH_D1, Board_ALL_OCC(board)) 
             && !get_checkmap(board, NCH_White, NCH_C1, Board_ALL_OCC(board))){
             
-            *moves++ = Move_New(NCH_E1, NCH_C1, 0, Board_CASTLE_WQ, 0, 0);
+            *moves++ = Move_New(NCH_E1, NCH_C1, 1, MoveType_Castle);
         }
     }
     else{
@@ -266,14 +266,14 @@ generate_castle_moves(Board* board, Move* moves){
             && !get_checkmap(board, NCH_Black, NCH_G8, Board_ALL_OCC(board)) 
             && !get_checkmap(board, NCH_Black, NCH_F8, Board_ALL_OCC(board))){
             
-            *moves++ = Move_New(NCH_E8, NCH_G8, 0, Board_CASTLE_BK, 0, 0);
+            *moves++ = Move_New(NCH_E8, NCH_G8, 1, MoveType_Castle);
         }
 
         if (Board_IS_CASTLE_BQ(board) && !NCH_CHKUNI(Board_ALL_OCC(board), (NCH_SQR(NCH_D8) | NCH_SQR(NCH_C8) | NCH_SQR(NCH_B8)))
             && !get_checkmap(board, NCH_Black, NCH_D8, Board_ALL_OCC(board)) 
             && !get_checkmap(board, NCH_Black, NCH_C8, Board_ALL_OCC(board))){
             
-            *moves++ = Move_New(NCH_E8, NCH_C8, 0, Board_CASTLE_BQ, 0, 0);
+            *moves++ = Move_New(NCH_E8, NCH_C8, 1, MoveType_Castle);
         }
     }
 
@@ -283,12 +283,11 @@ generate_castle_moves(Board* board, Move* moves){
 NCH_STATIC void*
 generate_non_pinned_moves(Board* board, uint64 non_pinned_occ, uint64 allowed_squares, Move* moves){
     Side side = Board_GET_SIDE(board);
-    uint64 all_occ = Board_ALL_OCC(board);
     int idx;
     while (non_pinned_occ)
     {
         idx = NCH_SQRIDX(non_pinned_occ);
-        moves = generate_any_move(board, side, idx, all_occ, allowed_squares, moves);
+        moves = generate_any_move(board, side, idx, allowed_squares, moves);
         non_pinned_occ &= non_pinned_occ - 1;
     }
     
@@ -298,12 +297,11 @@ generate_non_pinned_moves(Board* board, uint64 non_pinned_occ, uint64 allowed_sq
 NCH_STATIC void*
 generate_pinned_moves(Board* board, uint64 pinned_pieces, uint64 allowed_sqaures, uint64* pinned_allowed_squares, Move* moves){
     Side side = Board_GET_SIDE(board);
-    uint64 all_occ = Board_ALL_OCC(board);
     int idx;
     while (pinned_pieces)
     {
         idx = NCH_SQRIDX(pinned_pieces);
-        moves = generate_any_move(board, side, idx, all_occ, *pinned_allowed_squares++ & allowed_sqaures, moves);
+        moves = generate_any_move(board, side, idx, *pinned_allowed_squares++ & allowed_sqaures, moves);
         pinned_pieces &= pinned_pieces - 1;
     }
 
@@ -343,12 +341,15 @@ Board_GeneratePseudoMovesMapOf(Board* board, Move* moves, int idx){
     Side side = Board_GET_SIDE(board);
     Piece p = Board_PIECE(board, side, idx);
 
+    if (p == NCH_NO_PIECE)
+        return moves;
+
     if (p == NCH_King){
         moves = generate_castle_moves(board, moves);
         moves = generate_king_moves(board, moves);
     }
     else{
-        moves = generate_any_move(board, side, idx, Board_ALL_OCC(board), NCH_UINT64_MAX, moves);
+        moves = generate_any_move(board, side, idx, NCH_UINT64_MAX, moves);
     }
     return moves;
 }

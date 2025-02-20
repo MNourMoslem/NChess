@@ -5,94 +5,6 @@
 #include <string.h>
 #include "utils.h"
 
-void
-Move_Parse(Move move, Square* from_, Square* to_, uint8* castle, Piece* promotion){
-    *from_ = Move_FROM(move);
-    *to_ = Move_TO(move);
-    *castle = Move_CASTLE(move);
-    *promotion = Move_PRO_PIECE(move);
-}
-
-int
-Move_ParseFromString(char* arg, Square* from_, Square* to_, Piece* promotion, uint8* castle){
-    int len = strlen(arg);
-    if (len > 5){
-        return -1;
-    }
-
-    if (arg[0] == 'O'){
-        if (len == 3){
-            *castle = Board_CASTLE_WK | Board_CASTLE_BK;
-        }
-        else{
-            *castle = Board_CASTLE_WQ | Board_CASTLE_BQ;
-        }
-        *from_ = 0;
-        *to_ = 0;
-        *promotion = 0;
-        return 0;
-    }
-
-    if (!is_valid_column(arg[0]) || !is_valid_row(arg[1])
-         || !is_valid_column(arg[2]) || !is_valid_row(arg[3]))
-    {
-        return -1;
-    }
-
-    *castle = 0;
-    *from_ = ('h' - arg[0]) + 8 * (arg[1] - '1');
-    *to_ = ('h' - arg[2]) + 8 * (arg[3] - '1');
-
-    if (len == 5){
-        if (arg[4] == 'q'){
-            *promotion = NCH_Queen;
-        }
-        else if (arg[4] == 'r'){
-            *promotion = NCH_Rook;
-        }
-        else if (arg[4] == 'b'){
-            *promotion = NCH_Bishop;
-        }
-        else if (arg[4] == 'n'){
-            *promotion = NCH_Knight;
-        }
-        else{
-            return -1;
-        }
-    }
-    else{
-        *promotion = 0;
-    }
-    return 0;
-}
-
-Move
-Move_FromString(char* move){
-    Square from_, to_;
-    Piece promotion;
-    uint8 castle;
-    int res = Move_ParseFromString(move, &from_, &to_, &promotion, &castle);
-    if (res == -1)
-        return 0;
-
-    return Move_New(from_, to_, promotion, castle, 0, 0);
-}
-
-void
-Move_Print(Move move){
-    Square from_, to_;
-    Piece promotion;
-    uint8 castle;
-
-    Move_Parse(move, &from_, &to_, &castle, &promotion);
-
-    printf("from: %i\n", from_);
-    printf("to: %i\n", to_);
-    printf("castle: %s\n", NCH_CHKFLG(castle, Board_CASTLE_WK | Board_CASTLE_BK) ? "king"
-                        : NCH_CHKFLG(castle, Board_CASTLE_WQ | Board_CASTLE_WQ) ? "queen" : "none");
-    printf("promotion piece: %i\n", promotion);
-}
-
 static char* squares_char[] = {
     "h1", "g1", "f1", "e1", "d1", "c1", "b1", "a1", 
     "h2", "g2", "f2", "e2", "d2", "c2", "b2", "a2", 
@@ -104,22 +16,54 @@ static char* squares_char[] = {
     "h8", "g8", "f8", "e8", "d8", "c8", "b8", "a8"
 };
 
+Move
+Move_FromString(const char* move_str){
+    if (strlen(move_str) > 5)
+        return 0;
+
+    Square from_ = str_to_square(move_str);
+    Square to_ = str_to_square(move_str + 2);
+
+    if (!is_valid_square(from_) || !is_valid_square(to_))
+        return 0;
+
+    const char pp = move_str[4];
+    Piece promotion_piece;
+    MoveType type;
+    if (pp  != '\0'){
+        if (pp == 'q'){
+            promotion_piece = NCH_Queen;
+        }
+        else if (pp == 'r'){
+            promotion_piece = NCH_Rook;
+        }
+        else if (pp == 'b'){
+            promotion_piece = NCH_Bishop;
+        }
+        else if (pp == 'k'){
+            promotion_piece = NCH_Knight;
+        }
+        else{
+            promotion_piece = NCH_Queen;
+        }
+        type = MoveType_Promotion;
+    }
+    else{
+        promotion_piece = NCH_Queen;
+        type = MoveType_Normal;
+    }
+
+    return Move_New(from_, to_, promotion_piece, type);
+}
+
 int
 Move_AsString(Move move, char* dst){
     char* temp;
-    if (Move_CASTLE(move)){
-        if (NCH_CHKUNI(Move_CASTLE(move), Board_CASTLE_WK | Board_CASTLE_BK)){
-            strcpy(dst, "O-O");
-        }
-        else{
-            strcpy(dst, "O-O-O");
-        }
-        return 0;
-    }
-
     Square from_ = Move_FROM(move);
     Square to_ = Move_TO(move);
-    Piece promotion = Move_PRO_PIECE(move);
+    Piece promotion = Move_TYPE(move) == MoveType_Promotion 
+                    ? Move_PRO_PIECE(move) + 1
+                    : 0;
 
     if (!is_valid_square(from_) || !is_valid_square(to_)){
         return -1;
@@ -153,6 +97,13 @@ Move_AsString(Move move, char* dst){
     }
 
     return 0;
+}
+
+void
+Move_Print(Move move){
+    char buffer[7];
+    Move_AsString(move, buffer);
+    printf(buffer);
 }
 
 void

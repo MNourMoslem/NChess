@@ -26,6 +26,16 @@ _init_board_flags_and_states(Board* board){
     board->info.fifty_counter = 0;
     board->info.captured_piece = NCH_NO_PIECE;
 
+    board->castle_squares[NCH_G1] = NCH_H1;
+    board->castle_squares[NCH_C1] = NCH_A1;
+    board->castle_squares[NCH_G8] = NCH_H8;
+    board->castle_squares[NCH_C8] = NCH_A8;
+
+    board->castle_squares[NCH_H1] = NCH_F1;
+    board->castle_squares[NCH_A1] = NCH_D1;
+    board->castle_squares[NCH_H8] = NCH_F8;
+    board->castle_squares[NCH_A8] = NCH_D8;
+
     board->nmoves = 0;
 }
 

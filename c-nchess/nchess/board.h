@@ -59,6 +59,8 @@ typedef struct
     BoardDict dict;   // position dictionary
 
     int nmoves;        // number of half moves
+
+    Square castle_squares[NCH_SQUARE_NB];
 }Board;
 
 /*
@@ -104,6 +106,8 @@ typedef struct
 #define Board_CAP_PIECE(board) (board)->info.captured_piece
 
 #define Board_NMOVES(board) (board)->nmoves
+
+#define Board_CASTLE_SQUARES(board, sqr) board->castle_squares[sqr]
 
 // returns the piece on the square idx
 #define Board_ON_SQUARE(board, idx) Board_WHITE_PIECE(board, idx) != NCH_NO_PIECE ?\

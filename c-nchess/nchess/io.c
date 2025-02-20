@@ -20,39 +20,6 @@ char* squares_char[] = {
 };
 
 void
-Board_Print(Board* board){
-    int i = 64;
-    uint64 current;
-    uint64 white_occ = Board_WHITE_OCC(board);
-    uint64 black_occ = Board_BLACK_OCC(board);
-
-    Side side;
-    Piece p;
-
-    for (int file = 0; file < 8; file++){
-        for (int raw = 0; raw < 8; raw++){
-            i--;
-            current = NCH_SQR(i);
-            
-            if (NCH_CHKFLG(white_occ, current)){
-                p = Board_WHITE_PIECE(board, i);
-                side = NCH_White;
-            }
-            else if (NCH_CHKFLG(black_occ, current)){
-                p = Board_BLACK_PIECE(board, i);
-                side = NCH_Black;
-            }
-            else{
-                printf(".");
-                continue;
-            }
-            printf("%c", NCH_PIECES[side * NCH_PIECE_NB + p]);
-        }
-        printf("\n");
-    }
-}
-
-void
 Board_AsString(Board* board, char* buffer){
     int i = NCH_A8, buffer_idx = 0;
     for (int raw = 7; raw > -1; raw--){
@@ -70,4 +37,12 @@ Board_AsString(Board* board, char* buffer){
         buffer[buffer_idx++] = '\n';
     }
     buffer[buffer_idx] = '\0';
+}
+
+
+void
+Board_Print(Board* board){
+    char buffer[90];
+    Board_AsString(board, buffer);
+    printf(buffer);
 }

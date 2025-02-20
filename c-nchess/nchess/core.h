@@ -27,6 +27,8 @@ typedef enum{
     NCH_NO_SIDE
 }Side;
 
+#define NCH_OP_SIDE(side) side == NCH_White ? NCH_Black : NCH_White
+
 typedef enum {
     NCH_H1 = 0, NCH_G1, NCH_F1, NCH_E1, NCH_D1, NCH_C1, NCH_B1, NCH_A1, 
         NCH_H2, NCH_G2, NCH_F2, NCH_E2, NCH_D2, NCH_C2, NCH_B2, NCH_A2, 

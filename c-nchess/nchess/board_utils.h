@@ -34,8 +34,7 @@ flip_turn(Board* board){
 NCH_STATIC_INLINE void
 reset_every_turn_states(Board* board){
     NCH_RMVFLG(board->info.flags, Board_CHECK | Board_DOUBLECHECK 
-                                | Board_CAPTURE | Board_PAWNMOVED 
-                                | Board_ENPASSANT | Board_PROMOTION);
+                                | Board_CAPTURE | Board_PAWNMOVED);
 }
 
 NCH_STATIC_INLINE void
@@ -64,10 +63,11 @@ reset_castle_rights(Board* board){
 
 NCH_STATIC_FINLINE void
 update_check(Board* board){
+    Side side = Board_SIDE(board);
     uint64 check_map = get_checkmap(
         board,
-        Board_SIDE(board),
-        NCH_SQRIDX(Board_IS_WHITETURN(board) ? Board_WHITE_KING(board) : Board_BLACK_KING(board)),
+        side,
+        NCH_SQRIDX(Board_BB(board, side, NCH_King)),
         Board_ALL_OCC(board)
     );
 

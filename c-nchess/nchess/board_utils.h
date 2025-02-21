@@ -28,14 +28,14 @@
 
 NCH_STATIC_INLINE void
 flip_turn(Board* board){
-    NCH_FLPFLG(board->info.flags, Board_TURN);
+    board->info.side ^= NCH_Black; 
 }
 
 NCH_STATIC_INLINE void
 reset_every_turn_states(Board* board){
     NCH_RMVFLG(board->info.flags, Board_CHECK | Board_DOUBLECHECK 
-                           | Board_CAPTURE | Board_PAWNMOVED 
-                           | Board_ENPASSANT | Board_PROMOTION);
+                                | Board_CAPTURE | Board_PAWNMOVED 
+                                | Board_ENPASSANT | Board_PROMOTION);
 }
 
 NCH_STATIC_INLINE void
@@ -66,7 +66,7 @@ NCH_STATIC_FINLINE void
 update_check(Board* board){
     uint64 check_map = get_checkmap(
         board,
-        Board_GET_SIDE(board),
+        Board_SIDE(board),
         NCH_SQRIDX(Board_IS_WHITETURN(board) ? Board_WHITE_KING(board) : Board_BLACK_KING(board)),
         Board_ALL_OCC(board)
     );

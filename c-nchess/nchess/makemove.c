@@ -1,5 +1,4 @@
 #include "makemove.h"
-#include "board_utils.h"
 #include "move.h"
 #include "utils.h"
 #include "movelist.h"
@@ -94,19 +93,12 @@ move_and_set_flags(Board* board, Move move){
         if (to_ - from_ == 16 || from_ - to_ == 16){
             set_board_enp_settings(board, side, to_);
         }
-        else{
-            reset_enpassant_variable(board);
-        }
 
         if (type == MoveType_Enpassant){
             NCH_SETFLG(board->info.flags, Board_CAPTURE);
             return captured;
         }
     }
-    else{
-        reset_enpassant_variable(board);
-    }
-
     if (captured != NCH_NO_PIECE){
         NCH_SETFLG(board->info.flags, Board_CAPTURE);
     }
@@ -207,8 +199,12 @@ Board_IsMoveLegal(Board* board, Move move){
 void
 _Board_MakeMove(Board* board, Move move){
     MoveList_Append(&board->movelist, move, board->info);
+
     Board_FLAGS(board) = 0;
-    
+    Board_ENP_MAP(board) = 0;
+    Board_ENP_IDX(board) = 0;
+    Board_ENP_TRG(board) = 0;
+
     Board_CAP_PIECE(board) = move_and_set_flags(board, move);
     
     BoardDict_Add(&board->dict, board->bitboards);

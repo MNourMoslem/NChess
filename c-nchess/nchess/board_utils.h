@@ -19,7 +19,7 @@
  
 
 /*
-    The flip_turn and reset functions run every time a move is made on the board,  
+    The reset function run every time a step is made on the board,  
     whether it is making a move or undoing one.  
 
     The update_check function also runs every step, but it is also used separately  
@@ -27,18 +27,10 @@
 */
 
 NCH_STATIC_INLINE void
-flip_turn(Board* board){
-    board->info.side ^= NCH_Black; 
-}
-
-NCH_STATIC_INLINE void
-reset_every_turn_states(Board* board){
-    NCH_RMVFLG(board->info.flags, Board_CHECK | Board_DOUBLECHECK 
-                                | Board_CAPTURE | Board_PAWNMOVED);
-}
-
-NCH_STATIC_INLINE void
 reset_castle_rights(Board* board){
+    if (!Board_CASTLES(board))
+        return;
+
     if (NCH_CHKFLG(board->info.castles, Board_CASTLE_WK) &&
         !NCH_CHKFLG(Board_WHITE_OCC(board), (NCH_SQR(NCH_E1) | NCH_SQR(NCH_H1))))
     {

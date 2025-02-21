@@ -6,10 +6,6 @@
     it is too obvious that these functions are used to manipulate
     bits but it is kind of a habit to write this explenation in every
     file.
-
-    future updates:
-        - get_ls1b would be deleted and get_ts1b would be renamed something like
-          get_last_bit.
 */
 
 
@@ -37,26 +33,7 @@ count_bits(uint64 x){
 };
 
 NCH_STATIC_INLINE int
-count_lbits(uint64 x){
-    #if NCH_GCC
-        return __builtin_clzll(x);
-    #elif NCH_MSC
-        unsigned long index;
-        _BitScanReverse64(&index, x);
-        return 63 - index;
-    #else
-        uint64 count = 0;
-        if (x == 0) return 64;
-        while (!(x & (1ULL << 63))) {
-            x <<= 1;
-            count++;
-        }
-        return count;
-    #endif 
-};
-
-NCH_STATIC_INLINE int
-count_tbits(uint64 x){
+count_last_zeros(uint64 x){
     #if NCH_GCC
         return __builtin_ctzll(x);
     #elif NCH_MSC
@@ -75,12 +52,7 @@ count_tbits(uint64 x){
 };
 
 NCH_STATIC_INLINE uint64
-get_ls1b(uint64 x) {
-    return x & -x;
-}
-
-NCH_STATIC_INLINE uint64
-get_ts1b(uint64 x) {
+get_last_bit(uint64 x) {
     return x & ~(x - 1);
 }
 

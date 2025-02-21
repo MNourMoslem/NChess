@@ -129,10 +129,10 @@ parse_fen(Board* board, char* fen){
     fen++;
 
     if (*fen == 'w'){
-        NCH_SETFLG(board->info.flags, Board_TURN);
+        Board_SIDE(board) = NCH_White;
     }
     else if (*fen == 'b'){
-        NCH_RMVFLG(board->info.flags, Board_TURN);
+        Board_SIDE(board) = NCH_Black;
     }
     else{
         return -1;

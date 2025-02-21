@@ -22,9 +22,10 @@ _init_board_flags_and_states(Board* board){
     board->info.en_passant_idx = 0;
     board->info.en_passant_map = 0ULL;
     board->info.en_passant_trg = 0ULL;
-    board->info.flags = Board_TURN;
+    board->info.flags = 0;
     board->info.fifty_counter = 0;
     board->info.captured_piece = NCH_NO_PIECE;
+    board->info.side = NCH_White;
 
     board->castle_squares[NCH_G1] = NCH_H1;
     board->castle_squares[NCH_C1] = NCH_A1;
@@ -138,10 +139,11 @@ Board_InitEmpty(Board* board){
 
 int
 Board_IsCheck(const Board* board){
+    Side side = Board_SIDE(board);
     return get_checkmap(
             board,
-            Board_IS_WHITETURN(board) ? NCH_White : NCH_Black,
-            NCH_SQRIDX( Board_IS_WHITETURN(board) ? Board_WHITE_KING(board) : Board_BLACK_KING(board)),
+            side,
+            NCH_SQRIDX( Board_BB(board, side, NCH_King) ),
             Board_ALL_OCC(board)
         ) != 0ULL;
 }

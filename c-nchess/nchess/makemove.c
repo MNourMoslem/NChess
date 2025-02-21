@@ -42,7 +42,7 @@ NCH_STATIC_FINLINE Piece
 make_move(Board* board, Square from_, Square to_,
          MoveType move_type, Piece promotion_piece)
 {
-    Side side = Board_GET_SIDE(board);
+    Side side = Board_SIDE(board);
     Side op_side = NCH_OP_SIDE(side);
     Piece captured_piece = Board_PIECE(board, op_side, to_);
 
@@ -80,7 +80,7 @@ make_move(Board* board, Square from_, Square to_,
 
 NCH_STATIC_FINLINE Piece
 move_and_set_flags(Board* board, Move move){    
-    Side side = Board_GET_SIDE(board);    
+    Side side = Board_SIDE(board);    
     Square from_ = Move_FROM(move);
     Square to_ = Move_TO(move);
     MoveType type = Move_TYPE(move);
@@ -163,7 +163,7 @@ is_move_legal(Board* board, Move move){
     Piece captured_piece = make_move(board, Move_FROM(move), Move_TO(move),
                                      Move_TYPE(move), Move_PRO_PIECE(move));
     int is_check = Board_IsCheck(board);
-    undo_move(board, Board_GET_SIDE(board), move, captured_piece);
+    undo_move(board, Board_SIDE(board), move, captured_piece);
     return !is_check;
 }
 
@@ -254,7 +254,7 @@ Board_Undo(Board* board){
         return;
 
     BoardDict_Remove(&board->dict, board->bitboards);
-    undo_move(board, Board_GET_OP_SIDE(board), node->move, Board_CAP_PIECE(board));
+    undo_move(board, Board_OP_SIDE(board), node->move, Board_CAP_PIECE(board));
 
     board->info = node->pos_info;
     board->nmoves -= 1;

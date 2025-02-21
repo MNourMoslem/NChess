@@ -14,7 +14,7 @@ get_allowed_squares(const Board* board){
     if (!Board_IS_CHECK(board))
         return NCH_UINT64_MAX;
 
-    Side side = Board_GET_SIDE(board);
+    Side side = Board_SIDE(board);
     int king_idx = NCH_SQRIDX(Board_BB(board, side, NCH_King));
 
     uint64 attackers_map = get_checkmap(board, side, king_idx, Board_ALL_OCC(board));
@@ -28,7 +28,7 @@ get_allowed_squares(const Board* board){
 
 NCH_STATIC_INLINE uint64
 get_pinned_pieces(const Board* board, uint64* pinned_allowed_squares){
-    Side       side = Board_GET_SIDE(board);
+    Side       side = Board_SIDE(board);
     int    king_idx = NCH_SQRIDX(Board_BB(board, side, NCH_King));
     uint64 self_occ = Board_OCC(board, side);
     uint64  all_occ = Board_ALL_OCC(board);
@@ -126,7 +126,7 @@ generate_knight_moves(NCH_UNUSED(Board* board), int idx, uint64 allowed_squares,
 
 NCH_STATIC_INLINE void*
 generate_pawn_moves(Board* board, int idx, uint64 allowed_squares, Move* moves){
-    Side ply_side = Board_GET_SIDE(board);
+    Side ply_side = Board_SIDE(board);
     Side op_side = NCH_OP_SIDE(ply_side);
 
     int could2sqr = ply_side == NCH_White ? NCH_GET_ROWIDX(idx) == 1
@@ -219,7 +219,7 @@ generate_any_move(Board* board, Side side, int idx, uint64 allowed_squares, Move
 
 NCH_STATIC_INLINE void*
 generate_king_moves(Board* board, Move* moves){
-    Side side = Board_GET_SIDE(board);
+    Side side = Board_SIDE(board);
 
     int king_idx = NCH_SQRIDX(board->bitboards[side][NCH_King]);
     if (king_idx >= 64)
@@ -285,7 +285,7 @@ Board_GenerateLegalMoves(Board* board, Move* moves){
     uint64 pinned_allowed_square[8];
     Move* mh = moves;
 
-    Side side = Board_GET_SIDE(board);
+    Side side = Board_SIDE(board);
     uint64 self_occ = Board_OCC(board, side);
     
     uint64 allowed_squares = get_allowed_squares(board) &~ self_occ;
@@ -319,7 +319,7 @@ Board_GenerateLegalMoves(Board* board, Move* moves){
 
 Move*
 Board_GeneratePseudoMovesMapOf(Board* board, Move* moves, int idx){
-    Side side = Board_GET_SIDE(board);
+    Side side = Board_SIDE(board);
     Piece p = Board_PIECE(board, side, idx);
 
     if (p == NCH_NO_PIECE)

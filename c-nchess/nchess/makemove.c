@@ -178,7 +178,7 @@ Board_IsMoveLegal(Board* board, Move move){
 
     Move pseudo_moves[30];
     Move* tail;
-    tail = Board_GeneratePseudoMovesMapOf(board, pseudo_moves, from_);
+    tail = Board_GeneratePseudoMovesOf(board, pseudo_moves, from_);
     if (tail == pseudo_moves){
         return 0;
     }
@@ -257,7 +257,7 @@ Board_Undo(Board* board){
     undo_move(board, Board_OP_SIDE(board), node->move, Board_CAP_PIECE(board));
 
     board->info = node->pos_info;
-    board->nmoves -= 1;
+    board->nmoves--;
 
     MoveList_Pop(&board->movelist);
 }
@@ -271,7 +271,7 @@ Board_GetMovesOf(Board* board, Square s, Move* moves){
     Move pseudo_moves[30];
     Move* tail = pseudo_moves;
 
-    tail = Board_GeneratePseudoMovesMapOf(board, pseudo_moves, s);
+    tail = Board_GeneratePseudoMovesOf(board, pseudo_moves, s);
 
     int len = (int)(tail - pseudo_moves);
     int nmoves = 0;

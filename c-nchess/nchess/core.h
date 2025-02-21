@@ -150,7 +150,7 @@ extern Diractions NCH_DIRACTION_TABLE[NCH_SQUARE_NB][NCH_SQUARE_NB];
 // macros ends with IDX returns the index and other macros return bitboards.
 // macro naming is awful and would be changed in the future.
 #define NCH_SQR(idx) (1ULL << (idx))
-#define NCH_SQRIDX(square) count_tbits(square)
+#define NCH_SQRIDX(square) count_last_zeros(square)
 #define NCH_GET_COLIDX(idx) NCH_COL_TABLE[idx]
 #define NCH_GET_ROWIDX(idx) NCH_ROW_TABLE[idx]
 #define NCH_GET_COL(idx) (NCH_COL1 << (NCH_GET_COLIDX(idx)))

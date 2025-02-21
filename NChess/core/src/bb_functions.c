@@ -84,7 +84,7 @@ BB_GetTSB(PyObject* self, PyObject* args){
     if (parse_bb(&bb, args) < 0)
         return NULL;
 
-    return PyLong_FromLong(get_ts1b(bb));
+    return PyLong_FromLong(get_last_bit(bb));
 }
 
 PyObject*

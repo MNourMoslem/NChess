@@ -14,7 +14,7 @@ typedef enum{
 
 typedef uint16 Move;
 
-#define Move_New(from_, to_, promotion_piece, move_type)\
+#define _Move_New(from_, to_, promotion_piece, move_type)\
 Move_ASSIGN_FROM(from_)\
 | Move_ASSIGN_TO(to_)\
 | Move_ASSIGN_PRO_PIECE(promotion_piece - 1)\

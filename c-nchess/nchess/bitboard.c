@@ -18,7 +18,7 @@ uint64 KnightAttacks[NCH_SQUARE_NB];                // 64
 uint64 KingAttacks[NCH_SQUARE_NB];                  // 64
 
 uint64 BetweenTable[NCH_SQUARE_NB][NCH_SQUARE_NB];  // 4,096
-uint64 LineBB[NCH_SQUARE_NB][NCH_DIR_NB];
+uint64 LineBB[NCH_SQUARE_NB][NCH_DIR_NB];           // 512
 
 uint64 Magics[2][NCH_SQUARE_NB];                    // 128
 uint64 SlidersAttackMask[2][NCH_SQUARE_NB];         // 128

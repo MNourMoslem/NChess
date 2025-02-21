@@ -48,6 +48,10 @@ extern uint64 KingAttacks[NCH_SQUARE_NB];                  // 64
 // the king is in check.
 extern uint64 BetweenTable[NCH_SQUARE_NB][NCH_SQUARE_NB];  // 4,096
 
+// Table representing a line of squares from a square to the edge
+// of the board in a specific direction. This is helpful for move
+// generation to detect the possible squares a the pinned pieces
+// can move to.
 extern uint64 LineBB[NCH_SQUARE_NB][NCH_DIR_NB];  // 4,096
 
 /*

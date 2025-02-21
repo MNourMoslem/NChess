@@ -1,3 +1,11 @@
+/*
+    generate.c
+
+    This file contains all functions related to move generation.
+    from generating pseudo moves to generating legal moves.
+*/
+
+
 #include "core.h"
 #include "config.h"
 #include "types.h"
@@ -6,9 +14,14 @@
 #include "bitboard.h"
 #include "generate.h"
 
-#include <stdio.h>
 #include <string.h>
 
+
+// This function is used to return the squares that pieces could move to.
+// If the king is not under check it would return all the squares on the board.
+// If the king is under check it by one piece it would return the squares between
+// the king and the attacker. If the king is under check by more than one piece
+// it would return 0 which means that no piece could move except the king.
 NCH_STATIC_INLINE uint64
 get_allowed_squares(const Board* board){
     if (!Board_IS_CHECK(board))
@@ -26,6 +39,12 @@ get_allowed_squares(const Board* board){
     return bb_between(king_idx, NCH_SQRIDX(attackers_map));
 }
 
+// This function is used to return the squares that the pinned pieces could move to.
+// If there are no pinned pieces it would return 0.
+// If there are pinned pieces it would return the bitboard of the pinned pieces.
+// The pinned_allowed_squares is an array of size NCH_DIR_NB (number of diractions)
+// where each item in the array respresent the squares that the pinned piece could move to.
+// with respect to its diractions to the king.
 NCH_STATIC_INLINE uint64
 get_pinned_pieces(const Board* board, uint64* pinned_allowed_squares){
     Side       side = Board_SIDE(board);
@@ -36,9 +55,23 @@ get_pinned_pieces(const Board* board, uint64* pinned_allowed_squares){
     uint64  enp_map = Board_ENP_MAP(board);
     
     uint64 queen_like = bb_queen_attacks(king_idx, all_occ);
-    uint64 around = (queen_like & self_occ);
+    uint64 around = (queen_like & self_occ); // currently playing player's pieces only
     all_occ &= ~around;
     
+    // This is a special case where the king is in the same row of the
+    // pawn threatening en passant. In this case if the pawn take by en passant
+    // two pieces would be removed from the row. This is very tricky because
+    // this is the only way to empty two squares with one move in chess.
+    // when this special case hits we need to add the attacking pawn to the 
+    // around bitboard and remove it from the all_occ bitboard.
+    // we check if en passant is possible and the king is in the same row.
+    // then we see if the queen_like scan is hitting one of the two pawns of the
+    // en passant. cause they might be on the same row but they could be seprated
+    // by another piece. and lastly we check if the enpassant map has two squares
+    // only because if there was two pawns threatening enpassant and one taget pawn.
+    // (in this case enp_map bit cound would be 3) the en passant move will not
+    // discover the king on a check cause it only empties two squares and the enp_map
+    // has 3.
     int special = 0;
     if (enp_idx && NCH_SAME_ROW(king_idx, enp_idx)
         && (queen_like & enp_map) && has_two_bits(enp_map))
@@ -55,10 +88,10 @@ get_pinned_pieces(const Board* board, uint64* pinned_allowed_squares){
 
     uint64 snipers = ((bb_rook_attacks(king_idx, all_occ) & rq)
                     | (bb_bishop_attacks(king_idx, all_occ) & bq))
-                    &~ queen_like;
+                    &~ queen_like; // execulde pieces that are already attacking the king
     
     if (!snipers)
-    return 0ULL;
+        return 0ULL;
     
     uint64 pinned_pieces = 0ULL;
     uint64 line, bet;
@@ -79,6 +112,21 @@ get_pinned_pieces(const Board* board, uint64* pinned_allowed_squares){
         {
             pinned_allowed_squares--;
         }
+
+        // we set the allowed squares to be anything but the en passant target
+        // and the en passant map. the reason we inlcude the en passant map as
+        // well is a tricky situation. if the king is under attack by a pawn 
+        // that has moved 2 squares. the allowed squares will only include the
+        // square of the pawn attacking the king althoug if we could take that
+        // pawn with en passant we will not be able to do it because the en passant
+        // target is not included in the allowed squares. so what we do in the
+        // pawn move generation is we check if the allowed squares containes the
+        // the en passant map and if so we say alloewd_squares |= en passant target.
+        // this want be harmful if the en passant target is 0. but if will be if 
+        // it is not and if the allowed squares containes all the board squares.
+        // that is why we need to exclude the en passant map from the allowed squares.
+        // because the pawn move generation automatically includes the en passant target
+        // if it sees that the target pawn is included in the allowed squares.
         *pinned_allowed_squares = ~(Board_ENP_TRG(board) | enp_map);
     }
 
@@ -156,6 +204,9 @@ generate_pawn_moves(Board* board, int idx, uint64 allowed_squares, Move* moves){
                                                 : NCH_NXTSQR_DOWN(NCH_SQR(idx)));
     }
     
+    // here is the tricky part we explained in get_pinned_pieces function.
+    // if the targeted pawn is in the allowed squares we automatically include
+    // the en passant target in the allowed squares.
     if (allowed_squares & Board_ENP_MAP(board)){
         allowed_squares |= Board_ENP_TRG(board);
     }
@@ -210,6 +261,9 @@ NCH_STATIC MoveGenFunction MoveGenFunctionTable[] = {
     generate_queen_moves,
 };
 
+// generate any move for a piece on the board except the king.
+// that is why it is not a safe function and it is only used in the
+// in this file.
 NCH_STATIC_INLINE void*
 generate_any_move(Board* board, Side side, int idx, uint64 allowed_squares, Move* moves){
     Piece p = Board_PIECE(board, side, idx);
@@ -220,13 +274,14 @@ generate_any_move(Board* board, Side side, int idx, uint64 allowed_squares, Move
 NCH_STATIC_INLINE void*
 generate_king_moves(Board* board, Move* moves){
     Side side = Board_SIDE(board);
+    int king_idx = NCH_SQRIDX(Board_BB(board, side, NCH_King));
 
-    int king_idx = NCH_SQRIDX(board->bitboards[side][NCH_King]);
+    // if there is no king on the board for some reason we don't want to crash.
     if (king_idx >= 64)
         return moves;
         
     uint64 bb =  bb_king_attacks(king_idx)
-              &  ~board->occupancy[side]
+              &  ~Board_OCC(board, side)
               &  ~bb_king_attacks(NCH_SQRIDX(Board_BB(board, NCH_OP_SIDE(side), NCH_King)));
     int target;
     while (bb)
@@ -318,9 +373,9 @@ Board_GenerateLegalMoves(Board* board, Move* moves){
 }
 
 Move*
-Board_GeneratePseudoMovesOf(Board* board, Move* moves, int idx){
+Board_GeneratePseudoMovesOf(Board* board, Move* moves, Square sqr){
     Side side = Board_SIDE(board);
-    Piece p = Board_PIECE(board, side, idx);
+    Piece p = Board_PIECE(board, side, sqr);
 
     if (p == NCH_NO_PIECE)
         return moves;
@@ -330,7 +385,7 @@ Board_GeneratePseudoMovesOf(Board* board, Move* moves, int idx){
         moves = generate_king_moves(board, moves);
     }
     else{
-        moves = generate_any_move(board, side, idx, NCH_UINT64_MAX, moves);
+        moves = generate_any_move(board, side, sqr, NCH_UINT64_MAX, moves);
     }
     return moves;
 }

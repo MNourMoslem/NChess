@@ -53,28 +53,25 @@ Move_FromString(const char* move_str){
         type = MoveType_Normal;
     }
 
-    return Move_New(from_, to_, promotion_piece, type);
+    return _Move_New(from_, to_, promotion_piece, type);
 }
 
 int
 Move_AsString(Move move, char* dst){
-    char* temp;
     Square from_ = Move_FROM(move);
     Square to_ = Move_TO(move);
     Piece promotion = Move_TYPE(move) == MoveType_Promotion 
-                    ? Move_PRO_PIECE(move) + 1
+                    ? Move_PRO_PIECE(move)
                     : 0;
 
     if (!is_valid_square(from_) || !is_valid_square(to_)){
         return -1;
     }
 
-    temp = squares_char[from_];
-    dst[0] = temp[0];
-    dst[1] = temp[1];
-    temp = squares_char[to_];
-    dst[2] = temp[0];
-    dst[3] = temp[1];
+    dst[0] = squares_char[from_][0];
+    dst[1] = squares_char[from_][1];
+    dst[2] = squares_char[to_][0];
+    dst[3] = squares_char[to_][1];
 
     if (promotion){
         if (promotion == NCH_Queen)

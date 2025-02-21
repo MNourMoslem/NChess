@@ -32,13 +32,11 @@ get_checkmap(const Board* board, Side side, int king_idx, uint64 all_occ){
 
 NCH_STATIC_INLINE void
 set_board_enp_settings(Board* board, Side side, Square enp_sqr){
-    uint64 sqr = NCH_SQR(enp_sqr);
+    Square trg_sqr = side == NCH_White ? enp_sqr - 8 : enp_sqr + 8;
     board->info.en_passant_idx = enp_sqr;
-    board->info.en_passant_map = sqr | (((NCH_NXTSQR_RIGHT(sqr) & 0x7f7f7f7f7f7f7f7f)
-                                | (NCH_NXTSQR_LEFT(sqr) & 0xfefefefefefefefe))
-                                & board->bitboards[TARGET_SIDE(side)][NCH_Pawn]);
-    board->info.en_passant_trg = side == NCH_White ? NCH_NXTSQR_DOWN(sqr)
-                                              : NCH_NXTSQR_UP(sqr);
+    board->info.en_passant_map = NCH_SQR(enp_sqr) | (bb_pawn_attacks(side, trg_sqr)
+                               & Board_BB(board, NCH_OP_SIDE(side), NCH_Pawn));
+    board->info.en_passant_trg = NCH_SQR(trg_sqr);
 }
 
 

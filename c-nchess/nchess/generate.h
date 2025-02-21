@@ -11,6 +11,6 @@ int
 Board_GenerateLegalMoves(Board* board, Move* moves);
 
 Move*
-Board_GeneratePseudoMovesMapOf(Board* board, Move* moves, int idx);
+Board_GeneratePseudoMovesOf(Board* board, Move* moves, int idx);
 
 #endif

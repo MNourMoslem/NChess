@@ -314,11 +314,9 @@ Board_GenerateLegalMoves(Board* board, Move* moves){
     Move* mh = moves;
 
     Side side = Board_GET_SIDE(board);
-
-    uint64 self_occ = board->occupancy[side];
+    uint64 self_occ = Board_OCC(board, side);
     
     uint64 allowed_sqaures = get_allowed_squares(board) &~ self_occ;
-
     uint64 pinned_pieces = get_pinned_pieces(board, pinned_allowed_square);
     uint64 not_pinned_pieces = self_occ &~ (pinned_pieces | Board_BB(board, side, NCH_King));
 

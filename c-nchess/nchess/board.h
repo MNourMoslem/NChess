@@ -104,6 +104,8 @@ typedef struct
 #define Board_ENP_MAP(board) (board)->info.en_passant_map
 #define Board_ENP_TRG(board) (board)->info.en_passant_trg
 #define Board_CAP_PIECE(board) (board)->info.captured_piece
+#define Board_SIDE(board) (board)->info.side
+#define Board_OP_SIDE(board) NCH_OP_SIDE(Board_SIDE(board))
 
 #define Board_NMOVES(board) (board)->nmoves
 
@@ -129,41 +131,17 @@ typedef struct
     however the Board_State function would be used to get the state of the game.
     the flags would be used to store the state of the board like CHECK, CAPTURE, etc.
 */
-#define Board_PAWNMOVED 0x1
-#define Board_ENPASSANT 0x2
-#define Board_CAPTURE 0x4
-#define Board_PROMOTION 0x8
-#define Board_CHECK 0x10
-#define Board_DOUBLECHECK 0x20
-#define Board_CHECKMATE 0x40
-#define Board_STALEMATE 0x80
-#define Board_THREEFOLD 0x100
-#define Board_FIFTYMOVES 0x200
-#define Board_GAMEEND 0x400
-#define Board_DRAW 0x800
-#define Board_WIN 0x1000
-#define Board_TURN 0x2000
+#define Board_PAWNMOVED 1
+#define Board_CAPTURE 2
+#define Board_CHECK 4
+#define Board_DOUBLECHECK 8
 
 #define Board_IS_PAWNMOVED(board) (board->info.flags & Board_PAWNMOVED)
-#define Board_IS_DOUBLECHECK(board) (board->info.flags & Board_DOUBLECHECK)
-#define Board_IS_ENPASSANT(board) (board->info.flags & Board_ENPASSANT)
 #define Board_IS_CAPTURE(board) (board->info.flags & Board_CAPTURE)
-#define Board_IS_PROMOTION(board) (board->info.flags & Board_PROMOTION)
 #define Board_IS_CHECK(board) (board->info.flags & Board_CHECK)
-#define Board_IS_CHECKMATE(board) (board->info.flags & Board_CHECKMATE)
-#define Board_IS_STALEMATE(board) (board->info.flags & Board_STALEMATE)
-#define Board_IS_THREEFOLD(board) (board->info.flags & Board_THREEFOLD)
-#define Board_IS_FIFTYMOVES(board) (board->info.flags & Board_FIFTYMOVES)
-#define Board_IS_GAMEEND(board) (board->info.flags & Board_GAMEEND)
-#define Board_IS_DRAW(board) (board->info.flags & Board_DRAW)
-#define Board_IS_WHITEWIN(board) (board->info.flags & Board_WIN)
-#define Board_IS_BLACKWIN(board) !Board_IS_WHITEWIN(board)
-#define Board_IS_WHITETURN(board) (board->info.flags & Board_TURN)
-#define Board_IS_BLACKTURN(board) !Board_IS_WHITETURN(board)
-
-#define Board_GAME_ON(board) !Board_IS_GAMEEND(board) // would be removed later
-#define Board_GET_SIDE(board) (Board_IS_WHITETURN(board) ? NCH_White : NCH_Black)
-#define Board_GET_OP_SIDE(board) (Board_IS_WHITETURN(board) ? NCH_Black : NCH_White)
+#define Board_IS_DOUBLECHECK(board) (board->info.flags & Board_DOUBLECHECK)
+#define Board_IS_WHITETURN(board) !Board_SIDE(board)
+#define Board_IS_BLACKTURN(board) Board_SIDE(board)
 
 /*
     Castle rights flags

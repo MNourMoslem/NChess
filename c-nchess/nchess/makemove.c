@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-NCH_STATIC_INLINE void
+NCH_STATIC_FINLINE void
 set_piece(Board* board, Side side, Square sqr, Piece p){
     uint64 sqr_bb = NCH_SQR(sqr);
     Board_BB(board, side, p) |= sqr_bb;
@@ -18,7 +18,7 @@ set_piece(Board* board, Side side, Square sqr, Piece p){
     Board_PIECE(board, side, sqr) = p;
 }
 
-NCH_STATIC_INLINE void
+NCH_STATIC_FINLINE void
 remove_piece(Board* board, Side side, Square sqr){
     uint64 sqr_bb = NCH_SQR(sqr);
     Piece p = Board_PIECE(board, side, sqr);
@@ -28,17 +28,17 @@ remove_piece(Board* board, Side side, Square sqr){
 }
 
 
-NCH_STATIC_INLINE void
+NCH_STATIC_FINLINE void
 move_piece(Board* board, Side side, Square from_, Square to_){
     uint64 move_bb = NCH_SQR(from_) | NCH_SQR(to_);
     Piece p = Board_PIECE(board, side, from_);
     Board_BB(board, side, p) ^= move_bb;
     Board_OCC(board, side) ^= move_bb;
-    Board_PIECE(board, side, to_) = p;
     Board_PIECE(board, side, from_) = NCH_NO_PIECE;
+    Board_PIECE(board, side, to_) = p;
 }
 
-NCH_STATIC_INLINE Piece
+NCH_STATIC_FINLINE Piece
 make_move(Board* board, Square from_, Square to_,
          MoveType move_type, Piece promotion_piece)
 {
@@ -49,8 +49,9 @@ make_move(Board* board, Square from_, Square to_,
     move_piece(board, side, from_, to_);
     
     if (captured_piece != NCH_NO_PIECE){
-        Board_PIECE(board, op_side, to_) = NCH_NO_PIECE;
+        Board_BB(board, op_side, captured_piece) &= ~NCH_SQR(to_);
         Board_OCC(board, op_side) &= ~NCH_SQR(to_);
+        Board_PIECE(board, op_side, to_) = NCH_NO_PIECE;
     }
     
     if (move_type != MoveType_Normal){
@@ -64,8 +65,6 @@ make_move(Board* board, Square from_, Square to_,
                                                : to_ + 8;
                                                
             remove_piece(board, op_side, trg_sqr);
-
-            NCH_SETFLG(board->info.flags, Board_CAPTURE);
         }
         else{
             Board_BB(board, side, NCH_Pawn) &= ~NCH_SQR(to_);
@@ -79,7 +78,7 @@ make_move(Board* board, Square from_, Square to_,
     return captured_piece;
 }
 
-NCH_STATIC_INLINE Piece
+NCH_STATIC_FINLINE Piece
 move_and_set_flags(Board* board, Move move){    
     Side side = Board_GET_SIDE(board);    
     Square from_ = Move_FROM(move);
@@ -87,20 +86,30 @@ move_and_set_flags(Board* board, Move move){
     MoveType type = Move_TYPE(move);
     Piece promotion_piece = Move_PRO_PIECE(move);
 
-    Piece captured = make_move(board, from_, to_, type, promotion_piece);
     Piece moving_piece = Board_PIECE(board, side, from_);
+    Piece captured = make_move(board, from_, to_, type, promotion_piece);
 
     if (moving_piece == NCH_Pawn){
-        if (NCH_CHKFLG(0x00ff00ffff00ff00, (NCH_SQR(from_) | NCH_SQR(to_))))
+        if (to_ - from_ == 16 || from_ - to_ == 16){
             set_board_enp_settings(board, side, to_);
-        else
+        }
+        else{
             reset_enpassant_variable(board);
+        }
+        NCH_SETFLG(board->info.flags, Board_PAWNMOVED);
+    }
+    else{
+        reset_enpassant_variable(board);
+    }
+
+    if (captured != NCH_NO_PIECE){
+        NCH_SETFLG(board->info.flags, Board_CAPTURE);
     }
     
     return captured;
 }
 
-NCH_STATIC_INLINE void
+NCH_STATIC_FINLINE void
 undo_move(Board* board, Side side, Move move, Piece captured_piece){
     Side op_side = NCH_OP_SIDE(side);
     Square from_ = Move_FROM(move);
@@ -170,8 +179,9 @@ Board_IsMoveLegal(Board* board, Move move){
     Move pseudo_moves[30];
     Move* tail;
     tail = Board_GeneratePseudoMovesMapOf(board, pseudo_moves, from_);
-    if (tail == pseudo_moves)
-    return 0;
+    if (tail == pseudo_moves){
+        return 0;
+    }
     
     int len = tail - pseudo_moves;
     int available = 0;

@@ -8,7 +8,6 @@
 #include "board_utils.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 
 NCH_STATIC_FINLINE void
 set_piece(Board* board, Side side, Square sqr, Piece p){
@@ -90,13 +89,19 @@ move_and_set_flags(Board* board, Move move){
     Piece captured = make_move(board, from_, to_, type, promotion_piece);
 
     if (moving_piece == NCH_Pawn){
+        NCH_SETFLG(board->info.flags, Board_PAWNMOVED);
+
         if (to_ - from_ == 16 || from_ - to_ == 16){
             set_board_enp_settings(board, side, to_);
         }
         else{
             reset_enpassant_variable(board);
         }
-        NCH_SETFLG(board->info.flags, Board_PAWNMOVED);
+
+        if (type == MoveType_Enpassant){
+            NCH_SETFLG(board->info.flags, Board_CAPTURE);
+            return captured;
+        }
     }
     else{
         reset_enpassant_variable(board);
@@ -144,18 +149,6 @@ undo_move(Board* board, Side side, Move move, Piece captured_piece){
     }
 
     Board_ALL_OCC(board) = Board_WHITE_OCC(board) | Board_BLACK_OCC(board);
-}
-
-NCH_STATIC_INLINE void
-increase_counter(Board* board){
-    board->nmoves++;
-
-    if (NCH_CHKUNI(board->info.flags, Board_PAWNMOVED | Board_CAPTURE | Board_CHECK | Board_DOUBLECHECK)){
-        board->info.fifty_counter = 0;
-    }
-    else{
-        board->info.fifty_counter += 1;
-    }
 }
 
 NCH_STATIC_INLINE int
@@ -214,15 +207,19 @@ Board_IsMoveLegal(Board* board, Move move){
 void
 _Board_MakeMove(Board* board, Move move){
     MoveList_Append(&board->movelist, move, board->info);
-    reset_every_turn_states(board);
+    Board_FLAGS(board) = 0;
     
     Board_CAP_PIECE(board) = move_and_set_flags(board, move);
     
     BoardDict_Add(&board->dict, board->bitboards);
 
     reset_castle_rights(board);
-    flip_turn(board);
-    increase_counter(board);
+    Board_NMOVES(board)++;
+    Board_FIFTY_COUNTER(board) = NCH_CHKUNI(board->info.flags, Board_PAWNMOVED | Board_CAPTURE) 
+                                ? 0
+                                : Board_FIFTY_COUNTER(board) + 1;
+
+    Board_SIDE(board) = NCH_OP_SIDE(Board_SIDE(board));
     update_check(board);
 }
 

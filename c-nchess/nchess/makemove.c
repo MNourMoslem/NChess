@@ -204,7 +204,7 @@ Board_IsMoveLegal(Board* board, Move move){
     if (!available)
         return 0;
     
-    move = Move_New(from_, to_, promotion_piece, type);
+    move = _Move_New(from_, to_, promotion_piece, type);
     if (is_move_legal(board, move))
         return move;
     

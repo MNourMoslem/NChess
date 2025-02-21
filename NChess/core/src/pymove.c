@@ -57,7 +57,7 @@ new_move(PyTypeObject* type, PyObject* args, PyObject* kwds) {
         move = 0;
     }
     else{
-        move = Move_New(from_sqr, to_sqr, promote_piece, castle_type, 0, 0);
+        move = _Move_New(from_sqr, to_sqr, promote_piece, castle_type, 0, 0);
     }
 
     return PyMove_New(move);

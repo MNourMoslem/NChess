@@ -27,7 +27,7 @@ typedef enum{
     NCH_NO_SIDE
 }Side;
 
-#define NCH_OP_SIDE(side) side == NCH_White ? NCH_Black : NCH_White
+#define NCH_OP_SIDE(side) side ^ NCH_Black
 
 typedef enum {
     NCH_H1 = 0, NCH_G1, NCH_F1, NCH_E1, NCH_D1, NCH_C1, NCH_B1, NCH_A1, 
@@ -196,6 +196,8 @@ typedef struct
     int fifty_counter; // counter for fifty moves rule
 
     Piece captured_piece; // last captured piece. used for undoing moves
+
+    Side side; // side to play
 }PositionInfo;
 
 

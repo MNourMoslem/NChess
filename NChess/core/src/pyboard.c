@@ -417,7 +417,7 @@ board_get_attackers_map(PyObject* self, PyObject* args, PyObject* kwargs){
         return NULL;
 
     Board* b = board(self);
-    Side side = Board_GET_SIDE(b);
+    Side side = Board_SIDE(b);
     uint64 all_occ = Board_ALL_OCC(b);
 
     return PyLong_FromUnsignedLongLong(get_checkmap(b, side, s, all_occ));
@@ -494,7 +494,7 @@ board_find(PyObject* self, PyObject* args, PyObject* kwargs){
     if (p == NCH_NO_PIECE)
         return NULL;
 
-    Side side = Board_GET_SIDE(board(self));
+    Side side = Board_SIDE(board(self));
     uint64 bb = board(self)->bitboards[side][p];
 
     PyObject* list = PyList_New(count_bits(bb));

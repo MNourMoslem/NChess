@@ -60,6 +60,10 @@ typedef struct
 
     int nmoves;        // number of half moves
 
+    // A table that containes the source and the destination squares of the rooks
+    // when castling. like for example if the king goes to g1. then in the table
+    // g1 index would contain the rook source square h1 for example and h1 index
+    // would contain the rook destination square f1.
     Square castle_squares[NCH_SQUARE_NB];
 }Board;
 
@@ -107,6 +111,9 @@ typedef struct
 #define Board_SIDE(board) (board)->info.side
 #define Board_OP_SIDE(board) NCH_OP_SIDE(Board_SIDE(board))
 
+#define Board_DICT(board) (board)->dict
+#define Board_MOVELIST(board) (board)->movelist
+
 #define Board_NMOVES(board) (board)->nmoves
 
 #define Board_CASTLE_SQUARES(board, sqr) board->castle_squares[sqr]
@@ -136,10 +143,10 @@ typedef struct
 #define Board_CHECK 4
 #define Board_DOUBLECHECK 8
 
-#define Board_IS_PAWNMOVED(board) (board->info.flags & Board_PAWNMOVED)
-#define Board_IS_CAPTURE(board) (board->info.flags & Board_CAPTURE)
-#define Board_IS_CHECK(board) (board->info.flags & Board_CHECK)
-#define Board_IS_DOUBLECHECK(board) (board->info.flags & Board_DOUBLECHECK)
+#define Board_IS_PAWNMOVED(board) (Board_FLAGS(board) & Board_PAWNMOVED)
+#define Board_IS_CAPTURE(board) (Board_FLAGS(board) & Board_CAPTURE)
+#define Board_IS_CHECK(board) (Board_FLAGS(board) & Board_CHECK)
+#define Board_IS_DOUBLECHECK(board) (Board_FLAGS(board) & Board_DOUBLECHECK)
 #define Board_IS_WHITETURN(board) !Board_SIDE(board)
 #define Board_IS_BLACKTURN(board) Board_SIDE(board)
 
@@ -151,10 +158,10 @@ typedef struct
 #define Board_CASTLE_BK (uint8)4
 #define Board_CASTLE_BQ (uint8)8
 
-#define Board_IS_CASTLE_WK(board) (board->info.castles & Board_CASTLE_WK)
-#define Board_IS_CASTLE_WQ(board) (board->info.castles & Board_CASTLE_WQ)
-#define Board_IS_CASTLE_BK(board) (board->info.castles & Board_CASTLE_BK)
-#define Board_IS_CASTLE_BQ(board) (board->info.castles & Board_CASTLE_BQ)
+#define Board_IS_CASTLE_WK(board) (Board_CASTLES(board) & Board_CASTLE_WK)
+#define Board_IS_CASTLE_WQ(board) (Board_CASTLES(board) & Board_CASTLE_WQ)
+#define Board_IS_CASTLE_BK(board) (Board_CASTLES(board) & Board_CASTLE_BK)
+#define Board_IS_CASTLE_BQ(board) (Board_CASTLES(board) & Board_CASTLE_BQ)
 
 /*
     Board functions.
@@ -215,6 +222,5 @@ Board_Copy(const Board* src_board);
 // returns the state of the game
 GameState
 Board_State(const Board* board, int can_move);
-
 
 #endif

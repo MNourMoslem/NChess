@@ -224,33 +224,32 @@ Board_IsFiftyMoves(const Board* board){
     return Board_FIFTY_COUNTER(board) >= 50;
 }
 
-Board*
-Board_Copy(const Board* src_board){
-    // the way how this function behaves would be replaces in the future
-    // the board needs to support the stack allocation and the copy function
-    // should be able to copy the board to the stack.
-    // This function would take trg_board as a parameter and copy the src_board
-    // in the future.
-
-    Board* dst_board = malloc(sizeof(Board));
-    if (!dst_board)
-        return NULL;
-
+int
+Board_Copy(const Board* src_board, Board* dst_board){
     *dst_board = *src_board;
 
     int res = MoveList_CopyExtra(&Board_MOVELIST(src_board), &Board_MOVELIST(dst_board));
-    if (res < 0){
-        free(dst_board);
-        return NULL;
-    }
+    if (res < 0)
+        return -1;
     
     res = BoardDict_CopyExtra(&Board_DICT(src_board), &Board_DICT(dst_board));
     if (res < 0){
         MoveList_Free(&Board_MOVELIST(dst_board));
-        free(dst_board);
-        return NULL;
+        return -1;
     }
 
+    return 0;
+}
+
+Board*
+Board_NewCopy(const Board* src_board){
+    Board* dst_board = malloc(sizeof(Board));
+    if (!dst_board)
+        return NULL;
+
+    int res = Board_Copy(src_board, dst_board);
+    if (res < 0)
+        return NULL;
     return dst_board;
 }
 

@@ -18,24 +18,24 @@
 
 NCH_STATIC_FINLINE void
 _init_board_flags_and_states(Board* board){
-    board->info.castles = Board_CASTLE_WK | Board_CASTLE_WQ | Board_CASTLE_BK | Board_CASTLE_WQ;
-    board->info.en_passant_idx = 0;
-    board->info.en_passant_map = 0ULL;
-    board->info.en_passant_trg = 0ULL;
-    board->info.flags = 0;
-    board->info.fifty_counter = 0;
-    board->info.captured_piece = NCH_NO_PIECE;
-    board->info.side = NCH_White;
+    Board_CASTLES(board) = Board_CASTLE_WK | Board_CASTLE_WQ | Board_CASTLE_BK | Board_CASTLE_WQ;
+    Board_ENP_IDX(board) = 0;
+    Board_ENP_MAP(board) = 0ULL;
+    Board_ENP_TRG(board) = 0ULL;
+    Board_FLAGS(board) = 0;
+    Board_FIFTY_COUNTER(board) = 0;
+    Board_CAP_PIECE(board) = NCH_NO_PIECE;
+    Board_SIDE(board) = NCH_White;
 
-    board->castle_squares[NCH_G1] = NCH_H1;
-    board->castle_squares[NCH_C1] = NCH_A1;
-    board->castle_squares[NCH_G8] = NCH_H8;
-    board->castle_squares[NCH_C8] = NCH_A8;
+    Board_CASTLE_SQUARES(board, NCH_G1) = NCH_H1;
+    Board_CASTLE_SQUARES(board, NCH_C1) = NCH_A1;
+    Board_CASTLE_SQUARES(board, NCH_G8) = NCH_H8;
+    Board_CASTLE_SQUARES(board, NCH_C8) = NCH_A8;
 
-    board->castle_squares[NCH_H1] = NCH_F1;
-    board->castle_squares[NCH_A1] = NCH_D1;
-    board->castle_squares[NCH_H8] = NCH_F8;
-    board->castle_squares[NCH_A8] = NCH_D8;
+    Board_CASTLE_SQUARES(board, NCH_H1) = NCH_F1;
+    Board_CASTLE_SQUARES(board, NCH_A1) = NCH_D1;
+    Board_CASTLE_SQUARES(board, NCH_H8) = NCH_F8;
+    Board_CASTLE_SQUARES(board, NCH_A8) = NCH_D8;
 
     board->nmoves = 0;
 }
@@ -81,29 +81,36 @@ Board_NewEmpty(){
 }
 
 void
+Board_FreeExtraOnly(Board* board){
+    if (board){
+        BoardDict_FreeExtra(&Board_DICT(board));
+        MoveList_Free(&Board_MOVELIST(board));
+    }
+}
+
+void
 Board_Free(Board* board){
     if (board){
-        BoardDict_FreeExtra(&board->dict);
-        MoveList_Free(&board->movelist);
+        Board_FreeExtraOnly(board);
         free(board);
     }
 }
 
 void
 Board_Init(Board* board){
-    board->bitboards[NCH_White][NCH_Pawn]   = NCH_BOARD_W_PAWNS_STARTPOS;
-    board->bitboards[NCH_White][NCH_Knight] = NCH_BOARD_W_KNIGHTS_STARTPOS;
-    board->bitboards[NCH_White][NCH_Bishop] = NCH_BOARD_W_BISHOPS_STARTPOS;
-    board->bitboards[NCH_White][NCH_Rook]   = NCH_BOARD_W_ROOKS_STARTPOS;
-    board->bitboards[NCH_White][NCH_Queen]  = NCH_BOARD_W_QUEEN_STARTPOS;
-    board->bitboards[NCH_White][NCH_King]   = NCH_BOARD_W_KING_STARTPOS;
+    Board_BB(board, NCH_White, NCH_Pawn)   = NCH_BOARD_W_PAWNS_STARTPOS;
+    Board_BB(board, NCH_White, NCH_Knight) = NCH_BOARD_W_KNIGHTS_STARTPOS;
+    Board_BB(board, NCH_White, NCH_Bishop) = NCH_BOARD_W_BISHOPS_STARTPOS;
+    Board_BB(board, NCH_White, NCH_Rook)   = NCH_BOARD_W_ROOKS_STARTPOS;
+    Board_BB(board, NCH_White, NCH_Queen)  = NCH_BOARD_W_QUEEN_STARTPOS;
+    Board_BB(board, NCH_White, NCH_King)   = NCH_BOARD_W_KING_STARTPOS;
 
-    board->bitboards[NCH_Black][NCH_Pawn]   = NCH_BOARD_B_PAWNS_STARTPOS;
-    board->bitboards[NCH_Black][NCH_Knight] = NCH_BOARD_B_KNIGHTS_STARTPOS;
-    board->bitboards[NCH_Black][NCH_Bishop] = NCH_BOARD_B_BISHOPS_STARTPOS;
-    board->bitboards[NCH_Black][NCH_Rook]   = NCH_BOARD_B_ROOKS_STARTPOS;
-    board->bitboards[NCH_Black][NCH_Queen]  = NCH_BOARD_B_QUEEN_STARTPOS;
-    board->bitboards[NCH_Black][NCH_King]   = NCH_BOARD_B_KING_STARTPOS;
+    Board_BB(board, NCH_Black, NCH_Pawn)   = NCH_BOARD_B_PAWNS_STARTPOS;
+    Board_BB(board, NCH_Black, NCH_Knight) = NCH_BOARD_B_KNIGHTS_STARTPOS;
+    Board_BB(board, NCH_Black, NCH_Bishop) = NCH_BOARD_B_BISHOPS_STARTPOS;
+    Board_BB(board, NCH_Black, NCH_Rook)   = NCH_BOARD_B_ROOKS_STARTPOS;
+    Board_BB(board, NCH_Black, NCH_Queen)  = NCH_BOARD_B_QUEEN_STARTPOS;
+    Board_BB(board, NCH_Black, NCH_King)   = NCH_BOARD_B_KING_STARTPOS;
 
     _init_board(board);
 
@@ -114,19 +121,19 @@ Board_Init(Board* board){
 
 void
 Board_InitEmpty(Board* board){
-    board->bitboards[NCH_White][NCH_Pawn]   = 0ULL;
-    board->bitboards[NCH_White][NCH_Knight] = 0ULL;
-    board->bitboards[NCH_White][NCH_Bishop] = 0ULL;
-    board->bitboards[NCH_White][NCH_Rook]   = 0ULL;
-    board->bitboards[NCH_White][NCH_Queen]  = 0ULL;
-    board->bitboards[NCH_White][NCH_King]   = 0ULL;
+    Board_BB(board, NCH_White, NCH_Pawn)   = 0ULL;
+    Board_BB(board, NCH_White, NCH_Knight) = 0ULL;
+    Board_BB(board, NCH_White, NCH_Bishop) = 0ULL;
+    Board_BB(board, NCH_White, NCH_Rook)   = 0ULL;
+    Board_BB(board, NCH_White, NCH_Queen)  = 0ULL;
+    Board_BB(board, NCH_White, NCH_King)   = 0ULL;
 
-    board->bitboards[NCH_Black][NCH_Pawn]   = 0ULL;
-    board->bitboards[NCH_Black][NCH_Knight] = 0ULL;
-    board->bitboards[NCH_Black][NCH_Bishop] = 0ULL;
-    board->bitboards[NCH_Black][NCH_Rook]   = 0ULL;
-    board->bitboards[NCH_Black][NCH_Queen]  = 0ULL;
-    board->bitboards[NCH_Black][NCH_King]   = 0ULL;
+    Board_BB(board, NCH_Black, NCH_Pawn)   = 0ULL;
+    Board_BB(board, NCH_Black, NCH_Knight) = 0ULL;
+    Board_BB(board, NCH_Black, NCH_Bishop) = 0ULL;
+    Board_BB(board, NCH_Black, NCH_Rook)   = 0ULL;
+    Board_BB(board, NCH_Black, NCH_Queen)  = 0ULL;
+    Board_BB(board, NCH_Black, NCH_King)   = 0ULL;
 
     _init_board(board);
 
@@ -134,7 +141,7 @@ Board_InitEmpty(Board* board){
     // because the board is empty. Considereblt this is not the best way to do this
     // setting the value of the same variable twice like this but it is the easiest way
     // for now and it a new desing would be implemented in the future.
-    board->info.castles = 0;
+    Board_CASTLES(board) = 0;
 }
 
 int
@@ -209,12 +216,12 @@ Board_IsInsufficientMaterial(const Board* board){
 
 int
 Board_IsThreeFold(const Board* board){
-    return BoardDict_GetCount(&board->dict, board->bitboards) > 2;
+    return BoardDict_GetCount(&Board_DICT(board), board->bitboards) > 2;
 }
 
 int
 Board_IsFiftyMoves(const Board* board){
-    return board->info.fifty_counter >= 50;
+    return Board_FIFTY_COUNTER(board) >= 50;
 }
 
 Board*
@@ -231,15 +238,15 @@ Board_Copy(const Board* src_board){
 
     *dst_board = *src_board;
 
-    int res = MoveList_CopyExtra(&src_board->movelist, &dst_board->movelist);
+    int res = MoveList_CopyExtra(&Board_MOVELIST(src_board), &Board_MOVELIST(dst_board));
     if (res < 0){
         free(dst_board);
         return NULL;
     }
     
-    res = BoardDict_CopyExtra(&src_board->dict, &dst_board->dict);
+    res = BoardDict_CopyExtra(&Board_DICT(src_board), &Board_DICT(dst_board));
     if (res < 0){
-        MoveList_Free(&dst_board->movelist);
+        MoveList_Free(&Board_MOVELIST(dst_board));
         free(dst_board);
         return NULL;
     }

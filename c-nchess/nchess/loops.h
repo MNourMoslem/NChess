@@ -1,3 +1,10 @@
+/*
+    loops.h
+
+    This file contains the loop macros for the bitboards.
+    These macros are shortcut for iterating over the set bits of a bitboard.
+*/
+
 #ifndef NCHESS_SRC_LOOP_H
 #define NCHESS_SRC_LOOP_H
 

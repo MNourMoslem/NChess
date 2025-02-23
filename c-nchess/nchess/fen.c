@@ -10,6 +10,17 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define PARSE(func)\
+while (*fen == ' ') {fen++;}\
+fen = func(board, fen);\
+if (!fen) return -1;
+
+
+NCH_STATIC_INLINE int
+end_of_str(char s){
+    return s == '\0' || s == ' ';
+}
+
 NCH_STATIC_INLINE void
 char2piece(char c, Side* side, Piece* piece){
     switch (c)
@@ -92,20 +103,16 @@ char2number(char c){
 
 NCH_STATIC_INLINE Square
 str2square(char* s){
-    #if NCH_H1 == 0
-        return ('h' - s[0]) + (char2number(s[1]) * 8); 
-    #else
-        return (s[0] - 'a') + ((8 - char2number(s[1])) * 8);
-    #endif
+    return ('h' - s[0]) + (char2number(s[1]) * 8); 
 }
 
-int
-parse_fen(Board* board, char* fen){
+char*
+parse_bb(Board* board, char* fen){
     Square sqr = NCH_A8;
     Piece piece;
     Side side;
 
-    while (*fen != ' ')
+    while (!end_of_str(*fen))
     {
         if (is_number(*fen)){
             sqr -= char2number(*fen);
@@ -113,21 +120,18 @@ parse_fen(Board* board, char* fen){
         else if (*fen != '/'){
             char2piece(*fen, &side, &piece);
             if (piece != NCH_NO_PIECE){
-                board->bitboards[side][piece] |= NCH_SQR(sqr);
-                board->piecetables[side][sqr] = piece;
+                Board_BB(board, side, piece) |= NCH_SQR(sqr);
                 sqr--;
             }
         }
         fen++;
     }
-    for (Side s = 0; s < NCH_SIDES_NB; s++){
-        for (Piece p = 0; p < NCH_PIECE_NB; p++){
-            board->occupancy[s] |= board->bitboards[s][p];
-        }
-        board->occupancy[NCH_SIDES_NB] |= board->occupancy[s];  
-    }
-    fen++;
 
+    return fen;
+}
+
+char*
+parse_side(Board* board, char* fen){
     if (*fen == 'w'){
         Board_SIDE(board) = NCH_White;
     }
@@ -135,69 +139,99 @@ parse_fen(Board* board, char* fen){
         Board_SIDE(board) = NCH_Black;
     }
     else{
-        return -1;
+        return NULL;
     }
+    fen++;
+    return fen;
+}
 
-    fen += 2;
-
-    while (*fen != ' ')
+char*
+parse_castles(Board* board, char* fen){
+    while (!end_of_str(*fen))
     {
         if (*fen == 'K'){
-            NCH_SETFLG(board->info.castles, Board_CASTLE_WK);
+            NCH_SETFLG(Board_CASTLES(board), Board_CASTLE_WK);
         }
         else if (*fen == 'Q'){
-            NCH_SETFLG(board->info.castles, Board_CASTLE_WQ);
+            NCH_SETFLG(Board_CASTLES(board), Board_CASTLE_WQ);
         }
         else if (*fen == 'k'){
-            NCH_SETFLG(board->info.castles, Board_CASTLE_BK);
+            NCH_SETFLG(Board_CASTLES(board), Board_CASTLE_BK);
         }
         else if (*fen == 'q'){
-            NCH_SETFLG(board->info.castles, Board_CASTLE_BQ);
+            NCH_SETFLG(Board_CASTLES(board), Board_CASTLE_BQ);
         }
         fen++;
     }
-    fen++;
 
+    return fen;
+}
+
+char*
+parse_enpassant(Board* board, char* fen){
     if (*fen != '-'){
-        Side trg_side = Board_IS_WHITETURN(board) ? NCH_Black : NCH_White;
-        if (fen[1] == '6'){
-            *(fen+1) = '5';
-        }
-        else if (fen[1] == '3'){
-            *(fen+1) = '4'; 
-        }
+        if (end_of_str(*fen))
+            return fen;
 
-        Square en_passant_idx = str2square(fen);
-        if (!is_valid_square(en_passant_idx)){
-            return -1;
-        }
+        Side op_side = Board_OP_SIDE(board);
+        Square enp_sqr = str2square(fen);
+        if (!is_valid_square(enp_sqr))
+            return NULL;
+
+        if (NCH_GET_ROWIDX(enp_sqr) == 6)
+            enp_sqr -= 8;
+        else if (NCH_GET_ROWIDX(enp_sqr) == 3)
+            enp_sqr += 8;
+        else
+            return NULL;
         
-        set_board_enp_settings(board, trg_side, en_passant_idx);
-
-        fen += 3;
-    }
-    else{
-        reset_enpassant_variable(board);
+        set_board_enp_settings(board, op_side, enp_sqr);
         fen += 2;
     }
+    else{
+        fen++;
+    }
+    return fen;
+}
 
-    if (*fen == '\0'){
-        board->info.fifty_counter = 0;
-        board->nmoves = 0;
-        return 0;
+char*
+parse_fifty_counter(Board* board, char* fen){
+    int count = 0;
+    while (!end_of_str(*fen))
+    {
+        if (!is_number(*fen)){
+            return NULL;
+        }
+        count += char2number(*fen);
+        fen++;
     }
+    Board_FIFTY_COUNTER(board) = count;
+    return fen;
+}
 
-    if (!is_number(*fen)){
-        return -1;
+char*
+parse_nmoves(Board* board, char* fen){
+    int count = 0;
+    while (!end_of_str(*fen))
+    {
+        if (!is_number(*fen)){
+            return NULL;
+        }
+        count += char2number(*fen);
+        fen++;
     }
-    board->info.fifty_counter = char2number(*fen);
-    fen+=2;
-    
-    if (!is_number(*fen)){
-        return -1;
-    }
-    board->nmoves = char2number(*fen);
-    
+    Board_NMOVES(board) = count;
+    return fen;
+}
+
+int parse_fen(Board* board, char* fen){    
+    PARSE(parse_bb)
+    PARSE(parse_side)
+    PARSE(parse_castles)
+    PARSE(parse_enpassant)
+    PARSE(parse_fifty_counter)
+    PARSE(parse_nmoves)
+
     return 0;
 }
 
@@ -216,8 +250,6 @@ Board_FromFen(char* fen){
 
     set_board_occupancy(board);
     init_piecetables(board);
-
     update_check(board);
-
     return board;
 }

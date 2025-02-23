@@ -215,9 +215,14 @@ Board_IsThreeFold(const Board* board);
 int
 Board_IsFiftyMoves(const Board* board);
 
+// copies the board to the destination board
+// returns 0 on success and -1 on failure
+int
+Board_Copy(const Board* src_board, Board* dst_board);
+
 // copies the board and returns the new board
 Board*
-Board_Copy(const Board* src_board);
+Board_NewCopy(const Board* src_board);
 
 // returns the state of the game
 GameState

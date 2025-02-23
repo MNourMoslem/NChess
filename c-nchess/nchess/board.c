@@ -185,7 +185,7 @@ Board_IsInsufficientMaterial(const Board* board){
     if (!knights){
         // if there are no bishops on the board what we do first is to check if there are
         // more then one bishop on the board. if not it is a insufficient material.
-        // other ways we need to check if check if there is only two bishops on the board
+        // other ways we need to check if there is only two bishops on the board
         // and those bishop are on different sides of the board. if so the result is insufficient
         // material if bishops are on the same color. other ways it is not. 
         if (more_then_one(bishops)){

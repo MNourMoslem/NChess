@@ -31,18 +31,18 @@ format_number_with_commas(long long num, char* output) {
 
 long long
 preft_recursive(Board* board, int depth){
-    if (depth <= 1){
-        if (depth == 1){
-            Move moves[256];
-            return Board_GenerateLegalMoves(board, moves);
-        }
+    if (depth < 1){
         return 1;
     }
-    
-    long long count = 0;
+
     Move moves[256];
     int nmoves = Board_GenerateLegalMoves(board, moves);
     
+    if (depth == 1){
+        return nmoves;
+    }
+    
+    long long count = 0;
     for (int i = 0; i < nmoves; i++){
         _Board_MakeMove(board, moves[i]);
         count += preft_recursive(board, depth - 1);

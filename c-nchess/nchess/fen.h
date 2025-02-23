@@ -17,14 +17,23 @@
 #include "types.h"
 #include "config.h"
 
-// creates a board from a FEN string. the function is dynamic and
+// Creates a board from a FEN string. The function is dynamic and
 // could deal with extra white spaces. FEN has to contain board
-// pieces, side to play, castle rights. rest (en passant square,
-// fifty count, nmoves) is optional.
+// pieces, side to play and castle rights. Rest (en passant square,
+// fifty count, nmoves) are optional.
 // returns Board on success and NULL on failure
 Board*
 Board_NewFen(char* fen);
 
+// Sets the board to the state described in the FEN string.
+// this function is not board initlizer function and it must be
+// called after initlizing the board other way the board will
+// not be initialized correctly.
+// The function is dynamic and
+// could deal with extra white spaces. FEN has to contain board
+// pieces, side to play and castle rights. Rest (en passant square,
+// fifty count, nmoves) are optional.
+// returns 0 on success and -1 on failure
 int
 Board_FromFen(char* fen, Board* dst_board);
 

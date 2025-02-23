@@ -1,3 +1,9 @@
+/*
+    io.c
+
+    This file contains the function definitions for the io functions.
+*/
+
 #include "board.h" 
 #include "stdio.h"
 #include "loops.h"
@@ -8,7 +14,7 @@
 const char NCH_PIECES[13] = {'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k', '.'};
 const char NCH_COLUMNS[8] = {'h' ,'g', 'f', 'e', 'd', 'c', 'b', 'a'};
 
-char* squares_char[] = {
+const char* squares_char[] = {
     "h1", "g1", "f1", "e1", "d1", "c1", "b1", "a1", 
     "h2", "g2", "f2", "e2", "d2", "c2", "b2", "a2", 
     "h3", "g3", "f3", "e3", "d3", "c3", "b3", "a3", 

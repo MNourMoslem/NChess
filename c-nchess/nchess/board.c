@@ -50,19 +50,9 @@ _init_board(Board* board){
     MoveList_Init(&board->movelist);
 }
 
-NCH_STATIC_FINLINE Board*
-new_board(){
-    Board* board = malloc(sizeof(Board));
-    if (!board){
-        return NULL;
-    }
-
-    return board;
-}
-
 Board*
 Board_New(){
-    Board* board = new_board();
+    Board* board = malloc(sizeof(Board));
     if (!board)
         return NULL;
     
@@ -72,7 +62,7 @@ Board_New(){
 
 Board*
 Board_NewEmpty(){
-    Board* board = new_board();
+    Board* board = malloc(sizeof(Board));
     if (!board)
         return NULL;
     

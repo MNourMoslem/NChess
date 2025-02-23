@@ -106,7 +106,7 @@ test_copy_1(){
     if (!board)
         return 0;
 
-    Board* copy_board = Board_Copy(board);
+    Board* copy_board = Board_NewCopy(board);
     if (!copy_board){
         Board_Free(board);
         return 0;
@@ -126,7 +126,7 @@ test_copy_2(){
     if (!board)
         return 0;
 
-    Board* copy_board = Board_Copy(board);
+    Board* copy_board = Board_NewCopy(board);
     if (!copy_board){
         Board_Free(board);
         return 0;
@@ -151,7 +151,7 @@ test_copy_3(){
     if (!board)
         return 0;
 
-    Board* copy_board = Board_Copy(board);
+    Board* copy_board = Board_NewCopy(board);
     if (!copy_board){
         Board_Free(board);
         return 0;
@@ -184,7 +184,7 @@ test_copy_4(){
     if (!board)
         return 0;
 
-    Board* copy_board = Board_Copy(board);
+    Board* copy_board = Board_NewCopy(board);
     if (!copy_board){
         Board_Free(board);
         return 0;

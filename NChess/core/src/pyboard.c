@@ -448,7 +448,7 @@ board_get_moves_of(PyObject* self, PyObject* args, PyObject* kwargs){
 PyObject*
 board_copy(PyObject* self, PyObject* args){
     Board* src = board(self);
-    Board* dst = Board_Copy(src);
+    Board* dst = Board_NewCopy(src);
     if (!dst){
         PyErr_NoMemory();
         return NULL;

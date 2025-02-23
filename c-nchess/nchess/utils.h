@@ -33,10 +33,10 @@ get_checkmap(const Board* board, Side side, int king_idx, uint64 all_occ){
 NCH_STATIC_INLINE void
 set_board_enp_settings(Board* board, Side side, Square enp_sqr){
     Square trg_sqr = side == NCH_White ? enp_sqr - 8 : enp_sqr + 8;
-    board->info.en_passant_idx = enp_sqr;
-    board->info.en_passant_map = NCH_SQR(enp_sqr) | (bb_pawn_attacks(side, trg_sqr)
-                               & Board_BB(board, NCH_OP_SIDE(side), NCH_Pawn));
-    board->info.en_passant_trg = NCH_SQR(trg_sqr);
+    Board_ENP_IDX(board) = enp_sqr;
+    Board_ENP_MAP(board) = NCH_SQR(enp_sqr) | (bb_pawn_attacks(side, trg_sqr)
+                         & Board_BB(board, NCH_OP_SIDE(side), NCH_Pawn));
+    Board_ENP_TRG(board) = NCH_SQR(trg_sqr);
 }
 
 
@@ -102,29 +102,29 @@ init_piecetables(Board* board){
 
 NCH_STATIC_INLINE void
 reset_enpassant_variable(Board* board){
-    board->info.en_passant_idx = 0;
-    board->info.en_passant_map = 0ull;
-    board->info.en_passant_trg = 0ull;
+    Board_ENP_IDX(board)= 0;
+    Board_ENP_MAP(board) = 0ull;
+    Board_ENP_TRG(board) = 0ull;
 }
 
 NCH_STATIC_INLINE void
 set_board_occupancy(Board* board){
-    board->occupancy[NCH_White] = board->bitboards[NCH_White][NCH_Pawn]
+    Board_OCC(board, NCH_White) = board->bitboards[NCH_White][NCH_Pawn]
                                 | board->bitboards[NCH_White][NCH_Knight]
                                 | board->bitboards[NCH_White][NCH_Bishop]
                                 | board->bitboards[NCH_White][NCH_Rook]
                                 | board->bitboards[NCH_White][NCH_Queen]
                                 | board->bitboards[NCH_White][NCH_King];
 
-    board->occupancy[NCH_Black] = board->bitboards[NCH_Black][NCH_Pawn]
+    Board_OCC(board, NCH_Black) = board->bitboards[NCH_Black][NCH_Pawn]
                                 | board->bitboards[NCH_Black][NCH_Knight]
                                 | board->bitboards[NCH_Black][NCH_Bishop]
                                 | board->bitboards[NCH_Black][NCH_Rook]
                                 | board->bitboards[NCH_Black][NCH_Queen]
                                 | board->bitboards[NCH_Black][NCH_King];
 
-    board->occupancy[NCH_SIDES_NB] = board->occupancy[NCH_Black] 
-                                   | board->occupancy[NCH_White];
+    Board_ALL_OCC(board) = Board_OCC(board, NCH_Black) 
+                         | Board_OCC(board, NCH_White);
 }
 
 NCH_STATIC_INLINE int

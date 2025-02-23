@@ -32,7 +32,7 @@ void test_all_perft(char* testing_header, perfttest* funcs, int num_funcs, int t
 
 int
 perft_test(char* fen, long long* expected, int len){
-    Board* board = Board_FromFen(fen);
+    Board* board = Board_NewFen(fen);
     if (!board){
         printf("Failed to create board\n");
         return 0;

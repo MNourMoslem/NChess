@@ -47,7 +47,7 @@ PyBoard_New(PyTypeObject *self, PyObject *args, PyObject *kwargs){
         return NULL;
     }
     if (fen){
-        pyb->board = Board_FromFen(fen);
+        pyb->board = Board_NewFen(fen);
         if (!pyb->board){
             Py_DECREF(pyb);
             PyErr_SetString(PyExc_ValueError ,"could not read the fen");

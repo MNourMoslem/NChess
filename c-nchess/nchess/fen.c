@@ -228,28 +228,35 @@ int parse_fen(Board* board, char* fen){
     PARSE(parse_bb)
     PARSE(parse_side)
     PARSE(parse_castles)
-    PARSE(parse_enpassant)
+    PARSE(parse_enpassant) // fen could end here and it will work
     PARSE(parse_fifty_counter)
     PARSE(parse_nmoves)
 
     return 0;
 }
 
+int
+Board_FromFen(char* fen, Board* dst_board){
+    int out = parse_fen(dst_board, fen);
+    if (out != 0){
+        return -1;
+    }
+    set_board_occupancy(dst_board);
+    init_piecetables(dst_board);
+    update_check(dst_board);
+    return 0;
+}
+
 Board*
-Board_FromFen(char* fen){
+Board_NewFen(char* fen){
     Board* board = Board_NewEmpty();
     if (!board){
         return NULL;
     }
 
-    int out = parse_fen(board, fen);
-    if (out != 0){
-        Board_Free(board);
+    int res = Board_FromFen(fen, board);
+    if (res < 0)
         return NULL;
-    }
-
-    set_board_occupancy(board);
-    init_piecetables(board);
-    update_check(board);
+        
     return board;
 }

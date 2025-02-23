@@ -5,7 +5,7 @@
     In the future a Board_AsFen would be added to this file to convert the board
     to a fen string.
 
-    The way Board_FromFen behaves would change in the future to be able to create
+    The way Board_NewFen behaves would change in the future to be able to create
     the board on the stack and without the need to allocate memory for the board.
 */
 
@@ -17,8 +17,15 @@
 #include "types.h"
 #include "config.h"
 
-// creates a board from a fen string
+// creates a board from a FEN string. the function is dynamic and
+// could deal with extra white spaces. FEN has to contain board
+// pieces, side to play, castle rights. rest (en passant square,
+// fifty count, nmoves) is optional.
+// returns Board on success and NULL on failure
 Board*
-Board_FromFen(char* fen);
+Board_NewFen(char* fen);
+
+int
+Board_FromFen(char* fen, Board* dst_board);
 
 #endif

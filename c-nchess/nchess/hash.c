@@ -68,7 +68,7 @@ BoardDict_FreeExtra(BoardDict* dict){
 int
 BoardDict_GetCount(const BoardDict* dict, const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]){
     int idx = board_to_key(bitboards);
-    BoardNode* node = dict->nodes + idx;
+    const BoardNode* node = dict->nodes + idx;
     if (node->empty)
         return -1;
 

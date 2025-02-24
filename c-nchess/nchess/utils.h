@@ -116,19 +116,19 @@ reset_enpassant_variable(Board* board){
 
 NCH_STATIC_INLINE void
 set_board_occupancy(Board* board){
-    Board_OCC(board, NCH_White) = board->bitboards[NCH_White][NCH_Pawn]
-                                | board->bitboards[NCH_White][NCH_Knight]
-                                | board->bitboards[NCH_White][NCH_Bishop]
-                                | board->bitboards[NCH_White][NCH_Rook]
-                                | board->bitboards[NCH_White][NCH_Queen]
-                                | board->bitboards[NCH_White][NCH_King];
+    Board_OCC(board, NCH_White) = Board_BB(board, NCH_White, NCH_Pawn)
+                                | Board_BB(board, NCH_White, NCH_Knight)
+                                | Board_BB(board, NCH_White, NCH_Bishop)
+                                | Board_BB(board, NCH_White, NCH_Rook)
+                                | Board_BB(board, NCH_White, NCH_Queen)
+                                | Board_BB(board, NCH_White, NCH_King);
 
-    Board_OCC(board, NCH_Black) = board->bitboards[NCH_Black][NCH_Pawn]
-                                | board->bitboards[NCH_Black][NCH_Knight]
-                                | board->bitboards[NCH_Black][NCH_Bishop]
-                                | board->bitboards[NCH_Black][NCH_Rook]
-                                | board->bitboards[NCH_Black][NCH_Queen]
-                                | board->bitboards[NCH_Black][NCH_King];
+    Board_OCC(board, NCH_Black) = Board_BB(board, NCH_Black, NCH_Pawn)
+                                | Board_BB(board, NCH_Black, NCH_Knight)
+                                | Board_BB(board, NCH_Black, NCH_Bishop)
+                                | Board_BB(board, NCH_Black, NCH_Rook)
+                                | Board_BB(board, NCH_Black, NCH_Queen)
+                                | Board_BB(board, NCH_Black, NCH_King);
 
     Board_ALL_OCC(board) = Board_OCC(board, NCH_Black) 
                          | Board_OCC(board, NCH_White);

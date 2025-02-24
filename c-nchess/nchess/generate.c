@@ -237,7 +237,7 @@ generate_pawn_moves(Board* board, int idx, uint64 allowed_squares, Move* moves){
 
     if (is_enpassant){
         target = NCH_SQRIDX(Board_ENP_TRG(board));
-        *moves++ = _Move_New(idx, target, 1, MoveType_Enpassant);
+        *moves++ = _Move_New(idx, target, 1, MoveType_EnPassant);
         bb &= ~Board_ENP_TRG(board);
     }
 

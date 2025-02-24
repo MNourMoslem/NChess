@@ -37,7 +37,7 @@ _init_board_flags_and_states(Board* board){
     Board_CASTLE_SQUARES(board, NCH_H8) = NCH_F8;
     Board_CASTLE_SQUARES(board, NCH_A8) = NCH_D8;
 
-    board->nmoves = 0;
+    Board_NMOVES(board) = 0;
 }
 
 NCH_STATIC_FINLINE void
@@ -46,8 +46,8 @@ _init_board(Board* board){
     init_piecetables(board);
     _init_board_flags_and_states(board);
 
-    BoardDict_Init(&board->dict);
-    MoveList_Init(&board->movelist);
+    BoardDict_Init(&Board_DICT(board));
+    MoveList_Init(&Board_MOVELIST(board));
 }
 
 Board*
@@ -206,7 +206,7 @@ Board_IsInsufficientMaterial(const Board* board){
 
 int
 Board_IsThreeFold(const Board* board){
-    return BoardDict_GetCount(&Board_DICT(board), board->bitboards) > 2;
+    return BoardDict_GetCount(&Board_DICT(board), Board_BBS_PTR(board)) > 2;
 }
 
 int

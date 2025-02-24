@@ -119,7 +119,7 @@ typedef struct
 
 #define Board_NMOVES(board) (board)->nmoves
 
-#define Board_CASTLE_SQUARES(board, sqr) board->castle_squares[sqr]
+#define Board_CASTLE_SQUARES(board, sqr) (board)->castle_squares[sqr]
 
 // returns the piece on the square idx
 #define Board_ON_SQUARE(board, idx) Board_WHITE_PIECE(board, idx) != NCH_NO_PIECE ?\

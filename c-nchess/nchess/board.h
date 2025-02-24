@@ -81,7 +81,8 @@ typedef struct
 #define Board_WHITE_TABLE(board) (board)->piecetables[NCH_White]
 #define Board_BLACK_TABLE(board) (board)->piecetables[NCH_Black]
 
-#define Board_BB(board, side, piece) (board)->bitboards[side][piece]
+#define Board_BBS_PTR(board) (board)->bitboards
+#define Board_BB(board, side, piece) Board_BBS_PTR(board)[side][piece]
 
 #define Board_WHITE_PAWNS(board) Board_BB(board, NCH_White, NCH_Pawn)
 #define Board_WHITE_KNIGHTS(board) Board_BB(board, NCH_White, NCH_Knight)
@@ -101,14 +102,16 @@ typedef struct
 #define Board_WHITE_PIECE(board, idx) Board_PIECE(board, NCH_White, idx)
 #define Board_BLACK_PIECE(board, idx) Board_PIECE(board, NCH_Black, idx)
 
-#define Board_FLAGS(board) (board)->info.flags
-#define Board_CASTLES(board) (board)->info.castles
-#define Board_FIFTY_COUNTER(board) (board)->info.fifty_counter
-#define Board_ENP_IDX(board) (board)->info.en_passant_idx
-#define Board_ENP_MAP(board) (board)->info.en_passant_map
-#define Board_ENP_TRG(board) (board)->info.en_passant_trg
-#define Board_CAP_PIECE(board) (board)->info.captured_piece
-#define Board_SIDE(board) (board)->info.side
+#define Board_INFO(board) (board)->info
+
+#define Board_FLAGS(board) Board_INFO(board).flags
+#define Board_CASTLES(board) Board_INFO(board).castles
+#define Board_FIFTY_COUNTER(board) Board_INFO(board).fifty_counter
+#define Board_ENP_IDX(board) Board_INFO(board).en_passant_idx
+#define Board_ENP_MAP(board) Board_INFO(board).en_passant_map
+#define Board_ENP_TRG(board) Board_INFO(board).en_passant_trg
+#define Board_CAP_PIECE(board) Board_INFO(board).captured_piece
+#define Board_SIDE(board) Board_INFO(board).side
 #define Board_OP_SIDE(board) NCH_OP_SIDE(Board_SIDE(board))
 
 #define Board_DICT(board) (board)->dict
@@ -131,12 +134,10 @@ typedef struct
 /*
     Board flags.
 
-    These flags are used to store the state of the board.
-    flags realted to the state of the game would be removed like
-    DRAW, WIN, GAMEEND, etc. and would be replaced with a single.
-    the nchess.Board will not be responsible for the state of the game.
+    These flags are used to store actions happens every step like if a pawn moved
+    or a capture happened. These flags are not used to store the state of the game.
+    The nchess.Board will not be responsible for the state of the game.
     however the Board_State function would be used to get the state of the game.
-    the flags would be used to store the state of the board like CHECK, CAPTURE, etc.
 */
 #define Board_PAWNMOVED 1
 #define Board_CAPTURE 2
@@ -165,7 +166,7 @@ typedef struct
 
 /*
     Board functions.
-    As metions above all functions in this file are creation, initialization, copying
+    As mentioned above all functions in this file are creation, initialization, copying
     and checking state functions.
 */
 
@@ -185,17 +186,17 @@ void
 Board_Free(Board* board);
 
 // initializes the board with the standard starting position
-// this functions used if the board is already allocated and initialized
+// this functions used if the board is already allocated
 void
 Board_Init(Board* board);
 
-
 // initializes the board with the empty board
-// this functions used if the board is already allocated and initialized
+// this functions used if the board is already allocated
 void
 Board_InitEmpty(Board* board);
 
 // checks if the king of the side that is to move is under attack
+// returns 1 if the king is under attack and 0 otherwise
 int
 Board_IsCheck(const Board* board);
 
@@ -204,14 +205,17 @@ void
 Board_Reset(Board* board);
 
 // checks if the board is in a state of insufficient material
+// returns 1 if the board is in a state of insufficient material and 0 otherwise
 int
 Board_IsInsufficientMaterial(const Board* board);
 
 // checks if the board is in a state of threefold repetition
+// returns 1 if the board is in a state of threefold repetition and 0 otherwise
 int
 Board_IsThreeFold(const Board* board);
 
 // checks if the board is in a state of fifty moves rule
+// returns 1 if the board is in a state of fifty moves rule and 0 otherwise
 int
 Board_IsFiftyMoves(const Board* board);
 

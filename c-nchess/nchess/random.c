@@ -1,3 +1,10 @@
+/*
+    random.c
+
+    This file containes function definitions of random.h
+*/
+
+
 #include "random.h"
 
 unsigned int state = 1804289383;

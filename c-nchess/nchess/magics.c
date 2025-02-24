@@ -1,3 +1,9 @@
+/*
+    magic.c
+
+    This file containes defentions of magic.h functions
+*/
+
 #include "magics.h"
 #include "loops.h"
 #include "core.h"

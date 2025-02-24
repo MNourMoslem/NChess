@@ -1,3 +1,13 @@
+/*
+    magic_utils.c
+
+    This file contains the function definitions for the magic utilities.
+
+    All functions written here by taken from the tutorial of the Chess Programming
+    youtube channel.
+    https://www.youtube.com/@chessprogramming591
+*/
+
 #include "magic_utils.h"
 
 uint64 

@@ -1,3 +1,9 @@
+/*
+    movelist.c
+
+    This file contains all function definitions of movelist.h
+*/
+
 #include "movelist.h"
 #include <stdlib.h>
 #include "types.h"

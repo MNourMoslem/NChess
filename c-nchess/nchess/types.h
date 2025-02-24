@@ -1,3 +1,9 @@
+/*
+    types.h
+
+    This file contains type definitions used throughout the program.
+*/
+
 #ifndef NCHESS_SRC_TYPES_H
 #define NCHESS_SRC_TYPES_H
 

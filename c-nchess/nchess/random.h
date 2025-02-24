@@ -1,3 +1,11 @@
+/*
+    random.h
+
+    This file containes functions for generating random numbers.
+    Used by magic files.
+*/
+
+
 #ifndef NCHESS_SRC_RANDOM_H
 #define NCHESS_SRC_RANDOM_H
 

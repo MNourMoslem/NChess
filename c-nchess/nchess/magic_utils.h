@@ -1,3 +1,9 @@
+/*
+    magic_utils.h
+
+    This file contains the function definitions for the magic utilities.
+*/
+
 #ifndef NCHESS_SRC_MAGICS_UTILS_H
 #define NCHESS_SRC_MAGICS_UTILS_H
 

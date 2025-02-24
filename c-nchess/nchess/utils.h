@@ -1,3 +1,10 @@
+/*
+    utils.h
+
+    This file contains utility inline functions that are used throughout the program.
+*/
+
+
 #ifndef NCHESS_SRC_UTILS_H
 #define NCHESS_SRC_UTILS_H
 

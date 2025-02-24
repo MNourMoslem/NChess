@@ -1,8 +1,15 @@
+/*
+    perft.c
+
+    This file contains the functions for running Perft (performance test) calculations.
+*/
+
 #include "perft.h"
 #include "makemove.h"
 #include "generate.h"
 #include "io.h"
 #include "move.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -109,11 +116,11 @@ Board_PerftPretty(Board* board, int depth){
         total += count;
     }
 
-    clock_t end_time = clock(); // End the timer
-    double time_spent = (double)(end_time - start_time) / CLOCKS_PER_SEC; // Calculate the time spent
+    clock_t end_time = clock();
+    double time_spent = (double)(end_time - start_time) / CLOCKS_PER_SEC;
 
     format_number_with_commas(total, formatted_total);
-    printf("Total: %s | Time spent: %f seconds\n", formatted_total, time_spent); // Print the time spent
+    printf("Total: %s | Time spent: %f seconds\n", formatted_total, time_spent);
 
     return total;
 }

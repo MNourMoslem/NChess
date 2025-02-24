@@ -1,3 +1,9 @@
+/*
+    makemove.c
+
+    This file contains declarations of all makemove.h functions.
+*/
+
 #include "makemove.h"
 #include "move.h"
 #include "utils.h"
@@ -25,7 +31,6 @@ remove_piece(Board* board, Side side, Square sqr){
     Board_PIECE(board, side, sqr) = NCH_NO_PIECE;
 }
 
-
 NCH_STATIC_FINLINE void
 move_piece(Board* board, Side side, Square from_, Square to_){
     uint64 move_bb = NCH_SQR(from_) | NCH_SQR(to_);
@@ -36,6 +41,8 @@ move_piece(Board* board, Side side, Square from_, Square to_){
     Board_PIECE(board, side, to_) = p;
 }
 
+// makes a move on the board.
+// it only modifies bitboard, piecetable and occupancy.
 NCH_STATIC_FINLINE Piece
 make_move(Board* board, Square from_, Square to_,
          MoveType move_type, Piece promotion_piece)
@@ -58,7 +65,7 @@ make_move(Board* board, Square from_, Square to_,
             Square rook_to = Board_CASTLE_SQUARES(board, rook_from);
             move_piece(board, side, rook_from, rook_to);
         }
-        else if (move_type == MoveType_Enpassant){
+        else if (move_type == MoveType_EnPassant){
             Square trg_sqr = side == NCH_White ? to_ - 8
                                                : to_ + 8;
                                                
@@ -76,6 +83,7 @@ make_move(Board* board, Square from_, Square to_,
     return captured_piece;
 }
 
+// makes a move and also modifies board info.
 NCH_STATIC_FINLINE Piece
 move_and_set_flags(Board* board, Move move){    
     Side side = Board_SIDE(board);    
@@ -88,24 +96,27 @@ move_and_set_flags(Board* board, Move move){
     Piece captured = make_move(board, from_, to_, type, promotion_piece);
 
     if (moving_piece == NCH_Pawn){
-        NCH_SETFLG(board->info.flags, Board_PAWNMOVED);
+        NCH_SETFLG(Board_FLAGS(board), Board_PAWNMOVED);
 
         if (to_ - from_ == 16 || from_ - to_ == 16){
             set_board_enp_settings(board, side, to_);
         }
 
-        if (type == MoveType_Enpassant){
-            NCH_SETFLG(board->info.flags, Board_CAPTURE);
+        if (type == MoveType_EnPassant){
+            NCH_SETFLG(Board_FLAGS(board), Board_CAPTURE);
             return captured;
         }
     }
     if (captured != NCH_NO_PIECE){
-        NCH_SETFLG(board->info.flags, Board_CAPTURE);
+        NCH_SETFLG(Board_FLAGS(board), Board_CAPTURE);
     }
     
     return captured;
 }
 
+
+// undo a move from the board.
+// it only modifies bitboard, piecetable and occupancy.
 NCH_STATIC_FINLINE void
 undo_move(Board* board, Side side, Move move, Piece captured_piece){
     Side op_side = NCH_OP_SIDE(side);
@@ -121,7 +132,7 @@ undo_move(Board* board, Side side, Move move, Piece captured_piece){
             Square rook_to = Board_CASTLE_SQUARES(board, rook_from);
             move_piece(board, side, rook_to, rook_from);
         }
-        else if (type == MoveType_Enpassant){
+        else if (type == MoveType_EnPassant){
             Square trg_sqr = side == NCH_White ? to_ - 8
                                                : to_ + 8;
 
@@ -152,7 +163,7 @@ is_move_legal(Board* board, Move move){
     return !is_check;
 }
 
-int 
+Move 
 Board_IsMoveLegal(Board* board, Move move){
     Square from_ = Move_FROM(move);
     Square to_ = Move_TO(move);
@@ -198,7 +209,7 @@ Board_IsMoveLegal(Board* board, Move move){
 
 void
 _Board_MakeMove(Board* board, Move move){
-    MoveList_Append(&board->movelist, move, board->info);
+    MoveList_Append(&Board_MOVELIST(board), move, Board_INFO(board));
 
     Board_FLAGS(board) = 0;
     Board_ENP_MAP(board) = 0;
@@ -207,11 +218,11 @@ _Board_MakeMove(Board* board, Move move){
 
     Board_CAP_PIECE(board) = move_and_set_flags(board, move);
     
-    BoardDict_Add(&board->dict, board->bitboards);
+    BoardDict_Add(&Board_DICT(board), Board_BBS_PTR(board));
 
     reset_castle_rights(board);
     Board_NMOVES(board)++;
-    Board_FIFTY_COUNTER(board) = NCH_CHKUNI(board->info.flags, Board_PAWNMOVED | Board_CAPTURE) 
+    Board_FIFTY_COUNTER(board) = NCH_CHKUNI(Board_FLAGS(board), Board_PAWNMOVED | Board_CAPTURE) 
                                 ? 0
                                 : Board_FIFTY_COUNTER(board) + 1;
 
@@ -242,17 +253,17 @@ Board_Step(Board* board, char* move){
 
 void
 Board_Undo(Board* board){
-    MoveNode* node = MoveList_Last(&board->movelist);
+    MoveNode* node = MoveList_Last(&Board_MOVELIST(board));
     if (!node)
         return;
 
-    BoardDict_Remove(&board->dict, board->bitboards);
+    BoardDict_Remove(&Board_DICT(board), Board_BBS_PTR(board));
     undo_move(board, Board_OP_SIDE(board), node->move, Board_CAP_PIECE(board));
 
-    board->info = node->pos_info;
-    board->nmoves--;
+    Board_INFO(board) = node->pos_info;
+    Board_NMOVES(board)--;
 
-    MoveList_Pop(&board->movelist);
+    MoveList_Pop(&Board_MOVELIST(board));
 }
 
 int

@@ -1,3 +1,9 @@
+/*
+    move.c
+
+    This file contains all function definitions of move.h
+*/
+
 #include "move.h"
 #include "board.h"
 #include <stdlib.h>
@@ -15,6 +21,18 @@ static char* squares_char[] = {
     "h7", "g7", "f7", "e7", "d7", "c7", "b7", "a7", 
     "h8", "g8", "f8", "e8", "d8", "c8", "b8", "a8"
 };
+
+Move
+Move_New(Square from_, Square to_, MoveType type, Piece promotion_piece){
+    // pawn and king are not valid promotion pieces
+    if (promotion_piece == NCH_Pawn || promotion_piece == NCH_King)
+        return 0;
+
+    if (!is_valid_square(from_) || !is_valid_square(to_))
+        return 0;
+
+    return _Move_New(from_, to_, promotion_piece, type);
+}
 
 Move
 Move_FromString(const char* move_str){

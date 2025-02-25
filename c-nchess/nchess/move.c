@@ -26,10 +26,10 @@ Move
 Move_New(Square from_, Square to_, MoveType type, Piece promotion_piece){
     // pawn and king are not valid promotion pieces
     if (promotion_piece == NCH_Pawn || promotion_piece == NCH_King)
-        return 0;
+        return Move_NULL;
 
     if (!is_valid_square(from_) || !is_valid_square(to_))
-        return 0;
+        return Move_NULL;
 
     return _Move_New(from_, to_, promotion_piece, type);
 }
@@ -37,13 +37,13 @@ Move_New(Square from_, Square to_, MoveType type, Piece promotion_piece){
 Move
 Move_FromString(const char* move_str){
     if (strlen(move_str) > 5)
-        return 0;
+        return Move_NULL;
 
     Square from_ = str_to_square(move_str);
     Square to_ = str_to_square(move_str + 2);
 
     if (!is_valid_square(from_) || !is_valid_square(to_))
-        return 0;
+        return Move_NULL;
 
     const char pp = move_str[4];
     Piece promotion_piece;

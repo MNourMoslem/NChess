@@ -1,23 +1,26 @@
 #include "pyboard.h"
 #include "nchess/nchess.h"
 #include "nchess/utils.h"
-#include <stdio.h>
-#include <numpy/arrayobject.h>
 #include "common.h"
 #include "pymove.h"
 #include "bb_functions.h"
 #include "array_conversion.h"
-#include "nchess/generate_utils.h"
+#include "PyBB.h"
 
-#define board(pyb) ((PyBoard*)pyb)->board
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#include <numpy/arrayobject.h>
+
+#include <stdio.h>
+
+#define BOARD(pyb) ((PyBoard*)pyb)->board
 
 PyObject*
 moves_to_list(Move* moves, int nmoves){
     PyObject* list = PyList_New(nmoves);
-    PyMove* pymove;
+    PyObject* pymove;
 
     for (int i = 0; i < nmoves; i++){
-        pymove = PyMove_New(moves[i]);
+        pymove = (PyObject*)PyMove_FromMove(moves[i]);
         if (!pymove){
             Py_DECREF(list);
             return NULL;
@@ -27,6 +30,24 @@ moves_to_list(Move* moves, int nmoves){
     }
 
     return list;
+}
+
+PyObject*
+moves_to_set(Move* moves, int nmoves){
+    PyObject* set = PySet_New(NULL);
+    PyMove* pymove;
+
+    for (int i = 0; i < nmoves; i++){
+        pymove = PyMove_FromMove(moves[i]);
+        if (!pymove){
+            Py_DECREF(set);
+            return NULL;
+        }
+
+        PySet_Add(set, (PyObject*)pymove);
+    }
+
+    return set;
 }
 
 PyObject*
@@ -53,7 +74,7 @@ PyBoard_New(PyTypeObject *self, PyObject *args, PyObject *kwargs){
             PyErr_SetString(PyExc_ValueError ,"could not read the fen");
             return NULL;
         }
-        return pyb;
+        return (PyObject*)pyb;
     }
 
     pyb->board = Board_New();
@@ -63,7 +84,7 @@ PyBoard_New(PyTypeObject *self, PyObject *args, PyObject *kwargs){
         return NULL;
     }
 
-    return pyb;
+    return (PyObject*)pyb;
 }
 
 void
@@ -99,7 +120,7 @@ board__makemove(PyObject* self, PyObject* args){
     if (!move)
         return NULL;
 
-    _Board_MakeMove(board(self), move);
+    _Board_MakeMove(BOARD(self), move);
 
     Py_RETURN_NONE;
 }
@@ -120,13 +141,13 @@ board_step(PyObject* self, PyObject* args, PyObject* kwargs){
     if (!move)
         return NULL;
 
-    int out = Board_StepByMove(board(self), move);
+    int out = Board_StepByMove(BOARD(self), move);
     return PyBool_FromLong(out);
 }
 
 PyObject*
 board_undo(PyObject* self){
-    Board_Undo(board(self));
+    Board_Undo(BOARD(self));
     Py_RETURN_NONE;
 }
 
@@ -146,11 +167,11 @@ board_perft(PyObject* self, PyObject* args, PyObject* kwargs){
 
     long long nmoves;
     if (no_print) {
-        nmoves = Board_PerftNoPrint(board(self), deep);
+        nmoves = Board_PerftNoPrint(BOARD(self), deep);
     } else if (pretty) {
-        nmoves = Board_PerftPretty(board(self), deep);
+        nmoves = Board_PerftPretty(BOARD(self), deep);
     } else {
-        nmoves = Board_Perft(board(self), deep);
+        nmoves = Board_Perft(BOARD(self), deep);
     }
 
     return PyLong_FromLongLong(nmoves);
@@ -158,23 +179,22 @@ board_perft(PyObject* self, PyObject* args, PyObject* kwargs){
 
 PyObject*
 board_generate_legal_moves(PyObject* self, PyObject* args, PyObject* kwargs){
-    Move moves[256];
-    int nmoves = Board_GenerateLegalMoves(board(self), moves);
-
-    PyObject* list = PyList_New(nmoves);
-    PyMove* pymove;
-
-    for (int i = 0; i < nmoves; i++){
-        pymove = PyMove_New(moves[i]);
-        if (!pymove){
-            Py_DECREF(list);
-            return NULL;
+    int as_set = 0;
+    NCH_STATIC char* kwlist[] = {"as_set", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|p", kwlist, &as_set)){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(PyExc_ValueError, "failed to parse the arguments");
         }
-
-        PyList_SetItem(list, i, pymove);
+        return NULL;
     }
 
-    return list;
+    Move moves[256];
+    int nmoves = Board_GenerateLegalMoves(BOARD(self), moves);
+
+    if (as_set){
+        return moves_to_set(moves, nmoves);
+    }
+    return moves_to_list(moves, nmoves);
 }
 
 NCH_STATIC_INLINE void
@@ -182,7 +202,7 @@ board2tensor(Board* board, int* tensor, int reversed){
     int i = 0;
     for (Side s = 0; s < NCH_SIDES_NB; s++){
         for (Piece p = 0; p < NCH_PIECE_NB; p++){
-            bb2array(board->bitboards[s][p], tensor + i * NCH_SQUARE_NB, reversed);
+            bb2array(Board_BB(board, s, p), tensor + i * NCH_SQUARE_NB, reversed);
             i++;
         }
     }
@@ -195,7 +215,7 @@ board_as_array(PyObject* self, PyObject* args, PyObject* kwargs) {
 
     int nitems = NCH_SIDES_NB * NCH_PIECE_NB * NCH_SQUARE_NB;
     npy_intp dims[NPY_MAXDIMS];
-    int ndim = parse_board_conversion_function_args(nitems, dims, args, kwargs, &reversed, &as_list);
+    int ndim = parse_array_conversion_function_args(nitems, dims, args, kwargs, &reversed, &as_list);
 
     if (ndim < 0){
         return NULL;
@@ -209,7 +229,7 @@ board_as_array(PyObject* self, PyObject* args, PyObject* kwargs) {
     
     if (as_list){
         int data[NCH_SIDES_NB * NCH_PIECE_NB * NCH_SQUARE_NB];
-        board2tensor(board(self), data, reversed);
+        board2tensor(BOARD(self), data, reversed);
         return create_list_array(data, dims, ndim);
     }
     else{
@@ -219,7 +239,7 @@ board_as_array(PyObject* self, PyObject* args, PyObject* kwargs) {
             return NULL;
         }
 
-        board2tensor(board(self), data, reversed);
+        board2tensor(BOARD(self), data, reversed);
         
         PyObject* array = create_numpy_array(data, dims, ndim, NPY_INT);
         if (!array){
@@ -262,7 +282,7 @@ board_as_table(PyObject* self, PyObject* args, PyObject* kwargs) {
 
     int nitems = NCH_SQUARE_NB;
     npy_intp dims[NPY_MAXDIMS];
-    int ndim = parse_board_conversion_function_args(nitems, dims, args, kwargs, &reversed, &as_list);
+    int ndim = parse_array_conversion_function_args(nitems, dims, args, kwargs, &reversed, &as_list);
 
     if (ndim < 0){
         return NULL;
@@ -275,7 +295,7 @@ board_as_table(PyObject* self, PyObject* args, PyObject* kwargs) {
 
     if (as_list){
         int data[NCH_SQUARE_NB];
-        board2table(board(self), data, reversed);
+        board2table(BOARD(self), data, reversed);
         return create_list_array(data, dims, ndim);
     }
     else{
@@ -285,7 +305,7 @@ board_as_table(PyObject* self, PyObject* args, PyObject* kwargs) {
             return NULL;
         }
 
-        board2table(board(self), data, reversed);
+        board2table(BOARD(self), data, reversed);
         
         PyObject* array = create_numpy_array(data, dims, ndim, NPY_INT);
         if (!array){
@@ -318,7 +338,7 @@ board_on_square(PyObject* self, PyObject* args){
         Py_RETURN_NONE;
     }
 
-    Piece p = Board_ON_SQUARE(board(self), sqr);
+    Piece p = Board_ON_SQUARE(BOARD(self), sqr);
     return piece_to_pyobject(p);
 }
 
@@ -341,18 +361,18 @@ board_owned_by(PyObject* self, PyObject* args){
         Py_RETURN_NONE;
     }
 
-    Side side = Board_OWNED_BY(board(self), sqr);
+    Side side = Board_OWNED_BY(BOARD(self), sqr);
     return side_to_pyobject(side);
 }
 
 PyObject*
 board_get_played_moves(PyObject* self, PyObject* args){
-    int nmoves = Board_NMOVES(board(self));
+    int nmoves = Board_NMOVES(BOARD(self));
 
     PyObject* list = PyList_New(nmoves);
     PyMove* pymove;
 
-    MoveList* ml = &board(self)->movelist;
+    MoveList* ml = &BOARD(self)->movelist;
     MoveNode* node;
 
     for (int i = 0; i < nmoves; i++){
@@ -362,13 +382,13 @@ board_get_played_moves(PyObject* self, PyObject* args){
             return NULL;
         }
 
-        pymove = PyMove_New(node->move);
+        pymove = PyMove_FromMove(node->move);
         if (!pymove){
             Py_DECREF(list);
             return NULL;
         }
 
-        PyList_SetItem(list, i, pymove);
+        PyList_SetItem(list, i, (PyObject*)pymove);
     }
 
     return list;
@@ -376,28 +396,28 @@ board_get_played_moves(PyObject* self, PyObject* args){
 
 PyObject*
 board_reset(PyObject* self, PyObject* args){
-    Board_Reset(board(self));
+    Board_Reset(BOARD(self));
     Py_RETURN_NONE;
 }
 
 PyObject*
 board_is_check(PyObject* self, PyObject* args){
-    return PyBool_FromLong(Board_IsCheck(board(self)));
+    return PyBool_FromLong(Board_IsCheck(BOARD(self)));
 }
 
 PyObject*
 board_is_insufficient_material(PyObject* self, PyObject* args){
-    return PyBool_FromLong(Board_IsInsufficientMaterial(board(self)));
+    return PyBool_FromLong(Board_IsInsufficientMaterial(BOARD(self)));
 }
 
 PyObject*
 board_is_threefold(PyObject* self, PyObject* args){
-    return PyBool_FromLong(Board_IsThreeFold(board(self)));
+    return PyBool_FromLong(Board_IsThreeFold(BOARD(self)));
 }
 
 PyObject*
 board_is_fifty_moves(PyObject* self, PyObject* args){
-    return PyBool_FromLong(Board_IsFiftyMoves(board(self)));
+    return PyBool_FromLong(Board_IsFiftyMoves(BOARD(self)));
 }
 
 PyObject*
@@ -416,19 +436,20 @@ board_get_attackers_map(PyObject* self, PyObject* args, PyObject* kwargs){
     if (s == NCH_NO_SQR)
         return NULL;
 
-    Board* b = board(self);
+    Board* b = BOARD(self);
     Side side = Board_SIDE(b);
     uint64 all_occ = Board_ALL_OCC(b);
 
-    return PyLong_FromUnsignedLongLong(get_checkmap(b, side, s, all_occ));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(get_checkmap(b, side, s, all_occ));
 }
 
 PyObject*
 board_get_moves_of(PyObject* self, PyObject* args, PyObject* kwargs){
+    int as_set = 0;
     PyObject* sqr;
-    static char* kwlist[] = {"square", NULL};
+    static char* kwlist[] = {"square", "as_set", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &sqr)){
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|p", kwlist, &sqr)){
         if (!PyErr_Occurred()){
             PyErr_SetString(PyExc_ValueError, "failed to parse the arguments");
         }
@@ -439,15 +460,20 @@ board_get_moves_of(PyObject* self, PyObject* args, PyObject* kwargs){
     if (s == NCH_NO_SQR)
         return NULL;
 
-    Board* b = board(self);
+    Board* b = BOARD(self);
     Move moves[30];
     int nmoves = Board_GetMovesOf(b, s, moves);
+
+    if (as_set){
+        return moves_to_set(moves, nmoves);
+    }
+
     return moves_to_list(moves, nmoves);
 }
 
 PyObject*
 board_copy(PyObject* self, PyObject* args){
-    Board* src = board(self);
+    Board* src = BOARD(self);
     Board* dst = Board_NewCopy(src);
     if (!dst){
         PyErr_NoMemory();
@@ -460,7 +486,7 @@ board_copy(PyObject* self, PyObject* args){
         return NULL;
     }
     pyb->board = dst;
-    return pyb;
+    return (PyObject*)pyb;
 }
 
 PyObject*
@@ -475,7 +501,7 @@ board_state(PyObject* self, PyObject* args, PyObject* kwargs){
         return NULL;
     }
 
-    return PyLong_FromUnsignedLong(Board_State(board(self), can_move));
+    return PyLong_FromUnsignedLong(Board_State(BOARD(self), can_move));
 }
 
 PyObject*
@@ -494,8 +520,8 @@ board_find(PyObject* self, PyObject* args, PyObject* kwargs){
     if (p == NCH_NO_PIECE)
         return NULL;
 
-    Side side = Board_SIDE(board(self));
-    uint64 bb = board(self)->bitboards[side][p];
+    Side side = Board_SIDE(BOARD(self));
+    uint64 bb = BOARD(self)->bitboards[side][p];
 
     PyObject* list = PyList_New(count_bits(bb));
     if (!list)
@@ -535,7 +561,7 @@ NCH_STATIC PyMethodDef methods[] = {
 
     {"generate_legal_moves",
      (PyCFunction)board_generate_legal_moves,
-      METH_NOARGS,
+      METH_VARARGS | METH_KEYWORDS,
       NULL},
 
     {"as_array",
@@ -617,100 +643,100 @@ NCH_STATIC PyMethodDef methods[] = {
 };
 PyObject*
 board_get_white_pawns(PyObject* self, void* something){
-    return PyLong_FromUnsignedLongLong(Board_WHITE_PAWNS(board(self)));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(Board_WHITE_PAWNS(BOARD(self)));
 }
 
 PyObject*
 board_get_black_pawns(PyObject* self, void* something){
-    return PyLong_FromUnsignedLongLong(Board_BLACK_PAWNS(board(self)));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(Board_BLACK_PAWNS(BOARD(self)));
 }
 
 PyObject*
 board_get_white_knights(PyObject* self, void* something){
-    return PyLong_FromUnsignedLongLong(Board_WHITE_KNIGHTS(board(self)));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(Board_WHITE_KNIGHTS(BOARD(self)));
 }
 
 PyObject*
 board_get_black_knights(PyObject* self, void* something){
-    return PyLong_FromUnsignedLongLong(Board_BLACK_KNIGHTS(board(self)));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(Board_BLACK_KNIGHTS(BOARD(self)));
 }
 
 PyObject*
 board_get_white_bishops(PyObject* self, void* something){
-    return PyLong_FromUnsignedLongLong(Board_WHITE_BISHOPS(board(self)));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(Board_WHITE_BISHOPS(BOARD(self)));
 }
 
 PyObject*
 board_get_black_bishops(PyObject* self, void* something){
-    return PyLong_FromUnsignedLongLong(Board_BLACK_BISHOPS(board(self)));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(Board_BLACK_BISHOPS(BOARD(self)));
 }
 
 PyObject*
 board_get_white_rooks(PyObject* self, void* something){
-    return PyLong_FromUnsignedLongLong(Board_WHITE_ROOKS(board(self)));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(Board_WHITE_ROOKS(BOARD(self)));
 }
 
 PyObject*
 board_get_black_rooks(PyObject* self, void* something){
-    return PyLong_FromUnsignedLongLong(Board_BLACK_ROOKS(board(self)));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(Board_BLACK_ROOKS(BOARD(self)));
 }
 
 PyObject*
 board_get_white_queens(PyObject* self, void* something){
-    return PyLong_FromUnsignedLongLong(Board_WHITE_QUEENS(board(self)));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(Board_WHITE_QUEENS(BOARD(self)));
 }
 
 PyObject*
 board_get_black_queens(PyObject* self, void* something){
-    return PyLong_FromUnsignedLongLong(Board_BLACK_QUEENS(board(self)));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(Board_BLACK_QUEENS(BOARD(self)));
 }
 
 PyObject*
 board_get_white_king(PyObject* self, void* something){
-    return PyLong_FromUnsignedLongLong(Board_WHITE_KING(board(self)));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(Board_WHITE_KING(BOARD(self)));
 }
 
 PyObject*
 board_get_black_king(PyObject* self, void* something){
-    return PyLong_FromUnsignedLongLong(Board_BLACK_KING(board(self)));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(Board_BLACK_KING(BOARD(self)));
 }
 
 PyObject*
 board_get_white_occ(PyObject* self, void* something){
-    return PyLong_FromUnsignedLongLong(Board_WHITE_OCC(board(self)));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(Board_WHITE_OCC(BOARD(self)));
 }
 
 PyObject*
 board_get_black_occ(PyObject* self, void* something){
-    return PyLong_FromUnsignedLongLong(Board_BLACK_OCC(board(self)));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(Board_BLACK_OCC(BOARD(self)));
 }
 
 PyObject*
 board_get_all_occ(PyObject* self, void* something){
-    return PyLong_FromUnsignedLongLong(Board_ALL_OCC(board(self)));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(Board_ALL_OCC(BOARD(self)));
 }
 
 PyObject*
 board_castles(PyObject* self, void* something){
-    return PyLong_FromUnsignedLongLong(Board_CASTLES(board(self)));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(Board_CASTLES(BOARD(self)));
 }
 
 PyObject*
 board_castles_str(PyObject* self, void* something){
-    uint8 castles = Board_CASTLES(board(self));
+    uint8 castles = Board_CASTLES(BOARD(self));
     if (!castles)
         Py_RETURN_NONE;
 
     char buffer[5];
     int i = 0;
 
-    if (Board_IS_CASTLE_WK(board(self)))
+    if (Board_IS_CASTLE_WK(BOARD(self)))
         buffer[i++] = 'K';
-    if (Board_IS_CASTLE_WQ(board(self)))
+    if (Board_IS_CASTLE_WQ(BOARD(self)))
         buffer[i++] = 'Q';
-    if (Board_IS_CASTLE_BK(board(self)))
+    if (Board_IS_CASTLE_BK(BOARD(self)))
         buffer[i++] = 'k';
-    if (Board_IS_CASTLE_BQ(board(self)))
+    if (Board_IS_CASTLE_BQ(BOARD(self)))
         buffer[i++] = 'q';
     buffer[i] = '\0';
 
@@ -719,21 +745,21 @@ board_castles_str(PyObject* self, void* something){
 
 PyObject*
 board_nmoves(PyObject* self, void* something){
-    return PyLong_FromLong(Board_NMOVES(board(self)));
+    return PyLong_FromLong(Board_NMOVES(BOARD(self)));
 }
 
 PyObject*
 board_fifty_counter(PyObject* self, void* something){
-    return PyLong_FromLong(Board_FIFTY_COUNTER(board(self)));
+    return PyLong_FromLong(Board_FIFTY_COUNTER(BOARD(self)));
 }
 
 PyObject*
 board_en_passant_square(PyObject* self, void* something){
-    Board* b = board(self);
-    if (!b->en_passant_idx)
+    Board* b = BOARD(self);
+    if (!Board_ENP_IDX(b))
         Py_RETURN_NONE;
 
-    return PyLong_FromLong(NCH_SQR(b->en_passant_trg));
+    return PyLong_FromLong(NCH_SQRIDX(Board_ENP_TRG(b)));
 }
 
 NCH_STATIC PyGetSetDef getset[] = {
@@ -768,6 +794,6 @@ PyTypeObject PyBoardType = {
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
     .tp_new = (newfunc)PyBoard_New,
     .tp_str = (reprfunc)board_str,
-    .tp_methods = &methods,
-    .tp_getset = &getset
+    .tp_methods = methods,
+    .tp_getset = getset,
 };

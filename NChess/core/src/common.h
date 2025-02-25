@@ -66,7 +66,7 @@ NCH_STATIC_INLINE Move
 pyobject_as_move(PyObject* m){
     Move move;
     if (PyMove_Check(m)){
-        move = ((PyMove*)m)->move;
+        move = PyMove_AsMove(m);
     }
     else if (PyUnicode_Check(m)) {
         const char* move_str = PyUnicode_AsUTF8(m);
@@ -77,7 +77,7 @@ pyobject_as_move(PyObject* m){
 
         move = Move_FromString(move_str);
     } else if (PyLong_Check(m)) {
-        move = PyLong_AsUnsignedLong(m);
+        move = PyMove_AsMove(m);
     } else {
         PyErr_Format(PyExc_TypeError, "step must be a Move object, string or int, got %s", Py_TYPE(m)->tp_name);
         return 0;

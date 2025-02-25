@@ -2,121 +2,80 @@
 #include "common.h"
 #include "nchess/nchess.h"
 
-#define M(obj) ((PyMove*)obj)
-
 PyMove*
-PyMove_New(Move move){
-    PyMove* pymove = PyObject_New(PyMove, &PyMoveType);
-    if (pymove == NULL) {
-        PyErr_NoMemory();
+PyMove_New(Square from_, Square to_, Piece promote, MoveType type){
+    Move move = Move_New(from_, to_, promote, type);
+    if (move == Move_NULL){
+        PyErr_SetString(PyExc_ValueError, "invalid move");
         return NULL;
     }
 
-    pymove->move = move;
-
-    return pymove;
+    return (PyMove*)PyObject_CallFunction((PyObject*)&PyMoveType, "K", move);
 }
 
-PyObject*
-new_move(PyTypeObject* type, PyObject* args, PyObject* kwds) {
-    PyObject* from;
-    PyObject* to;
-    PyObject* promote = NULL;
-    PyObject* castle = NULL;
-
-    // Parse the arguments
-    if (!PyArg_ParseTuple(args, "OO|OO", &from, &to, &promote, &castle)) {
-        if (!PyErr_Occurred()){
-            PyErr_SetString(PyExc_ValueError, "Failed to parse the arguments to create a move");
-        }
-        return NULL;
-    }
-
-    Square from_sqr = pyobject_as_square(from);
-    Square to_sqr = pyobject_as_square(to);
-    Piece promote_piece = promote ? pyobject_as_piece(promote) : NCH_NO_PIECE;
-    
-    uint8 castle_type;
-    if (castle){
-        if (!PyLong_Check(castle)){
-            PyErr_Format(PyExc_ValueError,
-            "castle expected to be an int. got %s",
-            Py_TYPE(castle)->tp_name);
-            return NULL;
-        }
-        castle_type = (uint8)PyLong_AsUnsignedLong(castle);
-    }
-    else{
-        castle_type = 0;
-    }
-
-    Move move;
-    if (!is_valid_square(from_sqr) || !is_valid_square(to_sqr)){
-        if (PyErr_Occurred())
-            return NULL;
-        move = 0;
-    }
-    else{
-        move = _Move_New(from_sqr, to_sqr, promote_piece, castle_type, 0, 0);
-    }
-
-    return PyMove_New(move);
+PyMove*
+PyMove_FromMove(Move move){
+    return (PyMove*)PyObject_CallFunction((PyObject*)&PyMoveType, "K", move);
 }
 
 PyObject*
 PyMove_Str(PyObject* self){
     char buffer[10];
-    Move_AsString(M(self)->move, buffer);
+    Move move = (Move)PyLong_AsUnsignedLong(self);
+    Move_AsString(move, buffer);
     return PyUnicode_FromFormat("%s(\"%s\")", Py_TYPE(self)->tp_name, buffer);
 }
 
 PyObject*
-PyMove_AsInt(PyObject* self){
-    return PyLong_FromUnsignedLong(M(self)->move);
-}
-
-PyNumberMethods number_methods = {
-    .nb_int = (unaryfunc)PyMove_AsInt,
-};
-
-PyObject*
 get_from_sqr(PyObject* self, void* something){
-    return PyLong_FromUnsignedLong(Move_FROM(M(self)->move));
+    Move move = (Move)PyLong_AsUnsignedLong(self);
+    return PyLong_FromUnsignedLong(Move_FROM(move));
 }
 
 PyObject*
 get_to_sqr(PyObject* self, void* something){
-    return PyLong_FromUnsignedLong(Move_TO(M(self)->move));
+    Move move = (Move)PyLong_AsUnsignedLong(self);
+    return PyLong_FromUnsignedLong(Move_TO(move));
 }
-
 
 PyObject*
 get_promote_piece(PyObject* self, void* something){
-    return PyLong_FromUnsignedLong(Move_PRO_PIECE(M(self)->move));
+    Move move = (Move)PyLong_AsUnsignedLong(self);
+    return PyLong_FromUnsignedLong(Move_PRO_PIECE(move));
 }
 
 PyObject*
-get_castle_type(PyObject* self, void* something){
-    return PyLong_FromUnsignedLong(Move_CASTLE(M(self)->move));
+get_move_type(PyObject* self, void* something){
+    Move move = (Move)PyLong_AsUnsignedLong(self);
+    return PyLong_FromUnsignedLong(Move_TYPE(move));
 }
 
 PyObject*
-get_is_enp(PyObject* self, void* something){
-    return PyBool_FromLong(Move_IS_ENP(M(self)->move));
+get_is_enpassant(PyObject* self, void* something){
+    Move move = (Move)PyLong_AsUnsignedLong(self);
+    return PyBool_FromLong(Move_IsEnPassant(move));
 }
 
 PyObject*
-get_is_pro(PyObject* self, void* something){
-    return PyBool_FromLong(Move_IS_PRO(M(self)->move));
+get_is_castle(PyObject* self, void* something){
+    Move move = (Move)PyLong_AsUnsignedLong(self);
+    return PyBool_FromLong(Move_IsCastle(move));
+}
+
+PyObject*
+get_is_promotion(PyObject* self, void* something){
+    Move move = (Move)PyLong_AsUnsignedLong(self);
+    return PyBool_FromLong(Move_IsPromotion(move));
 }
 
 PyGetSetDef getset_methods[] = {
-    {"from_", (getter)get_from_sqr, NULL, NULL, NULL},
-    {"to_", (getter)get_to_sqr, NULL, NULL, NULL},
-    {"promote", (getter)get_promote_piece, NULL, NULL, NULL},
-    {"castle", (getter)get_castle_type, NULL, NULL, NULL},
-    {"is_enpassant", (getter)get_is_enp, NULL, NULL, NULL},
-    {"is_promotion", (getter)get_is_pro, NULL, NULL, NULL},
+    {"from_"       , (getter)get_from_sqr     , NULL, NULL, NULL},
+    {"to_"         , (getter)get_to_sqr       , NULL, NULL, NULL},
+    {"promote"     , (getter)get_promote_piece, NULL, NULL, NULL},
+    {"move_type"   , (getter)get_move_type    , NULL, NULL, NULL},
+    {"is_enpassant", (getter)get_is_enpassant , NULL, NULL, NULL},
+    {"is_castle"   , (getter)get_is_castle    , NULL, NULL, NULL},
+    {"is_promotion", (getter)get_is_promotion , NULL, NULL, NULL},
 };
 
 PyTypeObject PyMoveType = {
@@ -126,9 +85,7 @@ PyTypeObject PyMoveType = {
     .tp_basicsize = sizeof(PyMove),
     .tp_itemsize = 0,
     .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_new = new_move,
     .tp_str = PyMove_Str,
-    .tp_as_number = &number_methods,
-    .tp_getset = &getset_methods,
     .tp_repr = PyMove_Str,
+    .tp_getset = getset_methods,
 };

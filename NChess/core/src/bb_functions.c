@@ -1,10 +1,33 @@
-#include "bb_functions.h"
-#include "nchess/bit_operations.h"
-#include "array_conversion.h"
 #include "common.h"
+#include "array_conversion.h"
+#include "bb_functions.h"
+#include "PyBB.h"
+
+#include "nchess/bit_operations.h"
+
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
-NCH_STATIC int
+void
+bb2array(uint64 bb, int* arr, int reverse){
+    for (int i = 0; i < NCH_SQUARE_NB; i++){
+        arr[i] = 0;
+    }
+
+    int idx;
+    if (reverse){
+        LOOP_U64_T(bb){
+            arr[63 - idx] = 1;
+        }
+    }
+    else{
+        LOOP_U64_T(bb){
+            arr[idx] = 1;
+        }
+    }
+}
+
+NCH_STATIC_INLINE int
 parse_bb(uint64* bb, PyObject* args){
     if (!PyArg_ParseTuple(args, "K", bb)){
         if (!PyErr_Occurred()){
@@ -15,139 +38,7 @@ parse_bb(uint64* bb, PyObject* args){
     return 0;
 }
 
-PyObject* 
-BB_AsArray(PyObject* self, PyObject* args, PyObject* kwargs){
-    int reversed = 0;
-    int as_list = 0;
-    uint64 bb;
-
-    int nitems = NCH_SQUARE_NB;
-    npy_intp dims[NPY_MAXDIMS];
-    int ndim = parse_bb_conversion_function_args(&bb, nitems, dims, args, kwargs, &reversed, &as_list);
-
-    if (ndim < 0)
-        return NULL;
-
-    if (!ndim){
-        ndim = 1;
-        dims[0] = nitems;
-    }
-
-    if (as_list){
-        int data[NCH_SQUARE_NB];
-        bb2array(bb, data, reversed);
-        return create_list_array(data, dims, ndim);
-    }
-    else{
-        int* data = (int*)malloc(nitems * sizeof(int));
-        if (!data){
-            PyErr_NoMemory();
-            return NULL;
-        }
-
-        bb2array(bb, data, reversed);
-        
-        PyObject* array = create_numpy_array(data, dims, ndim, NPY_INT);
-        if (!array){
-            free(data);
-            if (!PyErr_Occurred()){
-                PyErr_SetString(PyExc_RuntimeError, "Failed to create array");
-            }
-            return NULL;
-        }
-
-        return array;
-    }
-}
-
-PyObject*
-BB_MoreThenOne(PyObject* self, PyObject* args){
-    uint64 bb;
-    if (parse_bb(&bb, args) < 0)
-        return NULL;
-
-    return PyBool_FromLong(more_then_one(bb));
-}
-
-PyObject*
-BB_HasTwoBits(PyObject* self, PyObject* args){
-    uint64 bb;
-    if (parse_bb(&bb, args) < 0)
-        return NULL;
-
-    return PyBool_FromLong(has_two_bits(bb));
-}
-
-PyObject*
-BB_GetTSB(PyObject* self, PyObject* args){
-    uint64 bb;
-    if (parse_bb(&bb, args) < 0)
-        return NULL;
-
-    return PyLong_FromLong(get_last_bit(bb));
-}
-
-PyObject*
-BB_GetLSB(PyObject* self, PyObject* args){
-    uint64 bb;
-    if (parse_bb(&bb, args) < 0)
-        return NULL;
-
-    return PyLong_FromLong(get_ls1b(bb));
-}
-
-PyObject*
-BB_CountBits(PyObject* self, PyObject* args){
-    uint64 bb;
-    if (parse_bb(&bb, args) < 0)
-        return NULL;
-
-    return PyLong_FromLong(count_bits(bb));
-}
-
-
-PyObject*
-BB_IsFilled(PyObject* self, PyObject* args, PyObject* kwargs){
-    uint64 bb;
-    PyObject* sqr;
-    static char* kwlist[] = {"bb", "square", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "KO", kwlist, &bb, &sqr)){
-        if (!PyErr_Occurred()){
-            PyErr_SetString(PyExc_ValueError, "failed to parse the arguments");
-        }
-        return NULL;
-    }
-
-    Square s = pyobject_as_square(sqr);
-    if (s == NCH_NO_SQR)
-        Py_RETURN_NONE;
-
-    return PyBool_FromLong(bb & NCH_SQR(s));
-}
-
-PyObject*
-BB_Between(PyObject* self, PyObject* args, PyObject* kwargs){
-    PyObject* src, *dst;
-    static char* kwlist[] = {"src_square", "dst_square2", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "KO", kwlist, &src, &dst)){
-        if (!PyErr_Occurred()){
-            PyErr_SetString(PyExc_ValueError, "failed to parse the arguments");
-        }
-        return NULL;
-    }
-
-    Square dst_sqr = pyobject_as_square(src);
-    if (dst_sqr == NCH_NO_SQR) Py_RETURN_NONE;
-
-    Square src_sqr = pyobject_as_square(dst);
-    if (src_sqr == NCH_NO_SQR) Py_RETURN_NONE;
-
-    return PyLong_FromUnsignedLongLong(bb_between(src_sqr, dst_sqr));
-}
-
-NCH_STATIC_INLINE int
+NCH_STATIC int
 discover_sequence_shape(PyObject* seq, npy_intp* dims, int dim){
     Py_ssize_t len = PySequence_Size(seq);
     if (len < 0)
@@ -270,7 +161,11 @@ bb_from_object(PyObject* obj) {
         return PyLong_AsUnsignedLongLong(obj);
     }
 
-    import_array();
+    if (_import_array() < 0) {
+        PyErr_SetString(PyExc_ImportError, "Failed to import NumPy");
+        return 0;
+    }
+    
     if (PyArray_Check(obj)) {
         if (npy2bb((PyArrayObject*)obj, &bb) < 0) {
             return 0;
@@ -293,22 +188,42 @@ bb_from_object(PyObject* obj) {
 }
 
 PyObject*
-BB_FromArray(PyObject* self, PyObject* args, PyObject* kwargs){
+BB_FromArray(PyObject* self, PyObject* args, PyObject* kwargs) {
     PyObject* array_like;
     static char* kwlist[] = {"array_like", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &array_like)){
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &array_like)) {
+        PyErr_SetString(PyExc_ValueError, "Failed to parse the arguments");
+        return NULL;
+    }
+
+    uint64 bb = bb_from_object(array_like);
+    if (!bb && PyErr_Occurred()) {
+        return NULL;  // Propagate error if conversion failed
+    }
+
+    return (PyObject*)(PyObject*)PyBitBoard_FromUnsignedLongLong(bb);
+}
+
+PyObject*
+BB_Between(PyObject* self, PyObject* args, PyObject* kwargs){
+    PyObject* src, *dst;
+    static char* kwlist[] = {"src_square", "dst_square", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "KO", kwlist, &src, &dst)){
         if (!PyErr_Occurred()){
             PyErr_SetString(PyExc_ValueError, "failed to parse the arguments");
         }
         return NULL;
     }
 
-    uint64 bb = bb_from_object(array_like);
-    if (!bb && PyErr_Occurred())
-        return NULL;
+    Square dst_sqr = pyobject_as_square(src);
+    if (dst_sqr == NCH_NO_SQR) Py_RETURN_NONE;
 
-    return PyLong_FromUnsignedLongLong(bb);
+    Square src_sqr = pyobject_as_square(dst);
+    if (src_sqr == NCH_NO_SQR) Py_RETURN_NONE;
+
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(bb_between(src_sqr, dst_sqr));
 }
 
 PyObject*
@@ -332,7 +247,7 @@ BB_RookAttacks(PyObject* self, PyObject* args, PyObject* kwargs){
     if (s == NCH_NO_SQR)
         return NULL;
 
-    return PyLong_FromUnsignedLongLong(bb_rook_attacks(s, bb));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(bb_rook_attacks(s, bb));
 }
 
 PyObject*
@@ -356,7 +271,7 @@ BB_BishopAttacks(PyObject* self, PyObject* args, PyObject* kwargs){
     if (s == NCH_NO_SQR)
         return NULL;
 
-    return PyLong_FromUnsignedLongLong(bb_bishop_attacks(s, bb));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(bb_bishop_attacks(s, bb));
 }
 
 PyObject*
@@ -380,7 +295,7 @@ BB_QueenAttacks(PyObject* self, PyObject* args, PyObject* kwargs){
     if (s == NCH_NO_SQR)
         return NULL;
 
-    return PyLong_FromUnsignedLongLong(bb_queen_attacks(s, bb));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(bb_queen_attacks(s, bb));
 }
 
 PyObject*
@@ -399,7 +314,7 @@ BB_KingAttacks(PyObject* self, PyObject* args, PyObject* kwargs){
     if (s == NCH_NO_SQR)
         return NULL;
 
-    return PyLong_FromUnsignedLongLong(bb_king_attacks(s));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(bb_king_attacks(s));
 }
 
 PyObject*
@@ -418,7 +333,7 @@ BB_KnightAttacks(PyObject* self, PyObject* args, PyObject* kwargs){
     if (s == NCH_NO_SQR)
         return NULL;
 
-    return PyLong_FromUnsignedLongLong(bb_knight_attacks(s));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(bb_knight_attacks(s));
 }
 
 PyObject*
@@ -440,7 +355,7 @@ BB_PawnAttacks(PyObject* self, PyObject* args, PyObject* kwargs){
 
     Side side = white ? NCH_White : NCH_Black;
 
-    return PyLong_FromUnsignedLongLong(bb_pawn_attacks(side, s));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(bb_pawn_attacks(side, s));
 }
 
 PyObject*
@@ -459,7 +374,7 @@ BB_RookMask(PyObject* self, PyObject* args, PyObject* kwargs){
     if (s == NCH_NO_SQR)
         return NULL;
 
-    return PyLong_FromUnsignedLongLong(bb_rook_mask(s));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(bb_rook_mask(s));
 }
 
 PyObject*
@@ -478,7 +393,7 @@ BB_BishopMask(PyObject* self, PyObject* args, PyObject* kwargs){
     if (s == NCH_NO_SQR)
         return NULL;
 
-    return PyLong_FromUnsignedLongLong(bb_bishop_mask(s));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(bb_bishop_mask(s));
 }
 
 PyObject*
@@ -535,7 +450,7 @@ BB_RookMagic(PyObject* self, PyObject* args, PyObject* kwargs){
     if (s == NCH_NO_SQR)
         return NULL;
 
-    return PyLong_FromUnsignedLongLong(bb_rook_magic(s));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(bb_rook_magic(s));
 }
 
 PyObject*
@@ -554,7 +469,7 @@ BB_BishopMagic(PyObject* self, PyObject* args, PyObject* kwargs){
     if (s == NCH_NO_SQR)
         return NULL;
 
-    return PyLong_FromUnsignedLongLong(bb_bishop_magic(s));
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(bb_bishop_magic(s));
 }
 
 PyObject* BB_ToIndeices(PyObject* self, PyObject* args, PyObject* kwargs){

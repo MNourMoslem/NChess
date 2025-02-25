@@ -1,6 +1,4 @@
-from typing import TypeAlias
-
-Piece : TypeAlias = int
+STARTING_FEN= 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
 WHITE = 0
 BLACK = 1
@@ -12,7 +10,9 @@ SIDE_NAMES = {
     BLACK : "black"
 }
 
-# pieces
+def side_name(side : int) -> str:
+    return SIDE_NAMES[side]
+
 PAWN = 0
 KNIGHT = 1
 BISHOP = 2
@@ -22,37 +22,77 @@ KING = 5
 PIECES_NB = 6
 NO_PIECE = 7
 
-PIECE_NAMES = {
+WHITE_PAWN = PAWN
+WHITE_KNIGHT = KNIGHT
+WHITE_BISHOP = BISHOP
+WHITE_ROOK = ROOK
+WHITE_QUEEN = QUEEN
+WHITE_KING = KING
+BLACK_PAWN = PAWN + PIECES_NB
+BLACK_KNIGHT = KNIGHT + PIECES_NB
+BLACK_BISHOP = BISHOP + PIECES_NB
+BLACK_ROOK = ROOK + PIECES_NB
+BLACK_QUEEN = QUEEN + PIECES_NB
+BLACK_KING = KING + PIECES_NB
+
+PIECE_TYPES_NAMES = {
     PAWN : "pawn",
     KNIGHT : "knight",
     BISHOP : "bishop",
     ROOK : "rook",
     QUEEN : "queen",
-    KING : "king",
-    PAWN + PIECES_NB : "pawn",
-    KNIGHT + PIECES_NB : "knight",
-    BISHOP + PIECES_NB : "bishop",
-    ROOK + PIECES_NB : "rook",
-    QUEEN + PIECES_NB : "queen",
-    KING + PIECES_NB : "king",
+    KING : "king"
+}
+
+PIECE_NAMES = {
+    WHITE_PAWN : "white pawn",
+    WHITE_KNIGHT : "white knight",
+    WHITE_BISHOP : "white bishop",
+    WHITE_ROOK : "white rook",
+    WHITE_QUEEN : "white queen",
+    WHITE_KING : "white king",
+    BLACK_PAWN : "black pawn",
+    BLACK_KNIGHT : "black knight",
+    BLACK_BISHOP : "black bishop",
+    BLACK_ROOK : "black rook",
+    BLACK_QUEEN : "black queen",
+    BLACK_KING : "black king"
 }
 
 PIECE_SYMBOLS = "PNBRQKpnbrqk"
 
 PIECE_SYMBOLS_AS_PIECES = {
-    "P" : PAWN,
-    "N" : KNIGHT,
-    "B" : BISHOP,
-    "R" : ROOK,
-    "Q" : QUEEN,
-    "K" : KING,
-    "p" : PAWN,
-    "n" : KNIGHT,
-    "b" : BISHOP,
-    "r" : ROOK,
-    "q" : QUEEN,
-    "k" : KING
+    "P" : WHITE_PAWN,
+    "N" : WHITE_KNIGHT,
+    "B" : WHITE_BISHOP,
+    "R" : WHITE_ROOK,
+    "Q" : WHITE_QUEEN,
+    "K" : WHITE_KING,
+    "p" : BLACK_PAWN,
+    "n" : BLACK_KNIGHT,
+    "b" : BLACK_BISHOP,
+    "r" : BLACK_ROOK,
+    "q" : BLACK_QUEEN,
+    "k" : BLACK_KING
 }
+
+def piece_type(piece : int) -> int:
+    return piece % PIECES_NB
+
+def piece_type_name(piece_type : int) -> str:
+    return PIECE_TYPES_NAMES[piece_type]
+
+def piece_name(piece : int) -> str:
+    return PIECE_NAMES[piece]
+
+def piece_symbol(piece : int) -> str:
+    return PIECE_SYMBOLS[piece]
+
+def piece_from_symbol(symbol : str) -> int:
+    return PIECE_SYMBOLS_AS_PIECES[symbol]
+
+def piece_color(piece : int) -> int:
+    return piece // PIECES_NB
 
 # squares
 H1, G1, F1, E1, D1, C1, B1, A1 =  0,  1,  2,  3,  4,  5,  6,  7
@@ -77,29 +117,74 @@ SQUARE_NAMES = [
     "h8", "g8", "f8", "e8", "d8", "c8", "b8", "a8"
 ]
 
+def square_name(square : int) -> str:
+    return SQUARE_NAMES[square]
+
 CASTLE_WK = 1
 CASTLE_WQ = 2
 CASTLE_BK = 4
 CASTLE_BQ = 8
+NO_CASTLE = 0
 
 CASTLE_KINGSIDE = CASTLE_WK | CASTLE_BK
 CASTLE_QUEENSIDE = CASTLE_WQ | CASTLE_BQ
 
-NO_CASTLE = 0
+CASTLE_NAMES = {
+    NO_CASTLE : "-",
+    CASTLE_WK : "K",
+    CASTLE_WQ : "Q",
+    CASTLE_BK : "k",
+    CASTLE_BQ : "q",
+    CASTLE_WK | CASTLE_WQ : "KQ",
+    CASTLE_WK | CASTLE_BK : "Kk",
+    CASTLE_WK | CASTLE_BQ : "Kq",
+    CASTLE_WQ | CASTLE_BK : "Qk",
+    CASTLE_WQ | CASTLE_BQ : "Qq",
+    CASTLE_BK | CASTLE_BQ : "kq",
+    CASTLE_WK | CASTLE_WQ | CASTLE_BK : "KQk",
+    CASTLE_WK | CASTLE_WQ | CASTLE_BQ : "KQq",
+    CASTLE_WK | CASTLE_BK | CASTLE_BQ : "Kkq",
+    CASTLE_WQ | CASTLE_BK | CASTLE_BQ : "Qkq",
+    CASTLE_WK | CASTLE_WQ | CASTLE_BK | CASTLE_BQ : "KQkq"
+}
 
-STARTING_FEN= 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+def castle_name(castle : int) -> str:
+    return CASTLE_NAMES[castle]
 
-def piece_name(piece : int) -> str:
-    return PIECE_NAMES[piece]
+MOVE_NORMAL = 0
+MOVE_CASTLE = 1
+MOVE_EN_PASSANT = 2
+MOVE_PROMOTION = 3
+MOVE_NULL = 0xffff
 
-def piece_symbol(piece : int, side : int = WHITE) -> str:
-    return PIECE_SYMBOLS[side * PIECES_NB + piece]
+MOVE_NAMES = {
+    MOVE_NORMAL : "normal",
+    MOVE_CASTLE : "castle",
+    MOVE_EN_PASSANT : "en_passant",
+    MOVE_PROMOTION : "promotion",
+    MOVE_NULL : "null"
+}
 
-def piece_from_symbol(symbol : str) -> int:
-    return PIECE_SYMBOLS_AS_PIECES[symbol]
+def move_name(move : int) -> str:
+    return MOVE_NAMES[move]
 
-def side_name(side : int) -> str:
-    return SIDE_NAMES[side]
+STATE_PLAYING = 0
+STATE_WHITE_WIN = 1
+STATE_BLACK_WIN = 2
+STATE_STALEMATE = 3
+STATE_THREEFOLD = 4
+STATE_FIFTY_MOVES = 5
+STATE_INSUFFICIENT_MATERIAL = 6
 
-def square_name(square : int) -> str:
-    return SQUARE_NAMES[square]
+STATE_NAMES = {
+    STATE_PLAYING : "playing",
+    STATE_WHITE_WIN : "white_win",
+    STATE_BLACK_WIN : "black_win",
+    STATE_STALEMATE : "stalemate",
+    STATE_THREEFOLD : "threefold",
+    STATE_FIFTY_MOVES : "fifty_moves",
+    STATE_INSUFFICIENT_MATERIAL : "insufficient_material"
+}
+
+def state_name(state : int) -> str:
+    return STATE_NAMES[state]

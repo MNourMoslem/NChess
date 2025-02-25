@@ -1,8 +1,14 @@
+#include "nchess/nchess.h"
 #include "array_conversion.h"
+
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
-int
-check_shape(PyObject* shape, int nitems, npy_intp* dims){
+#define PY_SSIZE_CLEAN_T
+#include <Python.h>
+
+NCH_STATIC int
+check_shape(PyObject* shape, npy_intp nitems, npy_intp* dims){
     if (!PySequence_Check(shape)){
         PyErr_Format(PyExc_TypeError,
             "shape expected to be a python sequence (list, tuple, ...). got %s",
@@ -11,7 +17,7 @@ check_shape(PyObject* shape, int nitems, npy_intp* dims){
         return -1;
     }
 
-    int ndim = PySequence_Length(shape);
+    int ndim = (int)PySequence_Length(shape);
     if (ndim > NPY_MAXDIMS){
         PyErr_Format(PyExc_ValueError,
             "could not create array from shape with ndim more then %i. got %i",
@@ -21,7 +27,7 @@ check_shape(PyObject* shape, int nitems, npy_intp* dims){
     }
 
     PyObject* item;
-    int total = 1;
+    npy_intp total = 1;
     for (int i = 0; i < ndim; i++){
         item = PySequence_GetItem(shape, i);
         if (!item){
@@ -46,7 +52,7 @@ check_shape(PyObject* shape, int nitems, npy_intp* dims){
 
     if (total != nitems){
         PyErr_Format(PyExc_ValueError,
-        "input shape expected to have %i number of items. got %i",
+        "input shape expected to have %d number of items. got %d",
         nitems, total);
 
         return -1;
@@ -69,7 +75,7 @@ create_numpy_array(void* data, npy_intp* dims, int ndim, enum NPY_TYPES dtype){
 }
 
 NCH_STATIC PyObject*
-create_list_array_recursive(int** data, npy_intp* dims, int dim, int roof){
+_create_list_array_recursive(int** data, npy_intp* dims, int dim, int roof){
     npy_intp size = dims[dim];
     PyObject* list = PyList_New(size);
     if (!list)
@@ -83,7 +89,7 @@ create_list_array_recursive(int** data, npy_intp* dims, int dim, int roof){
     else{
         PyObject* item;
         for (npy_intp i = 0; i < size; i++){
-            item = create_list_array_recursive(data, dims, dim+1, roof);
+            item = _create_list_array_recursive(data, dims, dim+1, roof);
             if (!item){
                 Py_DECREF(list);
                 return NULL;
@@ -97,41 +103,22 @@ create_list_array_recursive(int** data, npy_intp* dims, int dim, int roof){
 
 PyObject*
 create_list_array(int* data, npy_intp* dims, int ndim){
-    return create_list_array_recursive(&data, dims, 0, ndim-1);
+    return _create_list_array_recursive(&data, dims, 0, ndim-1);
 }
 
 int
-parse_board_conversion_function_args(int nitems, npy_intp* dims, PyObject* args,
+parse_array_conversion_function_args(npy_intp nitems, npy_intp* dims, PyObject* args,
                                      PyObject* kwargs, int* reversed, int* as_list)
 {
+    *reversed = 0;
+    *as_list = 0;
+
     PyObject* shape = NULL;
     static char* kwlist[] = {"shape", "reversed", "as_list", NULL};
     
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|Opp", kwlist, &shape, reversed, as_list)){
         if (!PyErr_Occurred()){
             PyErr_SetString(PyExc_ValueError, "failed to parse the shape argument");
-        }
-        return NULL;
-    }
-
-    int ndim = 0;
-    if (shape && !Py_IsNone(shape)){
-        ndim = check_shape(shape, nitems, dims);
-    }
-
-    return ndim;
-}
-
-int
-parse_bb_conversion_function_args(uint64* bb, int nitems, npy_intp* dims,
-                                 PyObject* args, PyObject* kwargs, int* reversed, int* as_list)
-{
-    PyObject* shape = NULL;
-    static char* kwlist[] = {"bb", "shape", "reversed", "as_list", NULL};
-    
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "K|Opp", kwlist, bb, &shape, reversed, as_list)){
-        if (!PyErr_Occurred()){
-            PyErr_SetString(PyExc_ValueError, "failed to parse the arguments");
         }
         return -1;
     }

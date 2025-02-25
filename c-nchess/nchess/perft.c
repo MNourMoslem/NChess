@@ -20,7 +20,7 @@ NCH_STATIC_INLINE void
 format_number_with_commas(long long num, char* output) {
     char buffer[30];
     sprintf(buffer, "%lld", num);
-    int len = strlen(buffer);
+    int len = (int)strlen(buffer);
     int comma_count = (len - 1) / 3;
     int new_len = len + comma_count;
     output[new_len] = '\0';

@@ -100,7 +100,7 @@ init_between_table(){
             }
             else if (NCH_SAME_ROW(i, j))
             {
-                bet = 0xFFFFFFFFFFFFFFFF;
+                bet = NCH_GET_ROW(i);
             }
             else if (NCH_SAME_MAIN_DG(i, j))
             {
@@ -115,10 +115,10 @@ init_between_table(){
             }
 
             if (s1 > s2){
-                bet &= (-s2) & (s1-1);
+                bet &= ~(s2-1) & (s1-1);
             }
             else{
-                bet &= (-s1) & (s2-1);
+                bet &= ~(s1-1) & (s2-1);
             }
 
             bet |= s2;    // include s2

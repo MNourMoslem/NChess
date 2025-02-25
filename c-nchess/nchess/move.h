@@ -20,6 +20,7 @@ typedef enum {
 } MoveType;
 
 typedef uint16 Move;
+#define Move_NULL 0xffff
 
 #define Move_ASSIGN_FROM(from_) ((from_))
 #define Move_ASSIGN_TO(to_) ((to_) << 6)
@@ -39,6 +40,10 @@ typedef uint16 Move;
     Move_ASSIGN_PRO_PIECE(promotion_piece - 1) | \
     Move_ASSIGN_TYPE(move_type)
 
+#define Move_IsValid(move) ((move) != Move_NULL)
+#define Move_IsPromotion(move) (Move_TYPE(move) == MoveType_Promotion)
+#define Move_IsEnPassant(move) (Move_TYPE(move) == MoveType_EnPassant)
+#define Move_IsCastle(move) (Move_TYPE(move) == MoveType_Castle)
 
 // Returns a new move if it is valid, and 0 if not.
 Move 

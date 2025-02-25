@@ -170,13 +170,13 @@ Board_IsMoveLegal(Board* board, Move move){
     Piece promotion_piece = Move_PRO_PIECE(move);
 
     if (!is_valid_square(from_) || !is_valid_square(to_))
-        return 0;
+        return Move_NULL;
 
     Move pseudo_moves[30];
     Move* tail;
     tail = Board_GeneratePseudoMovesOf(board, pseudo_moves, from_);
     if (tail == pseudo_moves){
-        return 0;
+        return Move_NULL;
     }
     
     int len = tail - pseudo_moves;
@@ -198,13 +198,13 @@ Board_IsMoveLegal(Board* board, Move move){
     }
     
     if (!available)
-        return 0;
+        return Move_NULL;
     
     move = _Move_New(from_, to_, promotion_piece, type);
     if (is_move_legal(board, move))
         return move;
     
-    return 0;
+    return Move_NULL;
 }
 
 void
@@ -233,22 +233,25 @@ _Board_MakeMove(Board* board, Move move){
 int
 Board_StepByMove(Board* board, Move move){
     move = Board_IsMoveLegal(board, move);
-    if (move){
-        _Board_MakeMove(board, move);
-        return 1;
-    }
-    return 0;
+    if (move == Move_NULL)
+        return 0;
+
+    _Board_MakeMove(board, move);
+    return 1;
 }
 
 int
 Board_Step(Board* board, char* move){
     Move m = Move_FromString(move);
+    if (m == Move_NULL)
+        return 0;
+
     m = Board_IsMoveLegal(board, m);
-    if (m){
-        _Board_MakeMove(board, m);
-        return 1;
-    }
-    return 0;
+    if (m == Move_NULL)
+        return 0;
+    
+    _Board_MakeMove(board, m);
+    return 1;
 }
 
 void

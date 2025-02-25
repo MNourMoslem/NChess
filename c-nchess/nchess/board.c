@@ -147,7 +147,7 @@ Board_IsCheck(const Board* board){
 
 void
 Board_Reset(Board* board){
-    for (int i = i; i < Board_NMOVES(board); i++){
+    for (int i = 0; i < Board_NMOVES(board); i++){
         Board_Undo(board);
     }
 }

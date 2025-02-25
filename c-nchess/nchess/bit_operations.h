@@ -19,9 +19,9 @@
 NCH_STATIC_INLINE int
 count_bits(uint64 x){
     #if NCH_GCC
-        return __builtin_popcountll(x);
+        return (int)__builtin_popcountll(x);
     #elif NCH_MSC
-        return __popcnt64(x);
+        return (int)__popcnt64(x);
     #else
         uint64 count = 0;
         while(x){

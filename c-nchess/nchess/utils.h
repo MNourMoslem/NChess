@@ -175,7 +175,7 @@ str_to_square(const char* sq_str){
 }
 
 NCH_STATIC_INLINE int
-is_valid_piece(Piece p){
+is_valid_piece(PieceType p){
     return p >= NCH_Pawn && p <= NCH_King;
 }
 

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef unsigned long long uint64;
+typedef unsigned long long uint64;z
 
 int main(){
 

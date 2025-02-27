@@ -201,7 +201,7 @@ NCH_STATIC_INLINE void
 board2tensor(Board* board, int* tensor, int reversed){
     int i = 0;
     for (Side s = 0; s < NCH_SIDES_NB; s++){
-        for (Piece p = 0; p < NCH_PIECE_NB; p++){
+        for (PieceType p = 0; p < NCH_PIECE_NB; p++){
             bb2array(Board_BB(board, s, p), tensor + i * NCH_SQUARE_NB, reversed);
             i++;
         }
@@ -338,7 +338,7 @@ board_on_square(PyObject* self, PyObject* args){
         Py_RETURN_NONE;
     }
 
-    Piece p = Board_ON_SQUARE(BOARD(self), sqr);
+    PieceType p = Board_ON_SQUARE(BOARD(self), sqr);
     if (p == NCH_NO_PIECE)
         return PyLong_FromLong(NCH_PIECE_NB * 2);
 
@@ -522,7 +522,7 @@ board_find(PyObject* self, PyObject* args, PyObject* kwargs){
         return NULL;
     }
 
-    Piece p = pyobject_as_piece(p_obj);
+    PieceType p = pyobject_as_piece(p_obj);
     if (p == NCH_NO_PIECE)
         return NULL;
 

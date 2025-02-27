@@ -3,7 +3,7 @@
 
     This file contains the core definitions and functions of the project.
     Main enums and constants are defined here.
-    Side, Piece, Square, Diractions enums are defined here.
+    Side, PieceType, Square, Diractions enums are defined here.
     Row, column, diagonal bitboards and tabels are defined here.
     Macros for square manipulation are defined here.
 
@@ -52,7 +52,7 @@ typedef enum {
 
     NCH_PIECE_NB,
     NCH_NO_PIECE
-}Piece;
+}PieceType;
 
 typedef enum{
     NCH_GS_Playing = 0,
@@ -195,7 +195,7 @@ typedef struct
 
     int fifty_counter; // counter for fifty moves rule
 
-    Piece captured_piece; // last captured piece. used for undoing moves
+    PieceType captured_piece; // last captured piece. used for undoing moves
 
     Side side; // side to play
 }PositionInfo;

@@ -23,7 +23,7 @@ static char* squares_char[] = {
 };
 
 Move
-Move_New(Square from_, Square to_, MoveType type, Piece promotion_piece){
+Move_New(Square from_, Square to_, MoveType type, PieceType promotion_piece){
     if (promotion_piece <= NCH_Pawn || promotion_piece >= NCH_King)
         promotion_piece = 1;
 
@@ -43,7 +43,7 @@ Move_FromString(const char* move_str){
 
     Square from_ = str_to_square(move_str);
     Square to_ = str_to_square(move_str + 2);
-    Piece promotion_piece;
+    PieceType promotion_piece;
     MoveType type;
 
     const char pp = move_str[4];
@@ -89,7 +89,7 @@ int
 Move_AsString(Move move, char* dst){
     Square from_ = Move_FROM(move);
     Square to_ = Move_TO(move);
-    Piece promotion = Move_TYPE(move) == MoveType_Promotion 
+    PieceType promotion = Move_TYPE(move) == MoveType_Promotion 
                     ? Move_PRO_PIECE(move)
                     : 0;
 

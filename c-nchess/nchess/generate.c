@@ -266,7 +266,7 @@ NCH_STATIC MoveGenFunction MoveGenFunctionTable[] = {
 // in this file.
 NCH_STATIC_INLINE void*
 generate_any_move(Board* board, Side side, int idx, uint64 allowed_squares, Move* moves){
-    Piece p = Board_PIECE(board, side, idx);
+    PieceType p = Board_PIECE(board, side, idx);
     MoveGenFunction func = MoveGenFunctionTable[p];
     return func(board, idx, allowed_squares, moves);
 }
@@ -375,7 +375,7 @@ Board_GenerateLegalMoves(Board* board, Move* moves){
 Move*
 Board_GeneratePseudoMovesOf(Board* board, Move* moves, Square sqr){
     Side side = Board_SIDE(board);
-    Piece p = Board_PIECE(board, side, sqr);
+    PieceType p = Board_PIECE(board, side, sqr);
 
     if (p == NCH_NO_PIECE)
         return moves;

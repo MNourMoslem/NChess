@@ -51,7 +51,7 @@ PyMove_FromUCI(PyObject* self, PyObject* args, PyObject* kwargs){
 PyObject*
 PyMove_FromArgs(PyObject* self, PyObject* args, PyObject* kwargs){
     PyObject *from_, *to_;
-    Piece promote = NCH_NO_PIECE;
+    PieceType promote = NCH_NO_PIECE;
     MoveType type = MoveType_Normal;
     static char* kwlist[] = {"from_", "to_", "promote", "type", NULL};
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO|II", kwlist, &from_, &to_, &promote, &type)){

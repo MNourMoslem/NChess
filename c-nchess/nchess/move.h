@@ -60,7 +60,7 @@ typedef uint16 Move;
 
 // Returns a new move if it is valid, and 0 if not.
 Move 
-Move_New(Square from_, Square to_, MoveType type, Piece promotion_piece);
+Move_New(Square from_, Square to_, MoveType type, PieceType promotion_piece);
 
 // Converts a UCI string into a Move object. The move type defaults to 
 // MoveType_Normal unless it is a promotion move. 

@@ -22,7 +22,7 @@ end_of_str(char s){
 }
 
 NCH_STATIC_INLINE void
-char2piece(char c, Side* side, Piece* piece){
+char2piece(char c, Side* side, PieceType* piece){
     switch (c)
     {
     case 'P':
@@ -109,7 +109,7 @@ str2square(char* s){
 char*
 parse_bb(Board* board, char* fen){
     Square sqr = NCH_A8;
-    Piece piece;
+    PieceType piece;
     Side side;
 
     while (!end_of_str(*fen))

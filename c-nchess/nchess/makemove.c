@@ -15,7 +15,7 @@
 #include <stdlib.h>
 
 NCH_STATIC_FINLINE void
-set_piece(Board* board, Side side, Square sqr, Piece p){
+set_piece(Board* board, Side side, Square sqr, PieceType p){
     uint64 sqr_bb = NCH_SQR(sqr);
     Board_BB(board, side, p) |= sqr_bb;
     Board_OCC(board, side) |= sqr_bb;
@@ -25,7 +25,7 @@ set_piece(Board* board, Side side, Square sqr, Piece p){
 NCH_STATIC_FINLINE void
 remove_piece(Board* board, Side side, Square sqr){
     uint64 sqr_bb = NCH_SQR(sqr);
-    Piece p = Board_PIECE(board, side, sqr);
+    PieceType p = Board_PIECE(board, side, sqr);
     Board_BB(board, side, p) &= ~sqr_bb;
     Board_OCC(board, side) &= ~sqr_bb;
     Board_PIECE(board, side, sqr) = NCH_NO_PIECE;
@@ -34,7 +34,7 @@ remove_piece(Board* board, Side side, Square sqr){
 NCH_STATIC_FINLINE void
 move_piece(Board* board, Side side, Square from_, Square to_){
     uint64 move_bb = NCH_SQR(from_) | NCH_SQR(to_);
-    Piece p = Board_PIECE(board, side, from_);
+    PieceType p = Board_PIECE(board, side, from_);
     Board_BB(board, side, p) ^= move_bb;
     Board_OCC(board, side) ^= move_bb;
     Board_PIECE(board, side, from_) = NCH_NO_PIECE;
@@ -43,13 +43,13 @@ move_piece(Board* board, Side side, Square from_, Square to_){
 
 // makes a move on the board.
 // it only modifies bitboard, piecetable and occupancy.
-NCH_STATIC_FINLINE Piece
+NCH_STATIC_FINLINE PieceType
 make_move(Board* board, Square from_, Square to_,
-         MoveType move_type, Piece promotion_piece)
+         MoveType move_type, PieceType promotion_piece)
 {
     Side side = Board_SIDE(board);
     Side op_side = NCH_OP_SIDE(side);
-    Piece captured_piece = Board_PIECE(board, op_side, to_);
+    PieceType captured_piece = Board_PIECE(board, op_side, to_);
 
     move_piece(board, side, from_, to_);
     
@@ -84,16 +84,16 @@ make_move(Board* board, Square from_, Square to_,
 }
 
 // makes a move and also modifies board info.
-NCH_STATIC_FINLINE Piece
+NCH_STATIC_FINLINE PieceType
 move_and_set_flags(Board* board, Move move){    
     Side side = Board_SIDE(board);    
     Square from_ = Move_FROM(move);
     Square to_ = Move_TO(move);
     MoveType type = Move_TYPE(move);
-    Piece promotion_piece = Move_PRO_PIECE(move);
+    PieceType promotion_piece = Move_PRO_PIECE(move);
 
-    Piece moving_piece = Board_PIECE(board, side, from_);
-    Piece captured = make_move(board, from_, to_, type, promotion_piece);
+    PieceType moving_piece = Board_PIECE(board, side, from_);
+    PieceType captured = make_move(board, from_, to_, type, promotion_piece);
 
     if (moving_piece == NCH_Pawn){
         NCH_SETFLG(Board_FLAGS(board), Board_PAWNMOVED);
@@ -118,7 +118,7 @@ move_and_set_flags(Board* board, Move move){
 // undo a move from the board.
 // it only modifies bitboard, piecetable and occupancy.
 NCH_STATIC_FINLINE void
-undo_move(Board* board, Side side, Move move, Piece captured_piece){
+undo_move(Board* board, Side side, Move move, PieceType captured_piece){
     Side op_side = NCH_OP_SIDE(side);
     Square from_ = Move_FROM(move);
     Square to_ = Move_TO(move);
@@ -139,7 +139,7 @@ undo_move(Board* board, Side side, Move move, Piece captured_piece){
             set_piece(board, op_side, trg_sqr, NCH_Pawn);
         }
         else{
-            Piece promotion_piece = Move_PRO_PIECE(move);
+            PieceType promotion_piece = Move_PRO_PIECE(move);
 
             Board_BB(board, side, promotion_piece) &= ~NCH_SQR(from_);
             Board_BB(board, side, NCH_Pawn) |= NCH_SQR(from_);
@@ -156,7 +156,7 @@ undo_move(Board* board, Side side, Move move, Piece captured_piece){
 
 NCH_STATIC_INLINE int
 is_move_legal(Board* board, Move move){
-    Piece captured_piece = make_move(board, Move_FROM(move), Move_TO(move),
+    PieceType captured_piece = make_move(board, Move_FROM(move), Move_TO(move),
                                      Move_TYPE(move), Move_PRO_PIECE(move));
     int is_check = Board_IsCheck(board);
     undo_move(board, Board_SIDE(board), move, captured_piece);
@@ -167,7 +167,7 @@ Move
 Board_IsMoveLegal(Board* board, Move move){
     Square from_ = Move_FROM(move);
     Square to_ = Move_TO(move);
-    Piece promotion_piece = Move_PRO_PIECE(move);
+    PieceType promotion_piece = Move_PRO_PIECE(move);
 
     if (!is_valid_square(from_) || !is_valid_square(to_))
         return Move_NULL;
@@ -271,7 +271,7 @@ Board_Undo(Board* board){
 
 int
 Board_GetMovesOf(Board* board, Square s, Move* moves){
-    Piece p = Board_ON_SQUARE(board, s);
+    PieceType p = Board_ON_SQUARE(board, s);
     if (p == NCH_NO_PIECE)
         return 0;
 

@@ -48,7 +48,7 @@ typedef struct
     // and the value at that index represents the piece on that square
     // This is useful to retrieve the piece on a square quickly instead of
     // searching through the bitboards.
-    Piece piecetables[NCH_SIDES_NB][NCH_SQUARE_NB];  
+    PieceType piecetables[NCH_SIDES_NB][NCH_SQUARE_NB];  
 
     // stores all variables that gets copied when a step is taken 
     // like flags, castle rights, etc.

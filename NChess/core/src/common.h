@@ -10,7 +10,7 @@
 #include <Python.h>
 
 NCH_STATIC_INLINE PyObject*
-piece_to_pyobject(Piece p){
+piece_to_pyobject(PieceType p){
     return PyLong_FromUnsignedLong(p);
 }
 
@@ -52,7 +52,7 @@ pyobject_as_square(PyObject* s){
     return sqr;
 }
 
-NCH_STATIC_INLINE Piece
+NCH_STATIC_INLINE PieceType
 pyobject_as_piece(PyObject* p){
     if (!PyLong_Check(p)){
         PyErr_Format(PyExc_ValueError,
@@ -60,7 +60,7 @@ pyobject_as_piece(PyObject* p){
         Py_TYPE(p)->tp_name);
         return NCH_NO_PIECE;
     }
-    return (Piece)PyLong_AsUnsignedLong(p);
+    return (PieceType)PyLong_AsUnsignedLong(p);
 }
 
 NCH_STATIC_INLINE Move

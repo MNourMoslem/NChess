@@ -14,25 +14,29 @@
 
 // Method definitions
 static PyMethodDef nchess_core_methods[] = {
-    {"uci_as_square"  , (PyCFunction)uci_as_square    , METH_VARARGS                , NULL},
-    {"square_file"    , (PyCFunction)square_file      , METH_VARARGS                , NULL},
-    {"square_rank"    , (PyCFunction)square_rank      , METH_VARARGS                , NULL},
-    {"square_distance", (PyCFunction)square_distance  , METH_VARARGS                , NULL},
-    {"square_mirror"  , (PyCFunction)square_mirror    , METH_VARARGS                , NULL},
-    {"bitboard"       , (PyCFunction)BB_FromArray     , METH_VARARGS | METH_KEYWORDS, NULL},
-    {"rook_attacks"   , (PyCFunction)BB_RookAttacks   , METH_VARARGS | METH_KEYWORDS, NULL},
-    {"bishop_attacks" , (PyCFunction)BB_BishopAttacks , METH_VARARGS | METH_KEYWORDS, NULL},
-    {"queen_attacks"  , (PyCFunction)BB_QueenAttacks  , METH_VARARGS | METH_KEYWORDS, NULL},
-    {"king_attacks"   , (PyCFunction)BB_KingAttacks   , METH_VARARGS | METH_KEYWORDS, NULL},
-    {"knight_attacks" , (PyCFunction)BB_KnightAttacks , METH_VARARGS | METH_KEYWORDS, NULL},
-    {"pawn_attacks"   , (PyCFunction)BB_PawnAttacks   , METH_VARARGS | METH_KEYWORDS, NULL},
-    {"rook_mask"      , (PyCFunction)BB_RookMask      , METH_VARARGS | METH_KEYWORDS, NULL},
-    {"bishop_mask"    , (PyCFunction)BB_BishopMask    , METH_VARARGS | METH_KEYWORDS, NULL},
-    {"rook_relevant"  , (PyCFunction)BB_RookRelevant  , METH_VARARGS | METH_KEYWORDS, NULL},
-    {"bishop_relevant", (PyCFunction)BB_BishopRelevant, METH_VARARGS | METH_KEYWORDS, NULL},
-    {"rook_magic"     , (PyCFunction)BB_RookMagic     , METH_VARARGS | METH_KEYWORDS, NULL},
-    {"bishop_magic"   , (PyCFunction)BB_BishopMagic   , METH_VARARGS | METH_KEYWORDS, NULL},
-    {NULL             , NULL                          , 0                           , NULL},
+    {"square_from_uci"   , (PyCFunction)square_from_uci  , METH_VARARGS                , NULL},
+    {"square_file"       , (PyCFunction)square_file      , METH_VARARGS                , NULL},
+    {"square_rank"       , (PyCFunction)square_rank      , METH_VARARGS                , NULL},
+    {"square_distance"   , (PyCFunction)square_distance  , METH_VARARGS                , NULL},
+    {"square_mirror"     , (PyCFunction)square_mirror    , METH_VARARGS | METH_KEYWORDS, NULL},
+
+    {"move"              , (PyCFunction)PyMove_FromArgs  , METH_VARARGS | METH_KEYWORDS, NULL},
+    {"move_from_uci"     , (PyCFunction)PyMove_FromUCI   , METH_VARARGS | METH_KEYWORDS, NULL},
+
+    {"bb_from_array"     , (PyCFunction)BB_FromArray     , METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_rook_attacks"   , (PyCFunction)BB_RookAttacks   , METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_bishop_attacks" , (PyCFunction)BB_BishopAttacks , METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_queen_attacks"  , (PyCFunction)BB_QueenAttacks  , METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_king_attacks"   , (PyCFunction)BB_KingAttacks   , METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_knight_attacks" , (PyCFunction)BB_KnightAttacks , METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_pawn_attacks"   , (PyCFunction)BB_PawnAttacks   , METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_rook_mask"      , (PyCFunction)BB_RookMask      , METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_bishop_mask"    , (PyCFunction)BB_BishopMask    , METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_rook_relevant"  , (PyCFunction)BB_RookRelevant  , METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_bishop_relevant", (PyCFunction)BB_BishopRelevant, METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_rook_magic"     , (PyCFunction)BB_RookMagic     , METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_bishop_magic"   , (PyCFunction)BB_BishopMagic   , METH_VARARGS | METH_KEYWORDS, NULL},
+    {NULL                , NULL                          , 0                           , NULL},
 };
 
 static PyModuleDef nchess_core = {
@@ -60,7 +64,7 @@ PyMODINIT_FUNC PyInit_nchess_core(void) {
     if (PyType_Ready(&PyBitBoardType) < 0) {
         return NULL;
     }
-    
+
     // Create the module
     m = PyModule_Create(&nchess_core);
     if (m == NULL) {

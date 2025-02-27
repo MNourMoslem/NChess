@@ -43,6 +43,8 @@ typedef enum {
 }Square;
 
 typedef enum {
+    NCH_NO_PIECE_TYPE,
+
     NCH_Pawn,
     NCH_Knight,
     NCH_Bishop,
@@ -50,9 +52,36 @@ typedef enum {
     NCH_Queen,
     NCH_King,
 
-    NCH_PIECE_NB,
-    NCH_NO_PIECE
+    NCH_PIECE_TYPE_NB,
 }PieceType;
+
+typedef enum {
+    NCH_NO_PIECE,
+
+    NCH_WPawn,
+    NCH_WKnight,
+    NCH_WBishop,
+    NCH_WRook,
+    NCH_WQueen,
+    NCH_WKing,
+
+    NCH_BPawn,
+    NCH_BKnight,
+    NCH_BBishop,
+    NCH_BRook,
+    NCH_BQueen,
+    NCH_BKing,
+
+    NCH_PIECE_NB,
+}Piece;
+
+extern const PieceType Piece2Type[NCH_PIECE_NB];
+extern const Side Piece2Side[NCH_PIECE_NB];
+extern const Piece PieceType2Piece[NCH_SIDES_NB][NCH_PIECE_TYPE_NB];
+
+#define Piece_TYPE(piece) Piece2Type[piece]
+#define Piece_SIDE(piece) Piece2Side[piece]
+#define PieceType_PIECE(side, piece_type) PieceType2Piece[side][piece_type]
 
 typedef enum{
     NCH_GS_Playing = 0,
@@ -195,7 +224,7 @@ typedef struct
 
     int fifty_counter; // counter for fifty moves rule
 
-    PieceType captured_piece; // last captured piece. used for undoing moves
+    Piece captured_piece; // last captured piece. used for undoing moves
 
     Side side; // side to play
 }PositionInfo;

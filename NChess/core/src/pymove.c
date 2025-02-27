@@ -11,15 +11,35 @@ PyMove_FromMove(Move move){
 PyObject*
 PyMove_FromUCI(PyObject* self, PyObject* args, PyObject* kwargs){
     const char* uci;
-    static char* kwlist[] = {"uci", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s", kwlist, &uci)){
+    PyObject* move_type = NULL;
+    static char* kwlist[] = {"uci", "move_type", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s|O", kwlist, &uci, &move_type)){
         if (!PyErr_Occurred()){
             PyErr_SetString(PyExc_ValueError, "failed to parse the arguments");
         }
         return NULL;
     }
 
-    Move move = Move_FromString(uci);
+    Move move = Move_FromString(uci);;
+    if (move_type && !Py_IsNone(move_type)){
+        if (!PyLong_Check(move_type)){
+            PyErr_Format(
+                PyExc_ValueError,
+                 "type expected to be int or None. got %s",
+                Py_TYPE(move_type)->tp_name
+            );
+            return NULL;
+        }
+
+        MoveType mt = (MoveType)PyLong_AsLong(move_type);
+        if (!MoveType_IsValid(mt)){
+            PyErr_SetString(PyExc_ValueError, "invalid move type");
+            return NULL;
+        }
+
+        move = Move_REASSAGIN_TYPE(move, mt);
+    }
+
     if (move == Move_NULL){
         PyErr_SetString(PyExc_ValueError, "invalid move");
         return NULL;

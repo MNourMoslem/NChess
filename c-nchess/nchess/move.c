@@ -24,9 +24,11 @@ static char* squares_char[] = {
 
 Move
 Move_New(Square from_, Square to_, MoveType type, Piece promotion_piece){
-    // pawn and king are not valid promotion pieces
-    if (promotion_piece == NCH_Pawn || promotion_piece == NCH_King)
-        return Move_NULL;
+    if (promotion_piece <= NCH_Pawn || promotion_piece >= NCH_King)
+        promotion_piece = 1;
+
+    if (type <= MoveType_Normal || type >= MoveType_Castle)
+        type = MoveType_Normal;
 
     if (!is_valid_square(from_) || !is_valid_square(to_))
         return Move_NULL;
@@ -41,13 +43,10 @@ Move_FromString(const char* move_str){
 
     Square from_ = str_to_square(move_str);
     Square to_ = str_to_square(move_str + 2);
-
-    if (!is_valid_square(from_) || !is_valid_square(to_))
-        return Move_NULL;
-
-    const char pp = move_str[4];
     Piece promotion_piece;
     MoveType type;
+
+    const char pp = move_str[4];
     if (pp  != '\0'){
         if (pp == 'q'){
             promotion_piece = NCH_Queen;
@@ -67,11 +66,11 @@ Move_FromString(const char* move_str){
         type = MoveType_Promotion;
     }
     else{
-        promotion_piece = NCH_Queen;
+        promotion_piece = NCH_NO_PIECE;
         type = MoveType_Normal;
     }
 
-    return _Move_New(from_, to_, promotion_piece, type);
+    return Move_New(from_, to_, promotion_piece, type);
 }
 
 int

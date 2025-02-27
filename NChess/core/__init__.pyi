@@ -420,7 +420,7 @@ class Board:
         """
         ...
 
-    def step(self, step: Move | str | int) -> None:
+    def step(self, step: Move | str | int) -> int:
         """
         Executes a move on the board.
 
@@ -429,6 +429,9 @@ class Board:
                 - If `Move`, it represents a move object.
                 - If `str`, it is the UCI (Universal Chess Interface) representation of the move.
                 - If `int`, it represents a move encoded as an integer.
+        
+        Returns:
+            True if the move has been played and False if not.
         """
         ...
 
@@ -452,9 +455,12 @@ class Board:
         """
         ...
 
-    def generate_legal_moves(self) -> list[Move]:
+    def generate_legal_moves(self, as_set : bool = True) -> list[Move] | set[Move]:
         """
         Generates all legal moves for the current position.
+
+        Parameters:
+            as_set: returns a set of moves if set to True.
 
         Returns:
             list[Move]: A list of all legal moves available.
@@ -578,12 +584,13 @@ class Board:
         """
         ...
 
-    def get_moves_of(self, square: str | int) -> list[Move]:
+    def get_moves_of(self, square: str | int, as_set : bool = True) -> list[Move] | set[Move]:
         """
         Returns all legal moves for the piece located on the given square.
 
         Parameters:
             square (str | int): The target square, given as a UCI string (e.g., "e4") or an index (0-63).
+            as_set: returns a set of moves if set to True.
 
         Returns:
             list[Move]: A list of legal moves for the piece on the given square.
@@ -622,6 +629,40 @@ class Board:
             list[int]: A list of squares (0-63) where the given piece is located.
         """
         ...
+
+    def _makemove(self, move: int | str) -> None:
+        """
+        Privately applies a move to the board without legality checks.
+
+        This is a private function, intended for internal use. However, it is provided 
+        for programmers who may need finer control over move execution. Unlike `step`, 
+        which ensures the move is legal before applying it, `_makemove` blindly executes 
+        the given move without any validation.
+
+        This makes `_makemove` useful in scenarios where legality is already ensured, 
+        such as when selecting a move from a pre-generated list of legal moves. Since it 
+        skips legality checks, it is technically faster than `step`.
+
+        Example use case:
+            If you generate legal moves and are certain that the selected move is valid, 
+            you can use `_makemove` instead of `step` for better performance:
+            
+            ```python
+            legal_moves = board.generate_legal_moves(as_set=True)
+            move = some_selection_function(legal_moves)
+            board._makemove(move)  # Faster than board.step(move) since legality is known
+            ```
+
+        Parameters:
+            move (int | str): The move to be applied.
+                - If `int`, it represents an encoded move.
+                - If `str`, it is the UCI (Universal Chess Interface) representation of the move.
+
+        Returns:
+            None
+        """
+        ...
+
 
 
 def square_from_uci(uci: str) -> int:
@@ -687,12 +728,49 @@ def square_mirror(square: str | int, vertical: bool = False) -> int:
     ...
 
 
-def move_from_uci(uci: str) -> Move:
+def move_from_uci(uci: str, move_type: int = None) -> Move:
     """
     Converts a UCI move notation (e.g., "e2e4" or "e7e8q") into a Move object.
 
+    # Note:
+        The move type cannot be determined solely from the UCI string.
+        UCI moves may represent Normal or Promotion types. However, if the move 
+        is an En Passant or Castling move, the type must be specified manually. 
+
+        The `Board.step` function does not require an explicit move type; it only 
+        considers the source and destination squares and automatically determines 
+        legality. If the type is not provided, `Board.step` will still execute the 
+        move correctly.
+
+        However, `Board._makemove` requires the correct move type. This means that 
+        while a UCI string is sufficient for `Board.step`, it is not enough for 
+        `Board._makemove`. If legal moves are generated and include Castling or 
+        En Passant moves, constructing a move solely from the UCI string will 
+        not detect these special moves, even if they share the same source and 
+        destination squares.
+
+        ## Example:
+        ```
+        move1 = move_from_uci("e5d6", move_type=MOVE_ENPASSANT)
+        move2 = move_from_uci("e5d6")
+
+        # move1 is not equal to move2
+        # However, both board.step(move1) and board.step(move2) will produce 
+        # the same result, whereas board._makemove(move1)
+        # and board._makemove(move2) will not.
+
+        # Additionally, if we generate legal moves as a set and assume there is 
+        # an En Passant move among them:
+        legal_moves = board.generate_legal_moves(as_set=True)
+
+        print(move1 in legal_moves)  # True
+        print(move2 in legal_moves)  # False
+        ```
+            
     Parameters:
-        uci (str): The UCI representation of the move (e.g., "e2e4" for a normal move or "e7e8q" for promotion).
+        uci (str): The UCI representation of the move (e.g., "e2e4" for a normal move 
+                   or "e7e8q" for promotion).
+        move_type (int, optional): The type of move, required for En Passant and Castling. 
 
     Returns:
         Move: The corresponding Move object.

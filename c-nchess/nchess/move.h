@@ -41,15 +41,18 @@ typedef uint16 Move;
 
 #define Move_FROM(move) ((move) & 0x3F)
 #define Move_TO(move) (((move) >> 6) & 0x3F)
-#define Move_PRO_PIECE(move) ((((move) >> 12) & 0x3) + 1)
+#define Move_PRO_PIECE(move) ((((move) >> 12) & 0x3) + NCH_Knight)
 #define Move_TYPE(move) (((move) >> 14) & 0x3)
+
+#define Move_SQUARES_MASK 0x0fff
+#define Move_SAME_SQUARES(m1, m2) ((m1 & Move_SQUARES_MASK) == (m2 & Move_SQUARES_MASK))
 
 // A macro to create a Move. It is faster but not safe
 // if the given parameters are incorrect. Use Move_New for safer usage.
 #define _Move_New(from_, to_, promotion_piece, move_type) \
     Move_ASSIGN_FROM(from_) | \
     Move_ASSIGN_TO(to_) | \
-    Move_ASSIGN_PRO_PIECE(promotion_piece - 1) | \
+    Move_ASSIGN_PRO_PIECE(promotion_piece - NCH_Knight) | \
     Move_ASSIGN_TYPE(move_type)
 
 #define Move_IsValid(move) ((move) != Move_NULL)

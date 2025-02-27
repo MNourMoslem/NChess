@@ -2,26 +2,24 @@
 #include "common.h"
 
 PyObject*
-uci_as_square(PyObject* self, PyObject* args){
-    PyObject* uni;
-    if (!PyArg_ParseTuple(args, "O", &uni)){
-        PyErr_SetString(PyExc_ValueError, "failed to parse the arguments to get the square from uci");
+square_from_uci(PyObject* self, PyObject* args){
+    char* s_str;
+    if (!PyArg_ParseTuple(args, "s", &s_str)){
+        if (!PyErr_Occurred){
+            PyErr_SetString(PyExc_ValueError, "failed to parse the arguments to get the square from uci");
+        }
         return NULL;
     }
 
-    if (!PyUnicode_Check(uni)){
-        PyErr_Format(PyExc_ValueError,
-         "square expected to be a string. got %s",
-         Py_TYPE(uni)->tp_name);
+    Square sqr = str_to_square(s_str);
+    if (sqr == NCH_NO_SQR){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(PyExc_ValueError, "failed to convert string to square");
+        }
         return NULL;
     }
 
-    const char* s_str = PyUnicode_AsUTF8(uni);
-    if (s_str == NULL) {
-        PyErr_SetString(PyExc_ValueError, "failed to string to square");
-        return NULL;
-    }
-    return square_to_pyobject(str_to_square(s_str));
+    return square_to_pyobject(sqr);
 }
 
 PyObject*
@@ -83,10 +81,11 @@ square_distance(PyObject* self, PyObject* args){
 }
 
 PyObject*
-square_mirror(PyObject* self, PyObject* args){
+square_mirror(PyObject* self, PyObject* args, PyObject* kwargs){
     PyObject* s;
-    int is_verical = 1;
-    if (!PyArg_ParseTuple(args, "O|p", &s)){
+    int is_vertical = 1;
+    NCH_STATIC char* kwlist[] = {"square", "vertical", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|p", kwlist, &s, &is_vertical)){
         PyErr_SetString(PyExc_ValueError, "failed to parse the arguments to mirror a square");
         return NULL;
     }
@@ -99,5 +98,9 @@ square_mirror(PyObject* self, PyObject* args){
         Py_RETURN_NONE;
     }
 
-    return square_to_pyobject(is_verical ? NCH_SQR_MIRROR_V(sqr) : NCH_SQR_MIRROR_V(sqr));
+    Square mirror = is_vertical ? NCH_SQR_MIRROR_V(sqr)
+                                : NCH_SQR_MIRROR_H(sqr);
+
+    return square_to_pyobject(mirror);
 }
+

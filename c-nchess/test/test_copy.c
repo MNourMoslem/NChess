@@ -190,7 +190,7 @@ test_copy_4(){
         return 0;
     }
 
-    copy_board->bitboards[NCH_White][NCH_Pawn] = NCH_BOARD_B_QUEEN_STARTPOS; 
+    Board_BB(copy_board, NCH_WPawn) = NCH_BOARD_B_QUEEN_STARTPOS; 
 
     int res = !is_boards_same(board, copy_board);
 

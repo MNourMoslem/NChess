@@ -19,7 +19,7 @@ int
 Board_GenerateLegalMoves(Board* board, Move* moves);
 
 // Generate all the pseudo moves for a piece on the board given its square.
-Move*
+int
 Board_GeneratePseudoMovesOf(Board* board, Move* moves, Square sqr);
 
 #endif

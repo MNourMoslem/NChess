@@ -23,9 +23,9 @@ static char* squares_char[] = {
 };
 
 Move
-Move_New(Square from_, Square to_, MoveType type, PieceType promotion_piece){
-    if (promotion_piece <= NCH_Pawn || promotion_piece >= NCH_King)
-        promotion_piece = 1;
+Move_New(Square from_, Square to_, MoveType type, PieceType pro_type){
+    if (pro_type <= NCH_Pawn || pro_type >= NCH_King)
+        pro_type = NCH_Knight;
 
     if (!MoveType_IsValid(type))
         type = MoveType_Normal;
@@ -33,7 +33,7 @@ Move_New(Square from_, Square to_, MoveType type, PieceType promotion_piece){
     if (!is_valid_square(from_) || !is_valid_square(to_))
         return Move_NULL;
 
-    return _Move_New(from_, to_, promotion_piece, type);
+    return _Move_New(from_, to_, pro_type, type);
 }
 
 Move
@@ -43,34 +43,34 @@ Move_FromString(const char* move_str){
 
     Square from_ = str_to_square(move_str);
     Square to_ = str_to_square(move_str + 2);
-    PieceType promotion_piece;
+    PieceType pro_type;
     MoveType type;
 
     const char pp = move_str[4];
     if (pp  != '\0'){
         if (pp == 'q'){
-            promotion_piece = NCH_Queen;
+            pro_type = NCH_Queen;
         }
         else if (pp == 'r'){
-            promotion_piece = NCH_Rook;
+            pro_type = NCH_Rook;
         }
         else if (pp == 'b'){
-            promotion_piece = NCH_Bishop;
+            pro_type = NCH_Bishop;
         }
-        else if (pp == 'k'){
-            promotion_piece = NCH_Knight;
+        else if (pp == 'n'){
+            pro_type = NCH_Knight;
         }
         else{
-            promotion_piece = NCH_Queen;
+            pro_type = NCH_Queen;
         }
         type = MoveType_Promotion;
     }
     else{
-        promotion_piece = NCH_NO_PIECE;
+        pro_type = NCH_NO_PIECE_TYPE;
         type = MoveType_Normal;
     }
 
-    return Move_New(from_, to_, type, promotion_piece);
+    return Move_New(from_, to_, type, pro_type);
 }
 
 Move
@@ -90,8 +90,8 @@ Move_AsString(Move move, char* dst){
     Square from_ = Move_FROM(move);
     Square to_ = Move_TO(move);
     PieceType promotion = Move_TYPE(move) == MoveType_Promotion 
-                    ? Move_PRO_PIECE(move)
-                    : 0;
+                        ? Move_PRO_PIECE(move)
+                        : 0;
 
     if (!is_valid_square(from_) || !is_valid_square(to_)){
         return -1;

@@ -1,4 +1,1 @@
-from .nchess_core import (
-    Board,
-    Move,
-)
+from .nchess_core import *

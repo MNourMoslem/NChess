@@ -41,6 +41,7 @@ typedef uint16 Move;
     Move_ASSIGN_TYPE(move_type)
 
 #define Move_IsValid(move) ((move) != Move_NULL)
+#define Move_IsNormal(move) (Move_TYPE(move) == MoveType_Normal)
 #define Move_IsPromotion(move) (Move_TYPE(move) == MoveType_Promotion)
 #define Move_IsEnPassant(move) (Move_TYPE(move) == MoveType_EnPassant)
 #define Move_IsCastle(move) (Move_TYPE(move) == MoveType_Castle)

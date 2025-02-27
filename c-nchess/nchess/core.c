@@ -10,6 +10,28 @@
 
 #include "core.h"
 
+const PieceType Piece2Type[NCH_PIECE_NB] = {
+    NCH_NO_PIECE_TYPE,
+    NCH_Pawn, NCH_Knight, NCH_Bishop, NCH_Rook, NCH_Queen, NCH_King, 
+    NCH_Pawn, NCH_Knight, NCH_Bishop, NCH_Rook, NCH_Queen, NCH_King, 
+};
+
+const Side Piece2Side[NCH_PIECE_NB] = {
+    NCH_NO_SIDE,
+    NCH_White, NCH_White, NCH_White, NCH_White, NCH_White, NCH_White,
+    NCH_Black, NCH_Black, NCH_Black, NCH_Black, NCH_Black, NCH_Black,
+};
+
+const Piece PieceType2Piece[NCH_SIDES_NB][NCH_PIECE_TYPE_NB] = {
+    {
+        NCH_NO_PIECE, NCH_WPawn, NCH_WKnight, NCH_WBishop, NCH_WRook, NCH_WQueen, NCH_WKing,
+    },
+    {
+        NCH_NO_PIECE, NCH_BPawn, NCH_BKnight, NCH_BBishop, NCH_BRook, NCH_BQueen, NCH_BKing,
+    },
+};
+
+
 const int NCH_ROW_TABLE[64] = {
     0, 0, 0, 0, 0, 0, 0, 0,
     1, 1, 1, 1, 1, 1, 1, 1,

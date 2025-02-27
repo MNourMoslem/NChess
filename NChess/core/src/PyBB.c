@@ -92,6 +92,7 @@ bb_count_bits(PyObject* self, PyObject* args){
     if (PyErr_Occurred()) {
         return NULL;
     }
+
     return PyLong_FromLong(count_bits(bb));
 }
 
@@ -138,6 +139,60 @@ bb_to_squares(PyObject* self, PyObject* args){
     return list;
 }
 
+NCH_STATIC PyObject*
+bb_set_square(PyObject* self, PyObject* args, PyObject* kwargs){
+    PyObject* sqr;
+    static char* kwlist[] = {"square", NULL};
+    
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &sqr)){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(PyExc_ValueError, "failed to parse the arguments");
+        }
+        return NULL;
+    }
+    
+    Square s = pyobject_as_square(sqr);
+    if (s == NCH_NO_SQR){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(PyExc_ValueError, "failed to convert input to square");
+        }
+        return NULL;
+    }
+    
+    uint64 bb = PyLong_AsUnsignedLongLong(self);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(bb | NCH_SQR(s));
+}
+
+NCH_STATIC PyObject*
+bb_remove_square(PyObject* self, PyObject* args, PyObject* kwargs){
+    PyObject* sqr;
+    static char* kwlist[] = {"square", NULL};
+    
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &sqr)){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(PyExc_ValueError, "failed to parse the arguments");
+        }
+        return NULL;
+    }
+    
+    Square s = pyobject_as_square(sqr);
+    if (s == NCH_NO_SQR){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(PyExc_ValueError, "failed to convert input to square");
+        }
+        return NULL;
+    }
+    
+    uint64 bb = PyLong_AsUnsignedLongLong(self);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(bb & ~NCH_SQR(s));
+}
+
 PyMethodDef bitboard_methods[] = {
     {"as_array"     , (PyCFunction)bb_as_array     , METH_VARARGS | METH_KEYWORDS, NULL},
     {"more_then_one", (PyCFunction)bb_more_then_one, METH_NOARGS                 , NULL},
@@ -146,7 +201,31 @@ PyMethodDef bitboard_methods[] = {
     {"count_bits"   , (PyCFunction)bb_count_bits   , METH_NOARGS                 , NULL},
     {"is_filled"    , (PyCFunction)bb_is_filled    , METH_VARARGS | METH_KEYWORDS, NULL},
     {"to_squares"   , (PyCFunction)bb_to_squares   , METH_NOARGS                 , NULL},
+    {"set_square"   , (PyCFunction)bb_set_square   , METH_VARARGS | METH_KEYWORDS, NULL},
+    {"remove_square", (PyCFunction)bb_remove_square, METH_VARARGS | METH_KEYWORDS, NULL},
 };
+
+NCH_STATIC PyObject*
+bb_iter(PyObject* self){
+    // just create a tuple and iterate over it
+    uint64 bb = PyLong_AsUnsignedLongLong(self);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
+    PyObject* tuple = PyTuple_New(count_bits(bb));
+    if (!tuple){
+        return NULL;
+    }
+
+    Py_ssize_t i = 0;
+    Square idx;
+    LOOP_U64_T(bb){
+        PyTuple_SetItem(tuple, i++, square_to_pyobject(idx));
+    }
+
+    // iterate the tuple
+    return PyObject_GetIter(tuple);
+}
 
 static PyObject*
 bb_str(PyBitBoard* self) {
@@ -176,4 +255,5 @@ PyTypeObject PyBitBoardType = {
     .tp_str = (reprfunc)bb_str,
     .tp_repr = (reprfunc)bb_str,
     .tp_methods = bitboard_methods,
+    .tp_iter = bb_iter,
 };

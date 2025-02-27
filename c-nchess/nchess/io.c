@@ -11,8 +11,7 @@
 #include <string.h>
 
 
-const char NCH_PIECES[13] = {'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k', '.'};
-const char NCH_COLUMNS[8] = {'h' ,'g', 'f', 'e', 'd', 'c', 'b', 'a'};
+NCH_STATIC const char* pieces_char = ".PNBRQKpnbrqk";
 
 const char* squares_char[] = {
     "h1", "g1", "f1", "e1", "d1", "c1", "b1", "a1", 
@@ -28,17 +27,13 @@ const char* squares_char[] = {
 void
 Board_AsString(Board* board, char* buffer){
     int i = NCH_A8, buffer_idx = 0;
+    Piece p;
     for (int raw = 7; raw > -1; raw--){
         for (int file = 7; file > -1; file--){
             i = raw * 8 + file;
-            
-            buffer[buffer_idx++] = Board_WHITE_PIECE(board, i) != NCH_NO_PIECE ?
-                                   NCH_PIECES[Board_WHITE_PIECE(board, i)]
 
-                                 : Board_BLACK_PIECE(board, i) != NCH_NO_PIECE ? 
-                                   NCH_PIECES[NCH_Black * NCH_PIECE_NB + Board_BLACK_PIECE(board, i)]
-
-                                 : '.';
+            p = Board_ON_SQUARE(board, i);
+            buffer[buffer_idx++] = pieces_char[p];
         }
         buffer[buffer_idx++] = '\n';
     }

@@ -5,6 +5,7 @@
 #include "nchess/utils.h"
 #include "nchess/move.h"
 #include "pymove.h"
+
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 

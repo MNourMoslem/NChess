@@ -85,7 +85,7 @@ char2piece(char c, Side* side, PieceType* piece){
         break;
 
     default:
-        *piece = NCH_NO_PIECE;
+        *piece = NCH_NO_PIECE_TYPE;
         *side = NCH_SIDES_NB;
         break;
     }
@@ -119,8 +119,8 @@ parse_bb(Board* board, char* fen){
         }
         else if (*fen != '/'){
             char2piece(*fen, &side, &piece);
-            if (piece != NCH_NO_PIECE){
-                Board_BB(board, side, piece) |= NCH_SQR(sqr);
+            if (piece != NCH_NO_PIECE_TYPE){
+                Board_BB_BYTYPE(board, side, piece) |= NCH_SQR(sqr);
                 sqr--;
             }
         }

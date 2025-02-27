@@ -88,19 +88,21 @@ Board_Free(Board* board){
 
 void
 Board_Init(Board* board){
-    Board_BB(board, NCH_White, NCH_Pawn)   = NCH_BOARD_W_PAWNS_STARTPOS;
-    Board_BB(board, NCH_White, NCH_Knight) = NCH_BOARD_W_KNIGHTS_STARTPOS;
-    Board_BB(board, NCH_White, NCH_Bishop) = NCH_BOARD_W_BISHOPS_STARTPOS;
-    Board_BB(board, NCH_White, NCH_Rook)   = NCH_BOARD_W_ROOKS_STARTPOS;
-    Board_BB(board, NCH_White, NCH_Queen)  = NCH_BOARD_W_QUEEN_STARTPOS;
-    Board_BB(board, NCH_White, NCH_King)   = NCH_BOARD_W_KING_STARTPOS;
+    Board_BB(board, NCH_NO_PIECE) = 0ull;
 
-    Board_BB(board, NCH_Black, NCH_Pawn)   = NCH_BOARD_B_PAWNS_STARTPOS;
-    Board_BB(board, NCH_Black, NCH_Knight) = NCH_BOARD_B_KNIGHTS_STARTPOS;
-    Board_BB(board, NCH_Black, NCH_Bishop) = NCH_BOARD_B_BISHOPS_STARTPOS;
-    Board_BB(board, NCH_Black, NCH_Rook)   = NCH_BOARD_B_ROOKS_STARTPOS;
-    Board_BB(board, NCH_Black, NCH_Queen)  = NCH_BOARD_B_QUEEN_STARTPOS;
-    Board_BB(board, NCH_Black, NCH_King)   = NCH_BOARD_B_KING_STARTPOS;
+    Board_BB(board, NCH_WPawn)   = NCH_BOARD_W_PAWNS_STARTPOS;
+    Board_BB(board, NCH_WKnight) = NCH_BOARD_W_KNIGHTS_STARTPOS;
+    Board_BB(board, NCH_WBishop) = NCH_BOARD_W_BISHOPS_STARTPOS;
+    Board_BB(board, NCH_WRook)   = NCH_BOARD_W_ROOKS_STARTPOS;
+    Board_BB(board, NCH_WQueen)  = NCH_BOARD_W_QUEEN_STARTPOS;
+    Board_BB(board, NCH_WKing)   = NCH_BOARD_W_KING_STARTPOS;
+
+    Board_BB(board, NCH_BPawn)   = NCH_BOARD_B_PAWNS_STARTPOS;
+    Board_BB(board, NCH_BKnight) = NCH_BOARD_B_KNIGHTS_STARTPOS;
+    Board_BB(board, NCH_BBishop) = NCH_BOARD_B_BISHOPS_STARTPOS;
+    Board_BB(board, NCH_BRook)   = NCH_BOARD_B_ROOKS_STARTPOS;
+    Board_BB(board, NCH_BQueen)  = NCH_BOARD_B_QUEEN_STARTPOS;
+    Board_BB(board, NCH_BKing)   = NCH_BOARD_B_KING_STARTPOS;
 
     _init_board(board);
 
@@ -111,19 +113,21 @@ Board_Init(Board* board){
 
 void
 Board_InitEmpty(Board* board){
-    Board_BB(board, NCH_White, NCH_Pawn)   = 0ULL;
-    Board_BB(board, NCH_White, NCH_Knight) = 0ULL;
-    Board_BB(board, NCH_White, NCH_Bishop) = 0ULL;
-    Board_BB(board, NCH_White, NCH_Rook)   = 0ULL;
-    Board_BB(board, NCH_White, NCH_Queen)  = 0ULL;
-    Board_BB(board, NCH_White, NCH_King)   = 0ULL;
+    Board_BB(board, NCH_NO_PIECE) = 0ULL;
 
-    Board_BB(board, NCH_Black, NCH_Pawn)   = 0ULL;
-    Board_BB(board, NCH_Black, NCH_Knight) = 0ULL;
-    Board_BB(board, NCH_Black, NCH_Bishop) = 0ULL;
-    Board_BB(board, NCH_Black, NCH_Rook)   = 0ULL;
-    Board_BB(board, NCH_Black, NCH_Queen)  = 0ULL;
-    Board_BB(board, NCH_Black, NCH_King)   = 0ULL;
+    Board_BB(board, NCH_WPawn)   = 0ULL;
+    Board_BB(board, NCH_WKnight) = 0ULL;
+    Board_BB(board, NCH_WBishop) = 0ULL;
+    Board_BB(board, NCH_WRook)   = 0ULL;
+    Board_BB(board, NCH_WQueen)  = 0ULL;
+    Board_BB(board, NCH_WKing)   = 0ULL;
+
+    Board_BB(board, NCH_BPawn)   = 0ULL;
+    Board_BB(board, NCH_BKnight) = 0ULL;
+    Board_BB(board, NCH_BBishop) = 0ULL;
+    Board_BB(board, NCH_BRook)   = 0ULL;
+    Board_BB(board, NCH_BQueen)  = 0ULL;
+    Board_BB(board, NCH_BKing)   = 0ULL;
 
     _init_board(board);
 
@@ -136,11 +140,10 @@ Board_InitEmpty(Board* board){
 
 int
 Board_IsCheck(const Board* board){
-    Side side = Board_SIDE(board);
     return get_checkmap(
             board,
-            side,
-            NCH_SQRIDX( Board_BB(board, side, NCH_King) ),
+            Board_SIDE(board),
+            NCH_SQRIDX( Board_PLY_BB(board, NCH_King) ),
             Board_ALL_OCC(board)
         ) != 0ULL;
 }

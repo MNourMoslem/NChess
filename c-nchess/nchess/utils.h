@@ -42,7 +42,7 @@ set_board_enp_settings(Board* board, Side side, Square enp_sqr){
     Square trg_sqr = side == NCH_White ? enp_sqr - 8 : enp_sqr + 8;
     Board_ENP_IDX(board) = enp_sqr;
     Board_ENP_MAP(board) = NCH_SQR(enp_sqr) | (bb_pawn_attacks(side, trg_sqr)
-                         & Board_BB(board, NCH_OP_SIDE(side), NCH_Pawn));
+                         & Board_BB_BYTYPE(board, NCH_OP_SIDE(side), NCH_Pawn));
     Board_ENP_TRG(board) = NCH_SQR(trg_sqr);
 }
 
@@ -50,60 +50,56 @@ set_board_enp_settings(Board* board, Side side, Square enp_sqr){
 NCH_STATIC_INLINE void
 init_piecetables(Board* board){
     for (int i = 0; i < NCH_SQUARE_NB; i++){
-        Board_WHITE_PIECE(board, i) = NCH_NO_PIECE;
-    }
-
-    for (int i = 0; i < NCH_SQUARE_NB; i++){
-        Board_BLACK_PIECE(board, i) = NCH_NO_PIECE;
+        Board_PIECE(board, i) = NCH_NO_PIECE;
     }
 
     int idx;
     LOOP_U64_T(Board_WHITE_PAWNS(board)){
-        Board_WHITE_PIECE(board, idx) = NCH_Pawn;
+        Board_PIECE(board, idx) = NCH_WPawn;
     }
 
     LOOP_U64_T(Board_WHITE_KNIGHTS(board)){
-        Board_WHITE_PIECE(board, idx) = NCH_Knight;
+        Board_PIECE(board, idx) = NCH_WKnight;
     }
 
     LOOP_U64_T(Board_WHITE_BISHOPS(board)){
-        Board_WHITE_PIECE(board, idx) = NCH_Bishop;
+        Board_PIECE(board, idx) = NCH_WBishop;
     }
     
     LOOP_U64_T(Board_WHITE_ROOKS(board)){
-        Board_WHITE_PIECE(board, idx) = NCH_Rook;
+        Board_PIECE(board, idx) = NCH_WRook;
     }
 
     LOOP_U64_T(Board_WHITE_QUEENS(board)){
-        Board_WHITE_PIECE(board, idx) = NCH_Queen;
+        Board_PIECE(board, idx) = NCH_WQueen;
     }
 
     LOOP_U64_T(Board_WHITE_KING(board)){
-        Board_WHITE_PIECE(board, idx) = NCH_King;
+        Board_PIECE(board, idx) = NCH_WKing;
     }
 
     LOOP_U64_T(Board_BLACK_PAWNS(board)){
-        Board_BLACK_PIECE(board, idx) = NCH_Pawn;
+        Board_PIECE(board, idx) = NCH_BPawn;
     }
 
     LOOP_U64_T(Board_BLACK_KNIGHTS(board)){
-        Board_BLACK_PIECE(board, idx) = NCH_Knight;
+        Board_PIECE(board, idx) = NCH_BKnight;
     }
 
     LOOP_U64_T(Board_BLACK_BISHOPS(board)){
-        Board_BLACK_PIECE(board, idx) = NCH_Bishop;
+        Board_PIECE(board, idx) = NCH_BBishop;
     }
     
     LOOP_U64_T(Board_BLACK_ROOKS(board)){
-        Board_BLACK_PIECE(board, idx) = NCH_Rook;
+        Board_PIECE(board, idx) = NCH_BRook;
     }
 
     LOOP_U64_T(Board_BLACK_QUEENS(board)){
-        Board_BLACK_PIECE(board, idx) = NCH_Queen;
+        Board_PIECE(board, idx) = NCH_BQueen;
     }
 
     LOOP_U64_T(Board_BLACK_KING(board)){
-        Board_BLACK_PIECE(board, idx) = NCH_King;
+        Board_PIECE(board, idx) = NCH_BKing;
     }
 }
 
@@ -116,19 +112,19 @@ reset_enpassant_variable(Board* board){
 
 NCH_STATIC_INLINE void
 set_board_occupancy(Board* board){
-    Board_OCC(board, NCH_White) = Board_BB(board, NCH_White, NCH_Pawn)
-                                | Board_BB(board, NCH_White, NCH_Knight)
-                                | Board_BB(board, NCH_White, NCH_Bishop)
-                                | Board_BB(board, NCH_White, NCH_Rook)
-                                | Board_BB(board, NCH_White, NCH_Queen)
-                                | Board_BB(board, NCH_White, NCH_King);
+    Board_OCC(board, NCH_White) = Board_BB(board, NCH_WPawn)
+                                | Board_BB(board, NCH_WKnight)
+                                | Board_BB(board, NCH_WBishop)
+                                | Board_BB(board, NCH_WRook)
+                                | Board_BB(board, NCH_WQueen)
+                                | Board_BB(board, NCH_WKing);
 
-    Board_OCC(board, NCH_Black) = Board_BB(board, NCH_Black, NCH_Pawn)
-                                | Board_BB(board, NCH_Black, NCH_Knight)
-                                | Board_BB(board, NCH_Black, NCH_Bishop)
-                                | Board_BB(board, NCH_Black, NCH_Rook)
-                                | Board_BB(board, NCH_Black, NCH_Queen)
-                                | Board_BB(board, NCH_Black, NCH_King);
+    Board_OCC(board, NCH_Black) = Board_BB(board, NCH_BPawn)
+                                | Board_BB(board, NCH_BKnight)
+                                | Board_BB(board, NCH_BBishop)
+                                | Board_BB(board, NCH_BRook)
+                                | Board_BB(board, NCH_BQueen)
+                                | Board_BB(board, NCH_BKing);
 
     Board_ALL_OCC(board) = Board_OCC(board, NCH_Black) 
                          | Board_OCC(board, NCH_White);

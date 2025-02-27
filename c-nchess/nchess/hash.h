@@ -20,7 +20,7 @@
 typedef struct BoardNode
 {
     int empty;
-    uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB];
+    uint64 bitboards[NCH_PIECE_NB];
     int count;
 
     struct BoardNode* next;
@@ -41,17 +41,17 @@ BoardDict_FreeExtra(BoardDict* dict);
 
 // Returns the count of a given position.
 int
-BoardDict_GetCount(const BoardDict* dict, const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]);
+BoardDict_GetCount(const BoardDict* dict, const uint64 bitboards[NCH_PIECE_NB]);
 
 // Adds a position to the dictionary. If the position already exists, increments
 // its counter by 1.
 int
-BoardDict_Add(BoardDict* dict, const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]);
+BoardDict_Add(BoardDict* dict, const uint64 bitboards[NCH_PIECE_NB]);
 
 // Removes a position from the dictionary. If the position exists, decrements
 // its counter by 1.
 int
-BoardDict_Remove(BoardDict* dict, const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]);
+BoardDict_Remove(BoardDict* dict, const uint64 bitboards[NCH_PIECE_NB]);
 
 // Deletes all linked lists outside the array and sets all nodes in the array to empty.
 // This function is equivalent to calling FreeExtra followed by Init.

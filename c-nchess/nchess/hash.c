@@ -12,26 +12,26 @@
 // Computes a hash key for a given board position using bitwise operations.
 // This function combines the bitboards for all pieces and sides into a single value.
 NCH_STATIC_INLINE int
-board_to_key(const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]){
-    uint64 maps = ~bitboards[NCH_White][NCH_Pawn]
-                ^ ~bitboards[NCH_White][NCH_Knight]
-                ^ ~bitboards[NCH_White][NCH_Bishop]
-                ^ ~bitboards[NCH_White][NCH_Rook]
-                ^ ~bitboards[NCH_White][NCH_Queen]
-                ^ ~bitboards[NCH_White][NCH_King]
-                ^ ~bitboards[NCH_Black][NCH_Pawn]
-                ^ ~bitboards[NCH_Black][NCH_Knight]
-                ^ ~bitboards[NCH_Black][NCH_Bishop]
-                ^ ~bitboards[NCH_Black][NCH_Rook]
-                ^ ~bitboards[NCH_Black][NCH_Queen]
-                ^ ~bitboards[NCH_Black][NCH_King];
+board_to_key(const uint64 bitboards[NCH_PIECE_NB]){
+    uint64 maps = ~bitboards[NCH_WPawn]
+                ^ ~bitboards[NCH_WKnight]
+                ^ ~bitboards[NCH_WBishop]
+                ^ ~bitboards[NCH_WRook]
+                ^ ~bitboards[NCH_WQueen]
+                ^ ~bitboards[NCH_WKing]
+                ^ ~bitboards[NCH_BPawn]
+                ^ ~bitboards[NCH_BKnight]
+                ^ ~bitboards[NCH_BBishop]
+                ^ ~bitboards[NCH_BRook]
+                ^ ~bitboards[NCH_BQueen]
+                ^ ~bitboards[NCH_BKing];
 
     return (int)(maps % NCH_BOARD_DICT_SIZE);
 }
 
 // Checks whether the given bitboards match the stored board node.
 NCH_STATIC_INLINE int
-is_same_board(const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB], const BoardNode* node){
+is_same_board(const uint64 bitboards[NCH_PIECE_NB], const BoardNode* node){
     return !memcmp(bitboards, node->bitboards, sizeof(node->bitboards));
 }
 
@@ -66,7 +66,7 @@ BoardDict_FreeExtra(BoardDict* dict){
 
 // Retrieves the count of a given board position.
 int
-BoardDict_GetCount(const BoardDict* dict, const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]){
+BoardDict_GetCount(const BoardDict* dict, const uint64 bitboards[NCH_PIECE_NB]){
     int idx = board_to_key(bitboards);
     const BoardNode* node = dict->nodes + idx;
     if (node->empty)
@@ -85,7 +85,7 @@ BoardDict_GetCount(const BoardDict* dict, const uint64 bitboards[NCH_SIDES_NB][N
 
 // Adds a board position to the dictionary.
 int
-BoardDict_Add(BoardDict* dict, const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]){
+BoardDict_Add(BoardDict* dict, const uint64 bitboards[NCH_PIECE_NB]){
     int idx = board_to_key(bitboards);
     BoardNode* node = dict->nodes + idx;
     if (!node->empty){
@@ -117,7 +117,7 @@ BoardDict_Add(BoardDict* dict, const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB
 
 // Removes a board position from the dictionary.
 int
-BoardDict_Remove(BoardDict* dict, const uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB]){
+BoardDict_Remove(BoardDict* dict, const uint64 bitboards[NCH_PIECE_NB]){
     int idx = board_to_key(bitboards);
     BoardNode* node = dict->nodes + idx;
     if (node->empty)

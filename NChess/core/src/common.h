@@ -58,7 +58,7 @@ pyobject_as_piece(PyObject* p){
         PyErr_Format(PyExc_ValueError,
         "piece expected to be an int. got %s",
         Py_TYPE(p)->tp_name);
-        return NCH_NO_PIECE;
+        return NCH_NO_PIECE_TYPE;
     }
     return (PieceType)PyLong_AsUnsignedLong(p);
 }

@@ -201,7 +201,7 @@ NCH_STATIC_INLINE void
 board2tensor(Board* board, int* tensor, int reversed){
     int i = 0;
     for (Side s = 0; s < NCH_SIDES_NB; s++){
-        for (PieceType p = 0; p < NCH_PIECE_NB; p++){
+        for (PieceType p = 0; p < NCH_PIECE_TYPE_NB; p++){
             bb2array(Board_BB(board, s, p), tensor + i * NCH_SQUARE_NB, reversed);
             i++;
         }
@@ -213,7 +213,7 @@ board_as_array(PyObject* self, PyObject* args, PyObject* kwargs) {
     int reversed = 0;
     int as_list = 0;
 
-    int nitems = NCH_SIDES_NB * NCH_PIECE_NB * NCH_SQUARE_NB;
+    int nitems = NCH_SIDES_NB * NCH_PIECE_TYPE_NB * NCH_SQUARE_NB;
     npy_intp dims[NPY_MAXDIMS];
     int ndim = parse_array_conversion_function_args(nitems, dims, args, kwargs, &reversed, &as_list);
 
@@ -223,12 +223,12 @@ board_as_array(PyObject* self, PyObject* args, PyObject* kwargs) {
 
     if (!ndim){
         ndim = 2;
-        dims[0] = NCH_SIDES_NB * NCH_PIECE_NB;
+        dims[0] = NCH_SIDES_NB * NCH_PIECE_TYPE_NB;
         dims[1] = NCH_SQUARE_NB;
     }
     
     if (as_list){
-        int data[NCH_SIDES_NB * NCH_PIECE_NB * NCH_SQUARE_NB];
+        int data[NCH_SIDES_NB * NCH_PIECE_TYPE_NB * NCH_SQUARE_NB];
         board2tensor(BOARD(self), data, reversed);
         return create_list_array(data, dims, ndim);
     }
@@ -257,20 +257,20 @@ board_as_array(PyObject* self, PyObject* args, PyObject* kwargs) {
 NCH_STATIC_INLINE void
 board2table(Board* board, int* table, int reversed){
     #define TABLE_ITEM(board, idx, default)\
-    Board_WHITE_PIECE(board, idx) != NCH_NO_PIECE\
-    ? Board_WHITE_PIECE(board, idx) + NCH_White * NCH_PIECE_NB\
-    : Board_BLACK_PIECE(board, idx) != NCH_NO_PIECE\
-    ? Board_BLACK_PIECE(board, idx) + NCH_Black * NCH_PIECE_NB\
+    Board_WHITE_PIECE(board, idx) != NCH_NO_PIECE_TYPE\
+    ? Board_WHITE_PIECE(board, idx) + NCH_White * NCH_PIECE_TYPE_NB\
+    : Board_BLACK_PIECE(board, idx) != NCH_NO_PIECE_TYPE\
+    ? Board_BLACK_PIECE(board, idx) + NCH_Black * NCH_PIECE_TYPE_NB\
     : default
 
     if (reversed){
         for (Square s = 0; s < NCH_SQUARE_NB; s++){
-            table[NCH_SQUARE_NB - 1 - s] = TABLE_ITEM(board, s, NCH_PIECE_NB * NCH_SIDES_NB);
+            table[NCH_SQUARE_NB - 1 - s] = TABLE_ITEM(board, s, NCH_PIECE_TYPE_NB * NCH_SIDES_NB);
         }
     }
     else{
         for (Square s = 0; s < NCH_SQUARE_NB; s++){
-            table[s] = TABLE_ITEM(board, s, NCH_PIECE_NB * NCH_SIDES_NB);
+            table[s] = TABLE_ITEM(board, s, NCH_PIECE_TYPE_NB * NCH_SIDES_NB);
         }
     }    
 }
@@ -339,11 +339,11 @@ board_on_square(PyObject* self, PyObject* args){
     }
 
     PieceType p = Board_ON_SQUARE(BOARD(self), sqr);
-    if (p == NCH_NO_PIECE)
-        return PyLong_FromLong(NCH_PIECE_NB * 2);
+    if (p == NCH_NO_PIECE_TYPE)
+        return PyLong_FromLong(NCH_PIECE_TYPE_NB * 2);
 
     Side side = Board_OWNED_BY(BOARD(self), sqr);
-    int piece = side * NCH_PIECE_NB + p;
+    int piece = side * NCH_PIECE_TYPE_NB + p;
 
     return piece_to_pyobject(piece);
 }
@@ -523,7 +523,7 @@ board_find(PyObject* self, PyObject* args, PyObject* kwargs){
     }
 
     PieceType p = pyobject_as_piece(p_obj);
-    if (p == NCH_NO_PIECE)
+    if (p == NCH_NO_PIECE_TYPE)
         return NULL;
 
     Side side = Board_SIDE(BOARD(self));

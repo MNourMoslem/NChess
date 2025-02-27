@@ -55,11 +55,10 @@ reset_castle_rights(Board* board){
 
 NCH_STATIC_FINLINE void
 update_check(Board* board){
-    Side side = Board_SIDE(board);
     uint64 check_map = get_checkmap(
         board,
-        side,
-        NCH_SQRIDX(Board_BB(board, side, NCH_King)),
+        Board_SIDE(board),
+        NCH_SQRIDX( Board_PLY_BB(board, NCH_King) ),
         Board_ALL_OCC(board)
     );
 

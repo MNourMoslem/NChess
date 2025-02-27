@@ -174,4 +174,14 @@ str_to_square(const char* sq_str){
     return (Square)(col + 8 * row);
 }
 
+NCH_STATIC_INLINE int
+is_valid_piece(Piece p){
+    return p >= NCH_Pawn && p <= NCH_King;
+}
+
+NCH_STATIC_INLINE int
+is_valid_side(Side s){
+    return s == NCH_White || s == NCH_Black;
+}
+
 #endif

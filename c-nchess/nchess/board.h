@@ -38,9 +38,9 @@
 */
 typedef struct
 {
-    uint64 bitboards[NCH_SIDES_NB][NCH_PIECE_NB];    // bitboards for each piece type
-    uint64 occupancy[NCH_SIDES_NB + 1];              // occupancy bitboards for each
-                                                     // side and both sides
+    uint64 bitboards[NCH_PIECE_NB];         // bitboards for each piece type
+    uint64 occupancy[NCH_SIDES_NB + 1];     // occupancy bitboards for each
+                                            // side and both sides
     
     // piece table for each side.
     // The table is an array of size NCH_SQUARE_NB
@@ -48,7 +48,7 @@ typedef struct
     // and the value at that index represents the piece on that square
     // This is useful to retrieve the piece on a square quickly instead of
     // searching through the bitboards.
-    PieceType piecetables[NCH_SIDES_NB][NCH_SQUARE_NB];  
+    Piece piecetables[NCH_SQUARE_NB];  
 
     // stores all variables that gets copied when a step is taken 
     // like flags, castle rights, etc.
@@ -78,29 +78,24 @@ typedef struct
 #define Board_BLACK_OCC(board) Board_OCC(board, NCH_Black)
 #define Board_ALL_OCC(board) Board_OCC(board, NCH_SIDES_NB)
 
-#define Board_WHITE_TABLE(board) (board)->piecetables[NCH_White]
-#define Board_BLACK_TABLE(board) (board)->piecetables[NCH_Black]
-
 #define Board_BBS_PTR(board) (board)->bitboards
-#define Board_BB(board, side, piece) Board_BBS_PTR(board)[side][piece]
+#define Board_BB(board, piece) Board_BBS_PTR(board)[piece]
 
-#define Board_WHITE_PAWNS(board) Board_BB(board, NCH_White, NCH_Pawn)
-#define Board_WHITE_KNIGHTS(board) Board_BB(board, NCH_White, NCH_Knight)
-#define Board_WHITE_BISHOPS(board) Board_BB(board, NCH_White, NCH_Bishop)
-#define Board_WHITE_ROOKS(board) Board_BB(board, NCH_White, NCH_Rook)
-#define Board_WHITE_QUEENS(board) Board_BB(board, NCH_White, NCH_Queen)
-#define Board_WHITE_KING(board) Board_BB(board, NCH_White, NCH_King)
+#define Board_WHITE_PAWNS(board) Board_BB(board, NCH_WPawn)
+#define Board_WHITE_KNIGHTS(board) Board_BB(board, NCH_WKnight)
+#define Board_WHITE_BISHOPS(board) Board_BB(board, NCH_WBishop)
+#define Board_WHITE_ROOKS(board) Board_BB(board, NCH_WRook)
+#define Board_WHITE_QUEENS(board) Board_BB(board, NCH_WQueen)
+#define Board_WHITE_KING(board) Board_BB(board, NCH_WKing)
 
-#define Board_BLACK_PAWNS(board) Board_BB(board, NCH_Black, NCH_Pawn)
-#define Board_BLACK_KNIGHTS(board) Board_BB(board, NCH_Black, NCH_Knight)
-#define Board_BLACK_BISHOPS(board) Board_BB(board, NCH_Black, NCH_Bishop)
-#define Board_BLACK_ROOKS(board) Board_BB(board, NCH_Black, NCH_Rook)
-#define Board_BLACK_QUEENS(board) Board_BB(board, NCH_Black, NCH_Queen)
-#define Board_BLACK_KING(board) Board_BB(board, NCH_Black, NCH_King)
+#define Board_BLACK_PAWNS(board) Board_BB(board, NCH_BPawn)
+#define Board_BLACK_KNIGHTS(board) Board_BB(board, NCH_BKnight)
+#define Board_BLACK_BISHOPS(board) Board_BB(board, NCH_BBishop)
+#define Board_BLACK_ROOKS(board) Board_BB(board, NCH_BRook)
+#define Board_BLACK_QUEENS(board) Board_BB(board, NCH_BQueen)
+#define Board_BLACK_KING(board) Board_BB(board, NCH_BKing)
 
-#define Board_PIECE(board, side, idx) (board)->piecetables[side][idx]
-#define Board_WHITE_PIECE(board, idx) Board_PIECE(board, NCH_White, idx)
-#define Board_BLACK_PIECE(board, idx) Board_PIECE(board, NCH_Black, idx)
+#define Board_PIECE(board, idx) (board)->piecetables[idx]
 
 #define Board_INFO(board) (board)->info
 
@@ -122,13 +117,14 @@ typedef struct
 #define Board_CASTLE_SQUARES(board, sqr) (board)->castle_squares[sqr]
 
 // returns the piece on the square idx
-#define Board_ON_SQUARE(board, idx) Board_WHITE_PIECE(board, idx) != NCH_NO_PIECE ?\
-                                    Board_WHITE_PIECE(board, idx) : Board_BLACK_PIECE(board, idx)
+#define Board_ON_SQUARE(board, idx) Board_PIECE(board, idx)
 
 // returns the side that owns the piece on the square idx
-#define Board_OWNED_BY(board, idx) Board_WHITE_PIECE(board, idx) != NCH_NO_PIECE ?\
-                                   NCH_White : Board_BLACK_PIECE(board, idx) != NCH_NO_PIECE ?\
-                                   NCH_Black : NCH_NO_SIDE;
+#define Board_OWNED_BY(board, idx) Piece_SIDE(Board_ON_SQUARE(board, idx))
+
+#define Board_BB_BYTYPE(board, side, piece_type) Board_BB(board, PieceType_PIECE(side, piece_type))
+#define Board_PLY_BB(board, piece_type) Board_BB_BYTYPE(board, Board_SIDE(board), piece_type)
+#define Board_OP_BB(board, piece_type) Board_BB_BYTYPE(board, Board_OP_SIDE(board), piece_type)
 
 
 /*

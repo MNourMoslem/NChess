@@ -70,7 +70,7 @@ Move_FromString(const char* move_str){
         type = MoveType_Normal;
     }
 
-    return Move_New(from_, to_, promotion_piece, type);
+    return Move_New(from_, to_, type, promotion_piece);
 }
 
 Move

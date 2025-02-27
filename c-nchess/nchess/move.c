@@ -27,7 +27,7 @@ Move_New(Square from_, Square to_, MoveType type, Piece promotion_piece){
     if (promotion_piece <= NCH_Pawn || promotion_piece >= NCH_King)
         promotion_piece = 1;
 
-    if (type <= MoveType_Normal || type >= MoveType_Castle)
+    if (!MoveType_IsValid(type))
         type = MoveType_Normal;
 
     if (!is_valid_square(from_) || !is_valid_square(to_))
@@ -71,6 +71,18 @@ Move_FromString(const char* move_str){
     }
 
     return Move_New(from_, to_, promotion_piece, type);
+}
+
+Move
+Move_FromStringAndType(const char* move_str, MoveType type){
+    Move move = Move_FromString(move_str);
+    if (move != Move_NULL){
+        if (!MoveType_IsValid(type))
+            return Move_NULL;
+
+        move = Move_REASSAGIN_TYPE(move, type);
+    }
+    return move;
 }
 
 int

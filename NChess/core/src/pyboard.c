@@ -62,11 +62,12 @@ PyBoard_New(PyTypeObject *self, PyObject *args, PyObject *kwargs){
         return NULL;
     }
 
-    PyBoard* pyb = PyObject_New(PyBoard, &PyBoardType);
+    PyBoard* pyb = (PyBoard*)self->tp_alloc(self, 0);
     if (pyb == NULL) {
         PyErr_NoMemory();
         return NULL;
     }
+
     if (fen){
         pyb->board = Board_NewFen(fen);
         if (!pyb->board){
@@ -74,14 +75,13 @@ PyBoard_New(PyTypeObject *self, PyObject *args, PyObject *kwargs){
             PyErr_SetString(PyExc_ValueError ,"could not read the fen");
             return NULL;
         }
-        return (PyObject*)pyb;
     }
-
-    pyb->board = Board_New();
-
-    if (!pyb->board){
-        Py_DECREF(pyb);
-        return NULL;
+    else{
+        pyb->board = Board_New();    
+        if (!pyb->board){
+            Py_DECREF(pyb);
+            return NULL;
+        }
     }
 
     return (PyObject*)pyb;
@@ -339,7 +339,13 @@ board_on_square(PyObject* self, PyObject* args){
     }
 
     Piece p = Board_ON_SQUARE(BOARD(self), sqr);
-    return piece_to_pyobject(p);
+    if (p == NCH_NO_PIECE)
+        return PyLong_FromLong(NCH_PIECE_NB * 2);
+
+    Side side = Board_OWNED_BY(BOARD(self), sqr);
+    int piece = side * NCH_PIECE_NB + p;
+
+    return piece_to_pyobject(piece);
 }
 
 PyObject*
@@ -490,7 +496,7 @@ board_copy(PyObject* self, PyObject* args){
 }
 
 PyObject*
-board_state(PyObject* self, PyObject* args, PyObject* kwargs){
+board_get_game_state(PyObject* self, PyObject* args, PyObject* kwargs){
     int can_move;
     static char* kwlist[] = {"can_move", NULL};
 
@@ -629,8 +635,8 @@ NCH_STATIC PyMethodDef methods[] = {
       METH_NOARGS,
       NULL},
 
-    {"state",
-     (PyCFunction)board_state,
+    {"get_game_state",
+     (PyCFunction)board_get_game_state,
       METH_VARARGS | METH_KEYWORDS,
       NULL},
 
@@ -763,27 +769,27 @@ board_en_passant_square(PyObject* self, void* something){
 }
 
 NCH_STATIC PyGetSetDef getset[] = {
-    {"white_pawns", (getter)board_get_white_pawns, NULL, NULL, NULL},
-    {"black_pawns", (getter)board_get_black_pawns, NULL, NULL, NULL},
-    {"white_knights", (getter)board_get_white_knights, NULL, NULL, NULL},
-    {"black_knights", (getter)board_get_black_knights, NULL, NULL, NULL},
-    {"white_bishops", (getter)board_get_white_bishops, NULL, NULL, NULL},
-    {"black_bishops", (getter)board_get_black_bishops, NULL, NULL, NULL},
-    {"white_rooks", (getter)board_get_white_rooks, NULL, NULL, NULL},
-    {"black_rooks", (getter)board_get_black_rooks, NULL, NULL, NULL},
-    {"white_queens", (getter)board_get_white_queens, NULL, NULL, NULL},
-    {"black_queens", (getter)board_get_black_queens, NULL, NULL, NULL},
-    {"white_king", (getter)board_get_white_king, NULL, NULL, NULL},
-    {"black_king", (getter)board_get_black_king, NULL, NULL, NULL},
-    {"white_occ", (getter)board_get_white_occ, NULL, NULL, NULL},
-    {"black_occ", (getter)board_get_black_occ, NULL, NULL, NULL},
-    {"all_occ", (getter)board_get_all_occ, NULL, NULL, NULL},
-    {"castles", (getter)board_castles, NULL, NULL, NULL},
-    {"castles_str", (getter)board_castles_str, NULL, NULL, NULL},
-    {"nmoves", (getter)board_nmoves, NULL, NULL, NULL},
-    {"fifty_counter", (getter)board_fifty_counter, NULL, NULL, NULL},
+    {"white_pawns"   , (getter)board_get_white_pawns  , NULL, NULL, NULL},
+    {"black_pawns"   , (getter)board_get_black_pawns  , NULL, NULL, NULL},
+    {"white_knights" , (getter)board_get_white_knights, NULL, NULL, NULL},
+    {"black_knights" , (getter)board_get_black_knights, NULL, NULL, NULL},
+    {"white_bishops" , (getter)board_get_white_bishops, NULL, NULL, NULL},
+    {"black_bishops" , (getter)board_get_black_bishops, NULL, NULL, NULL},
+    {"white_rooks"   , (getter)board_get_white_rooks  , NULL, NULL, NULL},
+    {"black_rooks"   , (getter)board_get_black_rooks  , NULL, NULL, NULL},
+    {"white_queens"  , (getter)board_get_white_queens , NULL, NULL, NULL},
+    {"black_queens"  , (getter)board_get_black_queens , NULL, NULL, NULL},
+    {"white_king"    , (getter)board_get_white_king   , NULL, NULL, NULL},
+    {"black_king"    , (getter)board_get_black_king   , NULL, NULL, NULL},
+    {"white_occ"     , (getter)board_get_white_occ    , NULL, NULL, NULL},
+    {"black_occ"     , (getter)board_get_black_occ    , NULL, NULL, NULL},
+    {"all_occ"       , (getter)board_get_all_occ      , NULL, NULL, NULL},
+    {"castles"       , (getter)board_castles          , NULL, NULL, NULL},
+    {"castles_str"   , (getter)board_castles_str      , NULL, NULL, NULL},
+    {"nmoves"        , (getter)board_nmoves           , NULL, NULL, NULL},
+    {"fifty_counter" , (getter)board_fifty_counter    , NULL, NULL, NULL},
     {"en_passant_sqr", (getter)board_en_passant_square, NULL, NULL, NULL},
-    {NULL, NULL, NULL, NULL, NULL}
+    {NULL            , NULL                           , NULL, NULL, NULL}
 };
 
 PyTypeObject PyBoardType = {

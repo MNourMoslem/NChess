@@ -5,13 +5,13 @@ PyObject*
 square_from_uci(PyObject* self, PyObject* args){
     char* s_str;
     if (!PyArg_ParseTuple(args, "s", &s_str)){
-        if (!PyErr_Occurred){
+        if (!PyErr_Occurred()){
             PyErr_SetString(PyExc_ValueError, "failed to parse the arguments to get the square from uci");
         }
         return NULL;
     }
 
-    Square sqr = str_to_square(s_str);
+    Square sqr = unicode_to_square(s_str);
     if (sqr == NCH_NO_SQR){
         if (!PyErr_Occurred()){
             PyErr_SetString(PyExc_ValueError, "failed to convert string to square");
@@ -23,26 +23,27 @@ square_from_uci(PyObject* self, PyObject* args){
 }
 
 PyObject*
-square_file(PyObject* self, PyObject* args){
+square_column(PyObject* self, PyObject* args){
     PyObject* s;
     if (!PyArg_ParseTuple(args, "O", &s)){
         PyErr_SetString(PyExc_ValueError, "failed to parse the arguments to get the file of a square");
         return NULL;
     }
-
+    
     Square sqr = pyobject_as_square(s);
-    if (!is_valid_square(sqr)){
-        if (PyErr_Occurred())
-            return NULL;
-
-        Py_RETURN_NONE;
+    if (sqr == NCH_NO_SQR){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(PyExc_ValueError, "cant not return the column of a NO_SQUARE");
+        }
+        return NULL;
     }
 
-    return PyLong_FromLong(NCH_GET_COLIDX(sqr));
+    int column = NCH_GET_COLIDX(sqr);
+    return PyLong_FromLong(column);
 }
 
 PyObject*
-square_rank(PyObject* self, PyObject* args){
+square_row(PyObject* self, PyObject* args){
     PyObject* s;
     if (!PyArg_ParseTuple(args, "O", &s)){
         PyErr_SetString(PyExc_ValueError, "failed to parse the arguments to get the rank of a square");
@@ -50,34 +51,46 @@ square_rank(PyObject* self, PyObject* args){
     }
 
     Square sqr = pyobject_as_square(s);
-    if (!is_valid_square(sqr)){
-        if (PyErr_Occurred())
-            return NULL;
-
-        Py_RETURN_NONE;
+    if (sqr == NCH_NO_SQR){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(PyExc_ValueError, "cant not return the row of a NO_SQUARE");
+        }
+        return NULL;
     }
 
-    return PyLong_FromLong(NCH_GET_ROWIDX(sqr));
+    int row = NCH_GET_ROWIDX(sqr);
+    return PyLong_FromLong(row);
 }
 
 PyObject*
 square_distance(PyObject* self, PyObject* args){
     PyObject* s1, *s2;
     if (!PyArg_ParseTuple(args, "OO", &s1, &s2)){
-        PyErr_SetString(PyExc_ValueError, "failed to parse the arguments to calculate the distance between two squares");
+        PyErr_SetString(
+            PyExc_ValueError,
+            "failed to parse the arguments to calculate the distance between two squares"
+        );
         return NULL;
     }
 
     Square sqr1 = pyobject_as_square(s1);
-    Square sqr2 = pyobject_as_square(s2);
-    if (!is_valid_square(sqr1) || !is_valid_square(sqr2)){
-        if (PyErr_Occurred())
-            return NULL;
-
-        Py_RETURN_NONE;
+    if (sqr1 == NCH_NO_SQR){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(PyExc_ValueError, "s1 can't be a NO_SQUARE");
+        }
+        return NULL;
     }
 
-    return PyLong_FromLong(NCH_SQR_DISTANCE(sqr1, sqr2));
+    Square sqr2 = pyobject_as_square(s2);
+    if (sqr2 == NCH_NO_SQR){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(PyExc_ValueError, "s2 can't be a NO_SQUARE");
+        }
+        return NULL;
+    }
+
+    int distance = NCH_SQR_DISTANCE(sqr1, sqr2);
+    return PyLong_FromLong(distance);
 }
 
 PyObject*
@@ -91,11 +104,11 @@ square_mirror(PyObject* self, PyObject* args, PyObject* kwargs){
     }
 
     Square sqr = pyobject_as_square(s);
-    if (!is_valid_square(sqr)){
-        if (PyErr_Occurred())
-            return NULL;
-
-        Py_RETURN_NONE;
+    if (sqr == NCH_NO_SQR){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(PyExc_ValueError, "can't return the mirror of a NO_SQUARE");
+        }
+        return NULL;
     }
 
     Square mirror = is_vertical ? NCH_SQR_MIRROR_V(sqr)

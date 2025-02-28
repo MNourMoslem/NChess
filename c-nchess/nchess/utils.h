@@ -167,12 +167,14 @@ str_to_square(const char* sq_str){
     int col = char_to_col(col_char);
     int row = char_to_row(row_char);
 
-    return (Square)(col + 8 * row);
+    Square sqr = col + 8 * row;
+
+    return sqr;
 }
 
 NCH_STATIC_INLINE int
-is_valid_piece(PieceType p){
-    return p >= NCH_Pawn && p <= NCH_King;
+is_valid_piece(Piece p){
+    return p >= NCH_NO_PIECE && p < NCH_PIECE_NB;
 }
 
 NCH_STATIC_INLINE int

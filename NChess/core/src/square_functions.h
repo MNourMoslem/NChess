@@ -6,8 +6,8 @@
 #include "nchess/move.h"
 
 PyObject* square_from_uci(PyObject* self, PyObject* args);
-PyObject* square_file(PyObject* self, PyObject* args);
-PyObject* square_rank(PyObject* self, PyObject* args);
+PyObject* square_column(PyObject* self, PyObject* args);
+PyObject* square_row(PyObject* self, PyObject* args);
 PyObject* square_distance(PyObject* self, PyObject* args);
 PyObject* square_mirror(PyObject* self, PyObject* args, PyObject* kwargs);
 

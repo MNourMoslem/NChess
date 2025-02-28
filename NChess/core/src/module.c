@@ -15,8 +15,8 @@
 // Method definitions
 static PyMethodDef nchess_core_methods[] = {
     {"square_from_uci"   , (PyCFunction)square_from_uci  , METH_VARARGS                , NULL},
-    {"square_file"       , (PyCFunction)square_file      , METH_VARARGS                , NULL},
-    {"square_rank"       , (PyCFunction)square_rank      , METH_VARARGS                , NULL},
+    {"square_column"     , (PyCFunction)square_column    , METH_VARARGS                , NULL},
+    {"square_row"        , (PyCFunction)square_row       , METH_VARARGS                , NULL},
     {"square_distance"   , (PyCFunction)square_distance  , METH_VARARGS                , NULL},
     {"square_mirror"     , (PyCFunction)square_mirror    , METH_VARARGS | METH_KEYWORDS, NULL},
 

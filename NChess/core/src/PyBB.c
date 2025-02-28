@@ -1,5 +1,5 @@
 #include "bb_functions.h"
-#include "PyBB.h"
+#include "pybb.h"
 #include "array_conversion.h"
 #include "common.h"
 

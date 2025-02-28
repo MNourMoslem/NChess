@@ -1,7 +1,7 @@
 #include "common.h"
 #include "array_conversion.h"
 #include "bb_functions.h"
-#include "PyBB.h"
+#include "pybb.h"
 
 #include "nchess/bit_operations.h"
 

@@ -212,6 +212,7 @@ PyMethodDef bitboard_methods[] = {
     {"to_squares"   , (PyCFunction)bb_to_squares   , METH_NOARGS                 , NULL},
     {"set_square"   , (PyCFunction)bb_set_square   , METH_VARARGS | METH_KEYWORDS, NULL},
     {"remove_square", (PyCFunction)bb_remove_square, METH_VARARGS | METH_KEYWORDS, NULL},
+    {NULL           , NULL                         , 0                           , NULL},
 };
 
 NCH_STATIC PyObject*

@@ -73,4 +73,5 @@ PyGetSetDef pymove_getset[] = {
     {"is_castle"   , (getter)get_is_castle    , NULL, NULL, NULL},
     {"is_promotion", (getter)get_is_promotion , NULL, NULL, NULL},
     {"is_valid"    , (getter)get_is_valid     , NULL, NULL, NULL},
+    {NULL          , NULL                     , NULL, NULL, NULL},
 };

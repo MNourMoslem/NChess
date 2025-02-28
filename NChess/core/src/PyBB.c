@@ -10,7 +10,16 @@
 #include <Python.h>
 
 PyBitBoard* PyBitBoard_FromUnsignedLongLong(unsigned long long value){
-    return (PyBitBoard*)PyObject_CallFunction((PyObject *)&PyBitBoardType, "K", value);
+    PyObject* obj = PyLong_FromUnsignedLongLong(value);
+    if (!obj){
+        PyErr_SetString(
+            PyExc_ValueError,
+            "Falied to create a bitboard object"
+        );
+        return NULL;
+    }
+    obj->ob_type = &PyBitBoardType;
+    return obj;
 }
 
 NCH_STATIC PyObject*

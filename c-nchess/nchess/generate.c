@@ -387,7 +387,8 @@ Board_GeneratePseudoMovesOf(Board* board, Move* moves, Square sqr){
         moves = generate_king_moves(board, moves);
     }
     else{
-        moves = generate_any_move(board, sqr, NCH_UINT64_MAX, moves);
+        uint64 allowed_square = ~Board_OCC(board, Board_SIDE(board));
+        moves = generate_any_move(board, sqr, allowed_square, moves);
     }
 
     int len = (int)(moves - begin);

@@ -17,6 +17,10 @@ typedef enum {
     MoveType_Promotion,
     MoveType_EnPassant,
     MoveType_Castle,
+
+    MoveType_NB,
+
+    MoveType_Null = -1,
 } MoveType;
 
 #define MoveType_IsValid(type) (type >= MoveType_Normal && type <= MoveType_Castle)

@@ -5,7 +5,16 @@
 
 PyMove*
 PyMove_FromMove(Move move){
-    return (PyMove*)PyObject_CallFunction((PyObject*)&PyMoveType, "K", move);
+    PyObject* obj = PyLong_FromUnsignedLong(move);
+    if (!obj){
+        PyErr_SetString(
+            PyExc_ValueError,
+            "Falied to create a move object"
+        );
+        return NULL;
+    }
+    obj->ob_type = &PyMoveType;
+    return obj;
 }
 
 PyObject*
@@ -20,29 +29,16 @@ PyMove_FromUCI(PyObject* self, PyObject* args, PyObject* kwargs){
         return NULL;
     }
 
-    Move move = Move_FromString(uci);;
-    if (move_type && !Py_IsNone(move_type)){
-        if (!PyLong_Check(move_type)){
-            PyErr_Format(
-                PyExc_ValueError,
-                 "type expected to be int or None. got %s",
-                Py_TYPE(move_type)->tp_name
-            );
+    Move move = pyobject_as_move(uci);                        
+    if (PyErr_Occurred())
+        return NULL;
+    
+    if (move_type){
+        MoveType mt = pyobject_as_move_type(move_type);
+        if (mt == MoveType_Null)
             return NULL;
-        }
-
-        MoveType mt = (MoveType)PyLong_AsLong(move_type);
-        if (!MoveType_IsValid(mt)){
-            PyErr_SetString(PyExc_ValueError, "invalid move type");
-            return NULL;
-        }
 
         move = Move_REASSAGIN_TYPE(move, mt);
-    }
-
-    if (move == Move_NULL){
-        PyErr_SetString(PyExc_ValueError, "invalid move");
-        return NULL;
     }
 
     return (PyObject*)PyMove_FromMove(move);
@@ -51,10 +47,10 @@ PyMove_FromUCI(PyObject* self, PyObject* args, PyObject* kwargs){
 PyObject*
 PyMove_FromArgs(PyObject* self, PyObject* args, PyObject* kwargs){
     PyObject *from_, *to_;
-    PieceType promote = NCH_NO_PIECE_TYPE;
-    MoveType type = MoveType_Normal;
+    PyObject * promote = NULL;
+    PyObject * type = NULL;
     static char* kwlist[] = {"from_", "to_", "promote", "type", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO|II", kwlist, &from_, &to_, &promote, &type)){
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO|OO", kwlist, &from_, &to_, &promote, &type)){
         if (!PyErr_Occurred()){
             PyErr_SetString(PyExc_ValueError, "failed to parse the arguments");
         }
@@ -62,9 +58,48 @@ PyMove_FromArgs(PyObject* self, PyObject* args, PyObject* kwargs){
     }
 
     Square f = pyobject_as_square(from_);
-    Square t = pyobject_as_square(to_);
+    if (f == NCH_NO_SQR){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(
+                PyExc_ValueError,
+                "from_ square must be a valid square from 0 to 63 and can't be None"
+            );
+        }
+        return NULL;
+    }
 
-    Move move = Move_New(f, t, promote, type);
+    Square t = pyobject_as_square(to_);
+    if (t == NCH_NO_SQR){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(
+                PyExc_ValueError,
+                "to_ square must be a valid square from 0 to 63 and can't be None"
+            );
+        }
+        return NULL;
+    }
+
+    PieceType pt;
+    if (promote){
+        pt = pyobject_as_piece_type(promote);
+        if (PyErr_Occurred())
+            return NULL;
+    }
+    else{
+        pt = NCH_NO_PIECE_TYPE;
+    }
+
+    MoveType mt;
+    if (type){
+        mt = pyobject_as_move_type(type);
+        if (mt == MoveType_Null)
+            return NULL;
+    }
+    else{
+        mt = MoveType_Normal;
+    }
+
+    Move move = Move_New(f, t, pt, mt);
     if (move == Move_NULL){
         PyErr_SetString(PyExc_ValueError, "invalid move");
         return NULL;

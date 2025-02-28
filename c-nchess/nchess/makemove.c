@@ -251,12 +251,13 @@ Board_Undo(Board* board){
 
 int
 Board_GetMovesOf(Board* board, Square s, Move* moves){
-    Move pseudo_moves[30];
+    Move pseudo_moves[30], m;
     int n = Board_GeneratePseudoMovesOf(board, pseudo_moves, s);
     int nmoves = 0;
     for (int i = 0; i < n; i++){
-        if (is_move_legal(board, pseudo_moves[i])){
-            moves[nmoves++] = pseudo_moves[i];
+        m = pseudo_moves[i];
+        if (is_move_legal(board, m)){
+            moves[nmoves++] = m;
         }
     }
 

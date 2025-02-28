@@ -472,7 +472,7 @@ class Board:
         Converts the board into an array representation where each bitboard is expanded into an array.
 
         Parameters:
-            shape (Sequence[int], optional): The shape of the returned array. Defaults to (64, 12),
+            shape (Sequence[int], optional): The shape of the returned array. Defaults to (12, 64),
                 where each of the 12 bitboards is represented as a 64-length array.
             reversed (bool, optional): If True, each bitboard is read in reverse.
             as_list (bool, optional): If True, returns a Python list instead of a NumPy array.
@@ -677,27 +677,27 @@ def square_from_uci(uci: str) -> int:
     """ 
     ...
 
-def square_file(square: str | int) -> int:
+def square_column(square: str | int) -> int:
     """
-    Retrieves the file (column) of a given square.
+    Retrieves the column (column) of a given square.
 
     Parameters:
         square (str | int): The target square, given as a UCI string (e.g., "e4") or an index (0-63).
 
     Returns:
-        int: The file of the square (0-7), where 0 represents file 'a' and 7 represents file 'h'.
+        int: The column of the square (0-7), where 0 represents column 'h' and 7 represents column 'a'.
     """
     ...
 
-def square_rank(square: str | int) -> int:
+def square_row(square: str | int) -> int:
     """
-    Retrieves the rank (row) of a given square.
+    Retrieves the row (row) of a given square.
 
     Parameters:
         square (str | int): The target square, given as a UCI string (e.g., "e4") or an index (0-63).
 
     Returns:
-        int: The rank of the square (0-7), where 0 represents rank '1' and 7 represents rank '8'.
+        int: The row of the square (0-7), where 0 represents row '1' and 7 represents row '8'.
     """
     ...
 

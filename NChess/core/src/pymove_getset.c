@@ -54,14 +54,10 @@ get_is_promotion(PyObject* self, void* something){
 PyObject*
 get_is_valid(PyObject* self, void* something){
     Move move = (Move)PyLong_AsUnsignedLong(self);
-    Square from_ = Move_FROM(move);
-    Square to_ = Move_TO(move);
-
-    if (!is_valid_square(from_) || !is_valid_square(to_))
+    if (Move_IsValidSquares(move))
         Py_RETURN_FALSE;
     Py_RETURN_TRUE;
 }
-
 
 PyGetSetDef pymove_getset[] = {
     {"from_"       , (getter)get_from_sqr     , NULL, NULL, NULL},

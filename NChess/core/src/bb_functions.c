@@ -206,6 +206,66 @@ BB_FromArray(PyObject* self, PyObject* args, PyObject* kwargs) {
 }
 
 PyObject*
+BB_FromSquares(PyObject* self, PyObject* args, PyObject* kwargs){
+    PyObject* sequence;
+    static char* kwlist[] = {"squares", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &sequence)) {
+        PyErr_SetString(PyExc_ValueError, "Failed to parse the arguments");
+        return NULL;
+    }
+
+    if (!PySequence_Check(sequence)){
+        PyErr_Format(
+            PyExc_TypeError,
+            "squares must be a python object sqeuence like (list, tuple, ...)."
+            "got %s",
+            Py_TYPE(sequence)->tp_name
+        );
+        return NULL;
+    }
+
+    PyObject* sqr_obj;
+    uint64 bb = 0ULL;
+    Py_ssize_t len = PySequence_Size(sequence);
+    if (PyErr_Occurred())
+        return NULL;
+
+    Square sqr;
+
+    for (Py_ssize_t i = 0; i < len; i++){
+        sqr_obj = PySequence_GetItem(sequence, i);
+        if (!sqr_obj){
+            if (!PyErr_Occurred()){
+                PyErr_SetString(
+                    PyExc_ValueError,
+                    "faild to get item from sequence object"
+                );
+            }
+            return NULL;
+        }
+
+        sqr = pyobject_as_square(sqr_obj);
+        if (sqr == NCH_NO_SQR){
+            if (!PyErr_Occurred()){
+                 PyErr_SetString(
+                    PyExc_ValueError,
+                    "NO_SQURE is invalid for this function"
+                );
+            }
+            Py_DECREF(sqr_obj);
+            return NULL;
+        }
+
+        bb |= NCH_SQR(sqr);
+
+        Py_DECREF(sqr_obj);
+    }
+
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(bb);
+}
+
+PyObject*
 BB_Between(PyObject* self, PyObject* args, PyObject* kwargs){
     PyObject* src, *dst;
     static char* kwlist[] = {"src_square", "dst_square", NULL};

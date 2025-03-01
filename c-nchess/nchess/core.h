@@ -30,6 +30,8 @@ typedef enum{
 #define NCH_OP_SIDE(side) side ^ NCH_Black
 
 typedef enum {
+    NCH_NO_SQR = -1,
+
     NCH_H1 = 0, NCH_G1, NCH_F1, NCH_E1, NCH_D1, NCH_C1, NCH_B1, NCH_A1, 
         NCH_H2, NCH_G2, NCH_F2, NCH_E2, NCH_D2, NCH_C2, NCH_B2, NCH_A2, 
         NCH_H3, NCH_G3, NCH_F3, NCH_E3, NCH_D3, NCH_C3, NCH_B3, NCH_A3,
@@ -38,8 +40,8 @@ typedef enum {
         NCH_H6, NCH_G6, NCH_F6, NCH_E6, NCH_D6, NCH_C6, NCH_B6, NCH_A6,
         NCH_H7, NCH_G7, NCH_F7, NCH_E7, NCH_D7, NCH_C7, NCH_B7, NCH_A7,
         NCH_H8, NCH_G8, NCH_F8, NCH_E8, NCH_D8, NCH_C8, NCH_B8, NCH_A8,
+        
     NCH_SQUARE_NB,
-    NCH_NO_SQR
 }Square;
 
 typedef enum {

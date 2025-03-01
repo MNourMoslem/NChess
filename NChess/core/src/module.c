@@ -24,6 +24,7 @@ static PyMethodDef nchess_core_methods[] = {
     {"move_from_uci"     , (PyCFunction)PyMove_FromUCI   , METH_VARARGS | METH_KEYWORDS, NULL},
 
     {"bb_from_array"     , (PyCFunction)BB_FromArray     , METH_VARARGS | METH_KEYWORDS, NULL},
+    {"bb_from_squares"   , (PyCFunction)BB_FromSquares   , METH_VARARGS | METH_KEYWORDS, NULL},
     {"bb_rook_attacks"   , (PyCFunction)BB_RookAttacks   , METH_VARARGS | METH_KEYWORDS, NULL},
     {"bb_bishop_attacks" , (PyCFunction)BB_BishopAttacks , METH_VARARGS | METH_KEYWORDS, NULL},
     {"bb_queen_attacks"  , (PyCFunction)BB_QueenAttacks  , METH_VARARGS | METH_KEYWORDS, NULL},

@@ -381,15 +381,18 @@ Board_GeneratePseudoMovesOf(const Board* board, Move* moves, Square sqr){
     if (p == NCH_NO_PIECE)
         return 0;
 
-    PieceType pt = Piece_TYPE(p);
+    Side side = Board_SIDE(board);
+    if (Piece_SIDE(p) != side)
+        return 0;
 
+    PieceType pt = Piece_TYPE(p);
     Move* begin = moves;
     if (pt == NCH_King){
         moves = generate_castle_moves(board, moves);
         moves = generate_king_moves(board, moves);
     }
     else{
-        uint64 allowed_square = ~Board_OCC(board, Piece_SIDE(p));
+        uint64 allowed_square = ~Board_OCC(board, side);
         moves = generate_any_move(board, sqr, allowed_square, moves);
     }
 

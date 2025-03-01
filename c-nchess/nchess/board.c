@@ -11,6 +11,7 @@
 #include "hash.h"
 #include "board_utils.h"
 #include "makemove.h"
+#include "generate.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -269,4 +270,11 @@ Board_State(const Board* board, int can_move){
     }
 
     return NCH_GS_Playing;
+}
+
+int
+Board_CanMove(const Board* board){
+    Move moves[256];
+    int nmoves = Board_GenerateLegalMoves(board, moves);
+    return nmoves > 0;
 }

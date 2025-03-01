@@ -224,6 +224,9 @@ Board_Copy(const Board* src_board, Board* dst_board);
 Board*
 Board_NewCopy(const Board* src_board);
 
+int
+Board_CanMove(const Board* board);
+
 // returns the state of the game
 GameState
 Board_State(const Board* board, int can_move);

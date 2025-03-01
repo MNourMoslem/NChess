@@ -20,6 +20,17 @@ if (sqr == NCH_NO_SQR){\
     return return_type;\
 }
 
+#define CHECK_MOVE_NULL_ERR(move, return_type)\
+if (move == Move_NULL){\
+    if (!PyErr_Occurred()){\
+        PyErr_SetString(\
+            PyExc_ValueError,\
+            "Move_NULL is invalid for this function"\
+        );\
+    }\
+    return return_type;\
+}
+
 extern const char* Str2MoveType[];
 
 NCH_STATIC_INLINE PyObject*
@@ -51,6 +62,9 @@ pyobject_as_move(PyObject* m);
 
 MoveType
 pyobject_as_move_type(PyObject* obj);
+
+Side
+pyobject_as_side(PyObject* obj);
 
 NCH_STATIC_INLINE PieceType
 pyobject_as_piece_type(PyObject* obj){

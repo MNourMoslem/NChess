@@ -109,11 +109,9 @@ pyobject_as_piece(PyObject* obj){
     return p;
 
     str_err:
-        PyErr_Format(
+        PyErr_SetString(
             PyExc_ValueError,
             "invalid string for piece. expected one char only from these \"PNBRQKpnbrqk\"."
-            "got %s",
-            Py_TYPE(obj)
         );
         return NCH_NO_PIECE;
 }
@@ -136,8 +134,20 @@ pyobject_as_move(PyObject* m){
         }
     
     } 
-    else if (PyMove_Check(m) || PyLong_Check(m)) {
+    else if (PyMove_Check(m) || PyLong_Check(m)){
         move = PyMove_AsMove(m);
+        if (PyErr_Occurred()){
+            return Move_NULL;
+        }
+
+        if (!Move_IsValidSquares(move)){
+            PyErr_Format(
+                PyExc_ValueError,
+                "squares in the move are invalid",
+                Py_TYPE(m)->tp_name
+            );
+            return Move_NULL;
+        }
     } 
     else {
         PyErr_Format(
@@ -207,4 +217,35 @@ pyobject_as_move_type(PyObject* obj){
         return MoveType_Null; 
     }
     return type;
+}
+
+Side
+pyobject_as_side(PyObject* obj){
+    if (Py_IsNone(obj)){
+        return NCH_NO_SIDE;
+    }
+    if (PyLong_Check(obj)){
+        Side side = PyLong_AsUnsignedLongLong(obj);
+        if (PyErr_Occurred())
+            return NCH_NO_SIDE;
+        
+        if (!is_valid_side(side)){
+            PyErr_Format(
+                PyExc_ValueError,
+                "side must be 0 or 1 (white or black). got %d",
+                side
+            );
+            return NCH_NO_SIDE;
+        }
+
+        return side;
+    }
+    else{
+        PyErr_Format(
+            PyExc_ValueError,
+            "side must be an int. 0 for white, 1 for black. got ",
+            Py_TYPE(obj)->tp_name
+        );
+        return NCH_NO_SIDE;
+    }
 }

@@ -202,6 +202,7 @@ parse_fifty_counter(Board* board, char* fen){
         if (!is_number(*fen)){
             return NULL;
         }
+        count *= 10;
         count += char2number(*fen);
         fen++;
     }
@@ -217,6 +218,7 @@ parse_nmoves(Board* board, char* fen){
         if (!is_number(*fen)){
             return NULL;
         }
+        count *= 10;
         count += char2number(*fen);
         fen++;
     }

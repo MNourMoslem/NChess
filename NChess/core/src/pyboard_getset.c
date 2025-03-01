@@ -176,6 +176,11 @@ board_is_fifty_moves(PyObject* self, PyObject* args){
     return PyBool_FromLong(Board_IsFiftyMoves(BOARD(self)));
 }
 
+PyObject*
+board_can_move(PyObject* self, PyObject* args){
+    return Board_CanMove(BOARD(self));
+}
+
 PyGetSetDef pyboard_getset[] = {
     {"white_pawns"             ,(getter)board_get_white_pawns          ,NULL ,NULL, NULL},
     {"black_pawns"             ,(getter)board_get_black_pawns          ,NULL ,NULL, NULL},
@@ -207,5 +212,7 @@ PyGetSetDef pyboard_getset[] = {
     {"is_insufficient_material",(getter)board_is_insufficient_material ,NULL ,NULL, NULL},
     {"is_threefold"            ,(getter)board_is_threefold             ,NULL ,NULL, NULL},
     {"is_fifty_moves"          ,(getter)board_is_fifty_moves           ,NULL ,NULL, NULL},
+    
+    {"can_move"                ,(getter)board_can_move           ,NULL ,NULL, NULL},
     {NULL                      ,NULL                                   ,NULL ,NULL, NULL},
 };

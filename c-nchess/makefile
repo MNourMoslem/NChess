@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c11
 DEBUG_FLAGS = -g -O0
-RELEASE_FLAGS = -O3 -march=native
+RELEASE_FLAGS = -Wsign-compare -DNDEBUG -g -fwrapv -O2 -Wall -g -fstack-protector-strong -Wformat -Werror=format-security -g -fwrapv -O2 -fPIC
 SRC_DIR = nchess
 BUILD_DIR = build
 OBJ_DIR = $(BUILD_DIR)/obj

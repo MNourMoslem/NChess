@@ -703,6 +703,16 @@ class Board:
         """
         ...
 
+    def fen(self) -> str:
+        """
+        Generates the FEN representation of the board, including all standard parameters  
+        (piece placement, turn, castling rights, en passant target, fifty moves and fullmove number).  
+
+        Returns:
+            str: The FEN representation of the board.
+        """
+        ...
+
     def _makemove(self, move: int | str) -> None:
         """
         Privately applies a move to the board without legality checks.

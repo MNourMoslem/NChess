@@ -11,7 +11,7 @@ square_from_uci(PyObject* self, PyObject* args){
         return NULL;
     }
 
-    Square sqr = unicode_to_square(s_str);
+    Square sqr = str_to_square(s_str);
     if (sqr == NCH_NO_SQR){
         if (!PyErr_Occurred()){
             PyErr_SetString(PyExc_ValueError, "failed to convert string to square");

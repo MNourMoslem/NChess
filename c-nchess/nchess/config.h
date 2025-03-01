@@ -41,8 +41,11 @@
 
 #if defined(__GNUC__) || defined(__ICC) || defined(__clang__)
     #define NCH_UNUSED(x) __attribute__((unused)) x
+#elif defined(_MSC_VER)
+    #define NCH_UNUSED(x) __pragma(warning(suppress: 4100)) x
 #else
     #define NCH_UNUSED(x) x
 #endif
+
 
 #endif // NCHESS_SRC_CONFIG_H

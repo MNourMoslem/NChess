@@ -2,6 +2,9 @@
 #include "pyboard_getset.h"
 #include "pyboard_methods.h"
 
+#include "nchess/fen.h"
+#include "nchess/io.h"
+
 #define PY_SSIZE_CLEAN_H
 #include <Python.h>
 
@@ -22,7 +25,7 @@ board_new(PyTypeObject *self, PyObject *args, PyObject *kwargs){
         PyErr_NoMemory();
         return NULL;
     }
-
+    
     if (fen){
         pyb->board = Board_NewFen(fen);
         if (!pyb->board){

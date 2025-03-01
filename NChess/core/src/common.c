@@ -60,7 +60,7 @@ pyobject_as_piece(PyObject* obj){
 
     Piece p;
     if (PyLong_Check(obj)){
-        p = PyLong_AsUnsignedLong(obj);
+        p = PyLong_AsLong(obj);
         if (!is_valid_piece(p)){
             PyErr_Format(
                 PyExc_ValueError,
@@ -168,7 +168,7 @@ pyobject_as_move_type(PyObject* obj){
 
     MoveType type;
     if (PyLong_Check(obj)){
-        type = (MoveType)PyLong_AsUnsignedLongLong(obj);
+        type = (MoveType)PyLong_AsLongLong(obj);
         if (!MoveType_IsValid(type)){
             PyErr_Format(
                 PyExc_ValueError,
@@ -225,7 +225,7 @@ pyobject_as_side(PyObject* obj){
         return NCH_NO_SIDE;
     }
     if (PyLong_Check(obj)){
-        Side side = PyLong_AsUnsignedLongLong(obj);
+        Side side = PyLong_AsLongLong(obj);
         if (PyErr_Occurred())
             return NCH_NO_SIDE;
         

@@ -50,6 +50,7 @@ typedef uint16 Move;
 
 #define Move_SQUARES_MASK 0x0fff
 #define Move_SAME_SQUARES(m1, m2) ((m1 & Move_SQUARES_MASK) == (m2 & Move_SQUARES_MASK))
+#define Move_IsValidSquares(m) (is_valid_square(Move_FROM(m)) && is_valid_square(Move_TO(m)))
 
 // A macro to create a Move. It is faster but not safe
 // if the given parameters are incorrect. Use Move_New for safer usage.

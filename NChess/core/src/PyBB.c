@@ -19,7 +19,7 @@ PyBitBoard* PyBitBoard_FromUnsignedLongLong(unsigned long long value){
         return NULL;
     }
     obj->ob_type = &PyBitBoardType;
-    return (PyObject*)obj;
+    return (PyBitBoard*)obj;
 }
 
 NCH_STATIC PyObject*

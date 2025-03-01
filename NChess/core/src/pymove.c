@@ -16,7 +16,7 @@ PyMove_FromMove(Move move){
         return NULL;
     }
     obj->ob_type = &PyMoveType;
-    return (PyObject*)obj;
+    return (PyMove*)obj;
 }
 
 PyObject*

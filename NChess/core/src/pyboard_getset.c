@@ -143,42 +143,42 @@ board_captured_piece(PyObject* self, void* something){
 
 PyObject*
 board_is_check(PyObject* self, void* something){
-    if(Board_IS_CHECK(BOARD(self))) Py_RETURN_TRUE; Py_RETURN_FALSE;
+    if(Board_IS_CHECK(BOARD(self))) {Py_RETURN_TRUE;} Py_RETURN_FALSE;
 }
 
 PyObject*
 board_is_double_check(PyObject* self, void* something){
-    if(Board_IS_DOUBLECHECK(BOARD(self))) Py_RETURN_TRUE; Py_RETURN_FALSE;
+    if(Board_IS_DOUBLECHECK(BOARD(self))) {Py_RETURN_TRUE;} Py_RETURN_FALSE;
 }
 
 PyObject*
 board_is_pawn_moved(PyObject* self, void* something){
-    if(Board_IS_PAWNMOVED(BOARD(self))) Py_RETURN_TRUE; Py_RETURN_FALSE;
+    if(Board_IS_PAWNMOVED(BOARD(self))) {Py_RETURN_TRUE;} Py_RETURN_FALSE;
 }
 
 PyObject*
 board_is_capture(PyObject* self, void* something){
-    if(Board_IS_CAPTURE(BOARD(self))) Py_RETURN_TRUE; Py_RETURN_FALSE;
+    if(Board_IS_CAPTURE(BOARD(self))) {Py_RETURN_TRUE;} Py_RETURN_FALSE;
 }
 
 PyObject*
 board_is_insufficient_material(PyObject* self, PyObject* args){
-    return PyBool_FromLong(Board_IsInsufficientMaterial(BOARD(self)));
+    if (Board_IsInsufficientMaterial(BOARD(self))) {Py_RETURN_TRUE;} Py_RETURN_FALSE;;
 }
 
 PyObject*
 board_is_threefold(PyObject* self, PyObject* args){
-    return PyBool_FromLong(Board_IsThreeFold(BOARD(self)));
+    if (Board_IsThreeFold(BOARD(self))) {Py_RETURN_TRUE;} Py_RETURN_FALSE;;
 }
 
 PyObject*
 board_is_fifty_moves(PyObject* self, PyObject* args){
-    return PyBool_FromLong(Board_IsFiftyMoves(BOARD(self)));
+    if (Board_IsFiftyMoves(BOARD(self))) {Py_RETURN_TRUE;} Py_RETURN_FALSE;;
 }
 
 PyObject*
 board_can_move(PyObject* self, PyObject* args){
-    return Board_CanMove(BOARD(self));
+    if (Board_CanMove(BOARD(self))) {Py_RETURN_TRUE;} Py_RETURN_FALSE;;
 }
 
 PyGetSetDef pyboard_getset[] = {

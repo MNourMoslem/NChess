@@ -5,6 +5,7 @@
 #include "common.h"
 #include "array_conversion.h"
 #include "pyboard.h"
+#include "bb_functions.h"
 
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
@@ -23,7 +24,7 @@ moves_to_list(Move* moves, int nmoves){
             Py_DECREF(list);
             return NULL;
         }
-
+        
         PyList_SetItem(list, i, pymove);
     }
 
@@ -68,8 +69,7 @@ board__makemove(PyObject* self, PyObject* args){
     }
 
     Move move = pyobject_as_move(step);
-    if (!move)
-        return NULL;
+    CHECK_MOVE_NULL_ERR(move, NULL)
 
     _Board_MakeMove(BOARD(self), move);
 
@@ -89,8 +89,7 @@ board_step(PyObject* self, PyObject* args, PyObject* kwargs){
     }
 
     Move move = pyobject_as_move(step);
-    if (!move)
-        return NULL;
+    CHECK_MOVE_NULL_ERR(move, NULL)
 
     int out = Board_StepByMove(BOARD(self), move);
     return PyBool_FromLong(out);
@@ -332,42 +331,35 @@ board_reset(PyObject* self, PyObject* args){
 }
 
 PyObject*
-board_is_check(PyObject* self, PyObject* args){
-    return PyBool_FromLong(Board_IsCheck(BOARD(self)));
-}
-
-PyObject*
-board_is_insufficient_material(PyObject* self, PyObject* args){
-    return PyBool_FromLong(Board_IsInsufficientMaterial(BOARD(self)));
-}
-
-PyObject*
-board_is_threefold(PyObject* self, PyObject* args){
-    return PyBool_FromLong(Board_IsThreeFold(BOARD(self)));
-}
-
-PyObject*
-board_is_fifty_moves(PyObject* self, PyObject* args){
-    return PyBool_FromLong(Board_IsFiftyMoves(BOARD(self)));
-}
-
-PyObject*
 board_get_attackers_map(PyObject* self, PyObject* args, PyObject* kwargs){
     PyObject* sqr;
-    static char* kwlist[] = {"square", NULL};
+    PyObject* side_obj = NULL;
+    static char* kwlist[] = {"square", "attacker_side", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &sqr)){
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|O", kwlist, &sqr, &side_obj)){
         if (!PyErr_Occurred()){
             PyErr_SetString(PyExc_ValueError, "failed to parse the arguments");
         }
         return NULL;
     }
+    Board* b = BOARD(self);
 
     Square s = pyobject_as_square(sqr);
     CHECK_NO_SQUARE_ERR(s, NULL)
 
-    Board* b = BOARD(self);
-    Side side = Board_SIDE(b);
+    Side side;
+    if (side_obj){
+        side = pyobject_as_side(side_obj);
+        if (PyErr_Occurred())
+            return NULL;
+    
+        if (side == NCH_NO_SIDE)
+            side = Board_SIDE(b);
+    }
+    else{
+        side = Board_SIDE(b);
+    }
+    
     uint64 all_occ = Board_ALL_OCC(b);
 
     uint64 attack_map = get_checkmap(b, side, s, all_occ);
@@ -411,30 +403,30 @@ board_copy(PyObject* self, PyObject* args){
         return NULL;
     }
 
-    PyBoard* pyb = PyObject_New(PyBoard, &PyBoardType);
+    PyBoard* pyb = (PyBoard*)Py_TYPE(self)->tp_alloc(Py_TYPE(self), 0);
     if (pyb == NULL) {
         PyErr_NoMemory();
+        Board_Free(dst);
         return NULL;
     }
     pyb->board = dst;
-
     return (PyObject*)pyb;
 }
 
 PyObject*
 board_get_game_state(PyObject* self, PyObject* args, PyObject* kwargs){
-    int can_move;
+    int can_move = -1;
     static char* kwlist[] = {"can_move", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "p", kwlist, &can_move)){
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|p", kwlist, &can_move)){
         if (!PyErr_Occurred()){
             PyErr_SetString(PyExc_ValueError, "failed to parse the arguments");
         }
         return NULL;
     }
 
+    can_move = can_move != -1 ? can_move : Board_CanMove(BOARD(self));
     GameState state = Board_State(BOARD(self), can_move);
-
     return PyLong_FromUnsignedLong(state);
 }
 
@@ -458,14 +450,16 @@ board_find(PyObject* self, PyObject* args, PyObject* kwargs){
     
     PyObject* list = PyList_New(count_bits(bb));
     if (!list){
-        PyErr_SetString(PyExc_ValueError, "faild to create a list");
+        PyErr_SetString(PyExc_ValueError, "failed to create a list");
         return NULL;
     }
 
+    PyObject* idx_obj;
     int idx;
     Py_ssize_t i = 0;
     LOOP_U64_T(bb){
-        PyList_SetItem(list, i++, PyLong_FromLong(idx));
+        idx_obj = PyLong_FromLong(idx);
+        PyList_SetItem(list, i++, idx_obj);
     }
 
     return list;
@@ -475,10 +469,6 @@ PyMethodDef pyboard_methods[] = {
     {"undo"                    , (PyCFunction)board_undo                    , METH_NOARGS                  , NULL},
     {"get_played_moves"        , (PyCFunction)board_get_played_moves        , METH_NOARGS                  , NULL},
     {"reset"                   , (PyCFunction)board_reset                   , METH_NOARGS                  , NULL},
-    {"is_check"                , (PyCFunction)board_is_check                , METH_NOARGS                  , NULL},
-    {"is_insufficient_material", (PyCFunction)board_is_insufficient_material, METH_NOARGS                  , NULL},
-    {"is_threefold"            , (PyCFunction)board_is_threefold            , METH_NOARGS                  , NULL},
-    {"is_fifty_moves"          , (PyCFunction)board_is_fifty_moves          , METH_NOARGS                  , NULL},
     {"copy"                    , (PyCFunction)board_copy                    , METH_NOARGS                  , NULL},
 
     {"_makemove"               , (PyCFunction)board__makemove               , METH_VARARGS                 , NULL},

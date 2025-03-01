@@ -224,6 +224,8 @@ Board_Copy(const Board* src_board, Board* dst_board);
 Board*
 Board_NewCopy(const Board* src_board);
 
+// checks if the player who has the play has any legal moves or not.
+// Return 1 if there is at least a legal move and False othewise. 
 int
 Board_CanMove(const Board* board);
 

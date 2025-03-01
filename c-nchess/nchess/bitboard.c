@@ -321,7 +321,7 @@ init_sliders_table(){
 
         for (int index = 0; index < occupancy_indicies; index++){
             occupancy = set_occupancy(index, rel_bits, mask);
-            magic_index = (occupancy * bb_rook_magic(sqr_idx)) >> (64 - bb_rook_relevant(sqr_idx));
+            magic_index = (int)((occupancy * bb_rook_magic(sqr_idx)) >> (64 - rel_bits));
             RookTable[sqr_idx][magic_index] = get_rook_mask_on_fly(sqr_idx, occupancy);
         }
     }

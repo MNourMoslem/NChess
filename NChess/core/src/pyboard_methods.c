@@ -465,11 +465,20 @@ board_find(PyObject* self, PyObject* args, PyObject* kwargs){
     return list;
 }
 
+PyObject*
+board_fen(PyObject* self, PyObject* args, PyObject* kwargs){
+    char buffer[400];
+    Board_AsFen(BOARD(self), buffer);
+    PyObject* str = PyUnicode_FromString(buffer);
+    return str;
+}
+
 PyMethodDef pyboard_methods[] = {
     {"undo"                    , (PyCFunction)board_undo                    , METH_NOARGS                  , NULL},
     {"get_played_moves"        , (PyCFunction)board_get_played_moves        , METH_NOARGS                  , NULL},
     {"reset"                   , (PyCFunction)board_reset                   , METH_NOARGS                  , NULL},
     {"copy"                    , (PyCFunction)board_copy                    , METH_NOARGS                  , NULL},
+    {"fen"                     , (PyCFunction)board_fen                     , METH_NOARGS                  , NULL},
 
     {"_makemove"               , (PyCFunction)board__makemove               , METH_VARARGS                 , NULL},
     {"on_square"               , (PyCFunction)board_on_square               , METH_VARARGS                 , NULL},

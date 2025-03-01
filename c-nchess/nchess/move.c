@@ -129,15 +129,13 @@ void
 Move_Print(Move move){
     char buffer[7];
     Move_AsString(move, buffer);
-    printf(buffer);
+    printf("%s ", buffer);
 }
 
 void
-Move_PrintAll(Move* moves, int nmoves){
-    char buffer[7];
+Move_PrintAll(const Move* moves, int nmoves){
     for (int i = 0; i < nmoves; i++){
-        Move_AsString(moves[i], buffer);
-        printf("%s ", buffer);
+        Move_Print(moves[i]);
     }
     printf("\n");
 }

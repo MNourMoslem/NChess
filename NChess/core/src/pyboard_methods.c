@@ -78,17 +78,17 @@ board__makemove(PyObject* self, PyObject* args){
 
 PyObject*
 board_step(PyObject* self, PyObject* args, PyObject* kwargs){
-    PyObject* step;
-    static char* kwlist[] = {"step", NULL};
+    PyObject* move_obj;
+    static char* kwlist[] = {"move", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &step)){
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &move_obj)){
         if (!PyErr_Occurred()){
             PyErr_SetString(PyExc_ValueError, "failed to parse the step argument");
         }
         return NULL;
     }
 
-    Move move = pyobject_as_move(step);
+    Move move = pyobject_as_move(move_obj);
     CHECK_MOVE_NULL_ERR(move, NULL)
 
     int out = Board_StepByMove(BOARD(self), move);

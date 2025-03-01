@@ -10,10 +10,10 @@
 
 PyObject*
 board_new(PyTypeObject *self, PyObject *args, PyObject *kwargs){
-    char* fen = NULL;
+    PyObject* fen_obj = NULL;
     static char* kwlist[] = {"fen", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|s", kwlist, &fen)){
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|O", kwlist, &fen_obj)){
         if (!PyErr_Occurred()){
             PyErr_SetString(PyExc_ValueError ,"failed reading the argmuents");
         }
@@ -25,8 +25,23 @@ board_new(PyTypeObject *self, PyObject *args, PyObject *kwargs){
         PyErr_NoMemory();
         return NULL;
     }
-    
-    if (fen){
+
+    if (fen_obj && !Py_IsNone(fen_obj)){
+        if (!PyUnicode_Check(fen_obj)){
+            PyErr_Format(
+                PyExc_TypeError,
+                "fen must be string. got %s",
+                Py_TYPE(fen_obj)->tp_name
+            );
+            Py_DECREF(pyb);
+            return NULL;
+        }
+        const char* fen = PyUnicode_AsUTF8(fen_obj);
+        if (PyErr_Occurred()){
+            Py_DECREF(pyb);
+            return NULL;
+        }
+
         pyb->board = Board_NewFen(fen);
         if (!pyb->board){
             Py_DECREF(pyb);

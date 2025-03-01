@@ -476,6 +476,31 @@ board_fen(PyObject* self, PyObject* args, PyObject* kwargs){
     return str;
 }
 
+PyObject*
+board_get_occ(PyObject* self, PyObject* args, PyObject* kwargs){
+    PyObject* side_obj;
+    NCH_STATIC char* kwlist[] = {"side", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &side_obj)){
+        return NULL;
+    }
+
+    Side side = pyobject_as_side(side_obj);
+    if (side == NCH_NO_SIDE){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(
+                PyExc_ValueError,
+                "side allowed are only 0 for white and 1 for black."
+            );
+        }
+        return NULL;
+    }
+
+    uint64 bb = Board_OCC(BOARD(self), side);
+    return (PyObject*)PyBitBoard_FromUnsignedLongLong(bb);
+
+}
+
 PyMethodDef pyboard_methods[] = {
     {"undo"                    , (PyCFunction)board_undo                    , METH_NOARGS                  , NULL},
     {"get_played_moves"        , (PyCFunction)board_get_played_moves        , METH_NOARGS                  , NULL},
@@ -495,6 +520,7 @@ PyMethodDef pyboard_methods[] = {
     {"get_attackers_map"       , (PyCFunction)board_get_attackers_map       , METH_VARARGS | METH_KEYWORDS , NULL},
     {"get_moves_of"            , (PyCFunction)board_get_moves_of            , METH_VARARGS | METH_KEYWORDS , NULL},
     {"get_game_state"          , (PyCFunction)board_get_game_state          , METH_VARARGS | METH_KEYWORDS , NULL},
+    {"get_occ"                 , (PyCFunction)board_get_occ                 , METH_VARARGS | METH_KEYWORDS , NULL},
     {"find"                    , (PyCFunction)board_find                    , METH_VARARGS | METH_KEYWORDS , NULL},
 
     {NULL                      , NULL                                       , 0                            , NULL},

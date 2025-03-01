@@ -138,42 +138,42 @@ init_diractions(){
         }
         
         cur = i;
-        while (NCH_GET_COLIDX(cur) < 7)
+        while (cur < 64 && NCH_GET_COLIDX(cur) < 7)
         {
             cur += 1;
             NCH_DIRACTION_TABLE[i][cur] = NCH_Left;
         }
         
         cur = i;
-        while (NCH_GET_COLIDX(cur) > 0)
+        while (cur > 0 && NCH_GET_COLIDX(cur) > 0)
         {
             cur -= 1;
             NCH_DIRACTION_TABLE[i][cur] = NCH_Right;
         }
 
         cur = i;
-        while (NCH_GET_COLIDX(cur) > 0 && NCH_GET_ROWIDX(cur) < 7)
+        while (cur < 64 && NCH_GET_COLIDX(cur) > 0 && NCH_GET_ROWIDX(cur) < 7)
         {
             cur += 7;
             NCH_DIRACTION_TABLE[i][cur] = NCH_UpRight;
         }
 
         cur = i;
-        while (NCH_GET_COLIDX(cur) < 7 && NCH_GET_ROWIDX(cur) < 7)
+        while (cur < 64 && NCH_GET_COLIDX(cur) < 7 && NCH_GET_ROWIDX(cur) < 7)
         {
             cur += 9;
             NCH_DIRACTION_TABLE[i][cur] = NCH_UpLeft;
         }
 
         cur = i;
-        while (NCH_GET_COLIDX(cur) > 0 && NCH_GET_ROWIDX(cur) > 0)
+        while (cur > 0 && NCH_GET_COLIDX(cur) > 0 && NCH_GET_ROWIDX(cur) > 0)
         {
             cur -= 9;
             NCH_DIRACTION_TABLE[i][cur] = NCH_DownRight;
         }
 
         cur = i;
-        while (NCH_GET_COLIDX(cur) < 7 && NCH_GET_ROWIDX(cur) > 0)
+        while (cur > 0 && NCH_GET_COLIDX(cur) < 7 && NCH_GET_ROWIDX(cur) > 0)
         {
             cur -= 7;
             NCH_DIRACTION_TABLE[i][cur] = NCH_DownLeft;

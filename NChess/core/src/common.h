@@ -35,17 +35,17 @@ extern const char* Str2MoveType[];
 
 NCH_STATIC_INLINE PyObject*
 piece_to_pyobject(Piece p){
-    return PyLong_FromUnsignedLong(p);
+    return PyLong_FromLong(p);
 }
 
 NCH_STATIC_INLINE PyObject*
 side_to_pyobject(Side s){
-    return PyLong_FromUnsignedLong(s);
+    return PyLong_FromLong(s);
 }
 
 NCH_STATIC_INLINE PyObject*
 square_to_pyobject(Square s){
-    return PyLong_FromUnsignedLong(s);
+    return PyLong_FromLong(s);
 }
 
 Square

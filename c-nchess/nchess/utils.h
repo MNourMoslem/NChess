@@ -131,12 +131,12 @@ set_board_occupancy(Board* board){
 }
 
 NCH_STATIC_INLINE int
-is_valid_column(const char arg){
+is_valid_column(char arg){
     return arg >= 'a' && arg <= 'h';
 }
 
 NCH_STATIC_INLINE int
-is_valid_row(const char arg){
+is_valid_row(char arg){
     return arg >= '1' && arg <= '8';
 }
 
@@ -146,12 +146,12 @@ is_valid_square(Square s){
 }
 
 NCH_STATIC_INLINE int
-char_to_col(const char c){
+char_to_col(char c){
     return 'h' - c;
 }
 
 NCH_STATIC_INLINE int
-char_to_row(const char c){
+char_to_row(char c){
     return c - '1';
 }
 

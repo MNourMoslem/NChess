@@ -16,7 +16,7 @@ PyMove*
 PyMove_FromMove(Move move);
 
 #define PyMove_Check(obj) PyObject_TypeCheck(obj, &PyMoveType)
-#define PyMove_AsMove(obj) ((Move)PyLong_AsUnsignedLong(obj))
+#define PyMove_AsMove(obj) ((Move)PyLong_AsUnsignedLongLong(obj))
 
 PyObject*
 PyMove_FromUCI(PyObject* self, PyObject* args, PyObject* kwargs);

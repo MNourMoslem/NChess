@@ -13,10 +13,7 @@
 #include "move.h"
 #include "generate.h"
 
-NCH_STATIC void
-NCH_Init(){
-    NCH_InitTables();
-    NCH_InitBitboards();
-}
+void
+NCH_Init();
 
 #endif

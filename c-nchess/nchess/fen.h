@@ -23,7 +23,7 @@
 // fifty count, nmoves) are optional.
 // returns Board on success and NULL on failure
 Board*
-Board_NewFen(char* fen);
+Board_NewFen(const char* fen);
 
 // Sets the board to the state described in the FEN string.
 // this function is not board initlizer function and it must be
@@ -35,6 +35,12 @@ Board_NewFen(char* fen);
 // fifty count, nmoves) are optional.
 // returns 0 on success and -1 on failure
 int
-Board_FromFen(char* fen, Board* dst_board);
+Board_FromFen(const char* fen, Board* dst_board);
+
+// Generates the FEN representation of the board to the give destenation char pointer (des_fen).
+// The FEN includs all standard parameters (piece placement, turn, castling rights,
+// en passant target, fifty moves and fullmove number).
+void
+Board_AsFen(const Board* board, char* des_fen);
 
 #endif

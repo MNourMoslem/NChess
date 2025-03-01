@@ -16,10 +16,10 @@
 
 // Generate all the legal moves for the current board.
 int
-Board_GenerateLegalMoves(Board* board, Move* moves);
+Board_GenerateLegalMoves(const Board* board, Move* moves);
 
 // Generate all the pseudo moves for a piece on the board given its square.
 int
-Board_GeneratePseudoMovesOf(Board* board, Move* moves, Square sqr);
+Board_GeneratePseudoMovesOf(const Board* board, Move* moves, Square sqr);
 
 #endif

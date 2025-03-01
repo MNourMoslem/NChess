@@ -145,34 +145,34 @@ bb_to_moves(uint64 bb, int idx, Move* moves){
 }
 
 NCH_STATIC_INLINE void*
-generate_queen_moves(Board* board, int idx, uint64 allowed_squares, Move* moves){
+generate_queen_moves(const Board* board, int idx, uint64 allowed_squares, Move* moves){
     uint64 occ = Board_ALL_OCC(board);
     uint64 bb = bb_queen_attacks(idx, occ) & allowed_squares;
     return bb_to_moves(bb, idx, moves);
 }
 
 NCH_STATIC_INLINE void*
-generate_rook_moves(Board* board, int idx, uint64 allowed_squares, Move* moves){
+generate_rook_moves(const Board* board, int idx, uint64 allowed_squares, Move* moves){
     uint64 occ = Board_ALL_OCC(board);
     uint64 bb = bb_rook_attacks(idx, occ) & allowed_squares;
     return bb_to_moves(bb, idx, moves);
 }
 
 NCH_STATIC_INLINE void*
-generate_bishop_moves(Board* board, int idx, uint64 allowed_squares, Move* moves){
+generate_bishop_moves(const Board* board, int idx, uint64 allowed_squares, Move* moves){
     uint64 occ = Board_ALL_OCC(board);
     uint64 bb = bb_bishop_attacks(idx, occ) & allowed_squares;
     return bb_to_moves(bb, idx, moves);
 }
 
 NCH_STATIC_INLINE void*
-generate_knight_moves(NCH_UNUSED(Board* board), int idx, uint64 allowed_squares, Move* moves){
+generate_knight_moves(NCH_UNUSED(const Board* board), int idx, uint64 allowed_squares, Move* moves){
     uint64 bb = bb_knight_attacks(idx) & allowed_squares;
     return bb_to_moves(bb, idx, moves);
 }
 
 NCH_STATIC_INLINE void*
-generate_pawn_moves(Board* board, int idx, uint64 allowed_squares, Move* moves){
+generate_pawn_moves(const Board* board, int idx, uint64 allowed_squares, Move* moves){
     Side ply_side = Board_SIDE(board);
     Side op_side = NCH_OP_SIDE(ply_side);
 
@@ -250,7 +250,7 @@ generate_pawn_moves(Board* board, int idx, uint64 allowed_squares, Move* moves){
     return moves;
 }
 
-typedef void* (*MoveGenFunction) (Board* board, int idx, uint64 allowed_squares, Move* moves);
+typedef void* (*MoveGenFunction) (const Board* board, int idx, uint64 allowed_squares, Move* moves);
 
 NCH_STATIC MoveGenFunction MoveGenFunctionTable[] = {
     NULL,
@@ -265,14 +265,14 @@ NCH_STATIC MoveGenFunction MoveGenFunctionTable[] = {
 // that is why it is not a safe function and it is only used in the
 // in this file.
 NCH_STATIC_INLINE void*
-generate_any_move(Board* board, int idx, uint64 allowed_squares, Move* moves){
+generate_any_move(const Board* board, int idx, uint64 allowed_squares, Move* moves){
     PieceType p = Piece_TYPE(Board_PIECE(board, idx));
     MoveGenFunction func = MoveGenFunctionTable[p];
     return func(board, idx, allowed_squares, moves);
 }
 
 NCH_STATIC_INLINE void*
-generate_king_moves(Board* board, Move* moves){
+generate_king_moves(const Board* board, Move* moves){
     Side side = Board_SIDE(board);
     int king_idx = NCH_SQRIDX( Board_PLY_BB(board, NCH_King) );
 
@@ -296,7 +296,7 @@ generate_king_moves(Board* board, Move* moves){
 }
 
 NCH_STATIC_INLINE void*
-generate_castle_moves(Board* board, Move* moves){
+generate_castle_moves(const Board* board, Move* moves){
     if (!Board_CASTLES(board) || Board_IS_CHECK(board)){
         return moves;
     }
@@ -336,7 +336,7 @@ generate_castle_moves(Board* board, Move* moves){
 }
 
 int
-Board_GenerateLegalMoves(Board* board, Move* moves){
+Board_GenerateLegalMoves(const Board* board, Move* moves){
     uint64 pinned_allowed_square[8];
     Move* mh = moves;
 
@@ -368,12 +368,12 @@ Board_GenerateLegalMoves(Board* board, Move* moves){
     }
 
     moves = generate_king_moves(board, moves);
-
-    return moves - mh;
+    int n = (int)(moves - mh);
+    return n;
 }
 
 int
-Board_GeneratePseudoMovesOf(Board* board, Move* moves, Square sqr){
+Board_GeneratePseudoMovesOf(const Board* board, Move* moves, Square sqr){
     if (!is_valid_square(sqr))
         return 0;
 

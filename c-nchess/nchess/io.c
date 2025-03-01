@@ -25,7 +25,7 @@ const char* squares_char[] = {
 };
 
 void
-Board_AsString(Board* board, char* buffer){
+Board_AsString(const Board* board, char* buffer){
     int i = NCH_A8, buffer_idx = 0;
     Piece p;
     for (int raw = 7; raw > -1; raw--){
@@ -42,8 +42,8 @@ Board_AsString(Board* board, char* buffer){
 
 
 void
-Board_Print(Board* board){
+Board_Print(const Board* board){
     char buffer[90];
     Board_AsString(board, buffer);
-    printf(buffer);
+    printf("%s ", buffer);
 }

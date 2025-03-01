@@ -12,9 +12,9 @@
 #include "board.h"
 
 void
-Board_Print(Board* board);
+Board_AsString(const Board* board, char* buffer);
 
 void
-Board_AsString(Board* board, char* buffer);
+Board_Print(const Board* board);
 
 #endif

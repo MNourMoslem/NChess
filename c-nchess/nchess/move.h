@@ -28,20 +28,20 @@ typedef enum {
 typedef uint16 Move;
 #define Move_NULL 0xffff
 
-#define Move_ASSIGN_FROM(from_) ((from_))
-#define Move_ASSIGN_TO(to_) ((to_) << 6)
-#define Move_ASSIGN_PRO_PIECE(pro_piece) ((pro_piece) << 12)
-#define Move_ASSIGN_TYPE(type) ((type) << 14)
+#define Move_ASSIGN_FROM(from_) (Move)((from_))
+#define Move_ASSIGN_TO(to_) (Move)((to_) << 6)
+#define Move_ASSIGN_PRO_PIECE(pro_piece) (Move)((pro_piece) << 12)
+#define Move_ASSIGN_TYPE(type) (Move)((type) << 14)
 
-#define Move_REMOVE_FROM(move) (move & 0xffc0)
-#define Move_REMOVE_TO(move) (move & 0xf03f)
-#define Move_REMOVE_PRO_PIECE(move) (move & 0xcfff)
-#define Move_REMOVE_TYPE(move) (move & 0x3fff)
+#define Move_REMOVE_FROM(move) (Move)(move & 0xffc0)
+#define Move_REMOVE_TO(move) (Move)(move & 0xf03f)
+#define Move_REMOVE_PRO_PIECE(move) (Move)(move & 0xcfff)
+#define Move_REMOVE_TYPE(move) (Move)(move & 0x3fff)
 
-#define Move_REASSAGIN_FROM(move, from_) Move_REMOVE_FROM(move) | Move_ASSIGN_FROM(from_)
-#define Move_REASSAGIN_TO(move, to_) Move_REMOVE_TO(move) | Move_ASSIGN_TO(to_)
-#define Move_REASSAGIN_PRO_PIECE(move, pro_piece) Move_REMOVE_PRO_PIECE(move) | Move_ASSIGN_PRO_PIECE(pro_piece)
-#define Move_REASSAGIN_TYPE(move, type) Move_REMOVE_TYPE(move) | Move_ASSIGN_TYPE(type)
+#define Move_REASSAGIN_FROM(move, from_) (Move_REMOVE_FROM(move) | Move_ASSIGN_FROM(from_))
+#define Move_REASSAGIN_TO(move, to_) (Move_REMOVE_TO(move) | Move_ASSIGN_TO(to_))
+#define Move_REASSAGIN_PRO_PIECE(move, pro_piece) (Move_REMOVE_PRO_PIECE(move) | Move_ASSIGN_PRO_PIECE(pro_piece))
+#define Move_REASSAGIN_TYPE(move, type) (Move_REMOVE_TYPE(move) | Move_ASSIGN_TYPE(type))
 
 #define Move_FROM(move) ((move) & 0x3F)
 #define Move_TO(move) (((move) >> 6) & 0x3F)
@@ -55,10 +55,10 @@ typedef uint16 Move;
 // A macro to create a Move. It is faster but not safe
 // if the given parameters are incorrect. Use Move_New for safer usage.
 #define _Move_New(from_, to_, promotion_piece, move_type) \
-    Move_ASSIGN_FROM(from_) | \
-    Move_ASSIGN_TO(to_) | \
-    Move_ASSIGN_PRO_PIECE(promotion_piece - NCH_Knight) | \
-    Move_ASSIGN_TYPE(move_type)
+    (Move)(Move_ASSIGN_FROM(from_) | \
+           Move_ASSIGN_TO(to_) | \
+           Move_ASSIGN_PRO_PIECE(promotion_piece - NCH_Knight) | \
+           Move_ASSIGN_TYPE(move_type))
 
 #define Move_IsValid(move) ((move) != Move_NULL)
 #define Move_IsNormal(move) (Move_TYPE(move) == MoveType_Normal)
@@ -103,6 +103,6 @@ Move_AsString(Move move, char* dst);
 
 // Prints all moves in a given buffer.
 void 
-Move_PrintAll(Move* move, int nmoves);
+Move_PrintAll(const Move* move, int nmoves);
 
 #endif // NCHESS_SRC_MOVE_H

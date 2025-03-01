@@ -343,18 +343,21 @@ board_get_attackers_map(PyObject* self, PyObject* args, PyObject* kwargs){
         return NULL;
     }
     Board* b = BOARD(self);
-
     Square s = pyobject_as_square(sqr);
     CHECK_NO_SQUARE_ERR(s, NULL)
 
     Side side;
-    if (side_obj){
+    if (side_obj && !Py_IsNone(side_obj)){
         side = pyobject_as_side(side_obj);
         if (PyErr_Occurred())
             return NULL;
     
-        if (side == NCH_NO_SIDE)
+        if (side == NCH_NO_SIDE){
             side = Board_SIDE(b);
+        }
+        else{
+            side = NCH_OP_SIDE(side);
+        }
     }
     else{
         side = Board_SIDE(b);

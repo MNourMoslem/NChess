@@ -21,10 +21,10 @@
 #include <math.h>
 
 typedef enum{
+    NCH_NO_SIDE = -1,
     NCH_White,
     NCH_Black,
     NCH_SIDES_NB,
-    NCH_NO_SIDE
 }Side;
 
 #define NCH_OP_SIDE(side) side ^ NCH_Black

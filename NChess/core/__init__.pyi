@@ -1,25 +1,38 @@
 import numpy as np
-from typing import Sequence, overload, TypeAlias, Iterable, Tuple
+from typing import Sequence, overload, TypeAlias, Iterable, Tuple, Optional
 
 Square : TypeAlias = int | str
 
 class Move(int):
     """
     The Move class is represented as a 16-bit unsigned integer (uint16), allowing for efficient encoding
-    of chess moves. The bits are structured as follows:
-
-    - Bits 0-5: Destination square (0-63)
-    - Bits 6-11: Origin square (0-63)
-    - Bits 12-13: Promotion piece type (0 for knight, 1 for bishop, 2 for rook, 3 for queen)
-    - Bits 14-15: Special move flags:
-        - 0: Normal move
-        - 1: Promotion
-        - 2: En passant
-        - 3: Castling
-
+    of chess moves.
     This encoding method enables compact storage and quick access to the essential information 
     regarding each move, similar to the approach used in the Stockfish chess engine.
     """
+
+    def __init__(self, move: int | str):
+        """
+        Initializes a Move instance.
+
+        Parameters:
+        -----------
+        move : int | str
+            - If an integer (uint16), it should follow the move encoding format:
+            - Bits 0-5: Destination square (0-63)
+            - Bits 6-11: Origin square (0-63)
+            - Bits 12-13: Promotion piece type (0=Knight, 1=Bishop, 2=Rook, 3=Queen)
+            - Bits 14-15: Move type (0=Normal, 1=Promotion, 2=En Passant, 3=Castling)
+            - If a string, it should be in UCI format (e.g., "e2e4" for a normal move or "e7e8q" for a promotion).
+
+        Raises:
+        -------
+        ValueError:
+            - If the integer encoding is out of range.
+            - If the string format is invalid or not a valid UCI move.
+        """
+        ...
+
 
     @property
     def from_(self) -> int:
@@ -420,7 +433,100 @@ class Board:
         """
         ...
 
-    def step(self, step: Move | str | int) -> int:
+    @property
+    def side(self) -> int:
+        """
+        Returns the side to play 0 for white and 1 for black
+
+        Returns:
+            int: side to play.
+        """
+        ...
+
+    @property
+    def captured_piece(self) -> int:
+        """
+        Returns the piece has been captured within the last move. if no piece
+        has been captured returns 0;
+
+        Returns:
+            int: piece has been captured
+        """
+        ...
+
+    @property
+    def is_check(self) -> bool:
+        """
+        Checks whether the current player's king is in check.
+
+        Returns:
+            bool: True if the king of the player to move is in check, False otherwise.
+        """
+        ...
+    
+    @property
+    def is_double_check(self) -> bool:
+        """
+        Checks whether the current player's king is in double check.
+
+        Returns:
+            bool: True if the king of the player to move is in double check, False otherwise.
+        """
+        ...
+
+    @property
+    def is_pawn_moved(self) -> bool:
+        """
+        Checks whether a pawn moved or not in the last move.
+
+        Returns:
+            bool: True if the last move is a pawn push, False otherwise.
+        """
+        ...
+
+    @property
+    def is_capture(self) -> bool:
+        """
+        Checks whether a piece has been captured or not in the last move.
+
+        Returns:
+            bool: True if the last move captured a piece, False otherwise.
+        """
+        ...
+
+    @property
+    def is_insufficient_material(self) -> bool:
+        """
+        Checks if the position meets the criteria for an insufficient material draw.
+
+        Returns:
+            bool: True if neither side has enough material to checkmate, False otherwise.
+        """
+        ...
+
+    @property
+    def is_threefold(self) -> bool:
+        """
+        Checks if the current position has occurred three times, leading to a draw by repetition.
+
+        Returns:
+            bool: True if the same position has been repeated three times, False otherwise.
+        """
+        ...
+
+    @property
+    def is_fifty_moves(self) -> bool:
+        """
+        Checks if the fifty-move rule applies, meaning no pawn move or capture has occurred in the last 50 moves.
+
+        Returns:
+            bool: True if the fifty-move rule applies, False otherwise.
+        """
+        ...
+
+
+
+    def step(self, step: Move | str | int) -> bool:
         """
         Executes a move on the board.
 
@@ -455,7 +561,7 @@ class Board:
         """
         ...
 
-    def generate_legal_moves(self, as_set : bool = True) -> list[Move] | set[Move]:
+    def generate_legal_moves(self, as_set : bool = False) -> list[Move] | set[Move]:
         """
         Generates all legal moves for the current position.
 
@@ -504,7 +610,7 @@ class Board:
             square (str | int): The target square, given as a UCI string (e.g., "e4") or an index (0-63).
 
         Returns:
-            int: The piece occupying the square, or NO_PIECE if empty.
+            int: The piece occupying the square, or 0 if empty.
         """
         ...
 
@@ -516,8 +622,8 @@ class Board:
             square (str | int): The target square, given as a UCI string (e.g., "e4") or an index (0-63).
 
         Returns:
-            int: WHITE if the piece belongs to White, BLACK if it belongs to Black,
-            and NO_SIDE if the square is empty.
+            int: 0 if the piece belongs to White, 1 if it belongs to Black,
+            and -1 if the square is empty.
         """
         ...
 
@@ -536,42 +642,6 @@ class Board:
         """
         ...
 
-    def is_check(self) -> bool:
-        """
-        Checks whether the current player's king is in check.
-
-        Returns:
-            bool: True if the king of the player to move is in check, False otherwise.
-        """
-        ...
-
-    def is_insufficient_material(self) -> bool:
-        """
-        Checks if the position meets the criteria for an insufficient material draw.
-
-        Returns:
-            bool: True if neither side has enough material to checkmate, False otherwise.
-        """
-        ...
-
-    def is_threefold(self) -> bool:
-        """
-        Checks if the current position has occurred three times, leading to a draw by repetition.
-
-        Returns:
-            bool: True if the same position has been repeated three times, False otherwise.
-        """
-        ...
-
-    def is_fifty_moves(self) -> bool:
-        """
-        Checks if the fifty-move rule applies, meaning no pawn move or capture has occurred in the last 50 moves.
-
-        Returns:
-            bool: True if the fifty-move rule applies, False otherwise.
-        """
-        ...
-
     def get_attackers_map(self, square: str | int) -> BitBoard:
         """
         Returns a bitboard representing all pieces attacking the given square.
@@ -584,7 +654,7 @@ class Board:
         """
         ...
 
-    def get_moves_of(self, square: str | int, as_set : bool = True) -> list[Move] | set[Move]:
+    def get_moves_of(self, square: str | int, as_set : bool = False) -> list[Move] | set[Move]:
         """
         Returns all legal moves for the piece located on the given square.
 
@@ -606,24 +676,27 @@ class Board:
         """
         ...
 
-    def get_game_state(self, can_move: bool) -> int:
+    def get_game_state(self, can_move: Optional[bool]) -> int:
         """
         Determines the current game state.
 
         Parameters:
-            can_move (bool): Whether the player to move has any legal moves.
+            can_move (bool): if set to True or False the board won't generate legal
+                            moves on its own to check if the player how has the play could
+                            move or not and it will use the parameter can_move.
 
         Returns:
-            int: The game state code (e.g., 0 for ongoing, 1 for checkmate, 2 for stalemate).
+            int: The game state code (e.g., 0 for playing, 1 for white win).
         """
         ...
 
-    def find(self, piece: int) -> list[int]:
+    def find(self, piece: int | str) -> list[int]:
         """
         Finds all squares where a specific piece is located.
 
         Parameters:
-            piece (int): The piece to search for.
+            piece (int | str): The piece to search for. could be int between (0, 11)
+                               or a string with one single char of these 'PNBRQKpnbrqk'
 
         Returns:
             list[int]: A list of squares (0-63) where the given piece is located.
@@ -800,6 +873,19 @@ def bb_from_array(arr: np.ndarray | Sequence) -> BitBoard:
         arr (np.ndarray | Sequence): The input array or sequence to convert.
                                       The shape of the sequence does not matter,
                                       but the number of elements must be 64.
+
+    Returns:
+        BitBoard: The corresponding BitBoard representation.
+    """
+    ...
+
+def bb_from_squares(squares: Sequence[int | str]) -> BitBoard:
+    """
+    Converts a sequence of squares to a BitBoard object.
+    squares could be given as a UCI string (e.g., "e4") or an index (0-63).
+
+    Parameters:
+        squares: a sequence of squares.
 
     Returns:
         BitBoard: The corresponding BitBoard representation.

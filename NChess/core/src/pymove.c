@@ -7,14 +7,16 @@ PyMove*
 PyMove_FromMove(Move move){
     PyObject* obj = PyLong_FromUnsignedLong(move);
     if (!obj){
-        PyErr_SetString(
-            PyExc_ValueError,
-            "Falied to create a move object"
-        );
+        if (!PyErr_Occurred()){
+            PyErr_SetString(
+                PyExc_ValueError,
+                "Falied to create a move object"
+            );
+        }
         return NULL;
     }
     obj->ob_type = &PyMoveType;
-    return obj;
+    return (PyObject*)obj;
 }
 
 PyObject*
@@ -29,7 +31,7 @@ PyMove_FromUCI(PyObject* self, PyObject* args, PyObject* kwargs){
         return NULL;
     }
 
-    Move move = pyobject_as_move(uci);                        
+    Move move = Move_FromString(uci);                        
     if (PyErr_Occurred())
         return NULL;
     
@@ -110,13 +112,32 @@ PyMove_FromArgs(PyObject* self, PyObject* args, PyObject* kwargs){
 
 PyObject*
 PyMove_Str(PyObject* self){
+    Move move = (Move)PyMove_AsMove(self);
+    if (PyErr_Occurred()){
+        return NULL;
+    }
+    
     char buffer[10];
-    Move move = (Move)PyLong_AsUnsignedLong(self);
     int res = Move_AsString(move, buffer);
     if (res < 0){
         strcpy(buffer, "null");
     }
     return PyUnicode_FromFormat("%s(\"%s\")", Py_TYPE(self)->tp_name, buffer);
+}
+
+PyObject*
+move_new(PyTypeObject* type, PyObject* args, PyObject* kwargs){
+    PyObject* obj;
+    NCH_STATIC char* kwlist[] = {"move", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &obj)) {
+        return NULL;
+    }
+
+    Move move = pyobject_as_move(obj);
+    if (PyErr_Occurred())
+        return NULL;
+
+    return (PyObject*)PyMove_FromMove(move);
 }
 
 PyTypeObject PyMoveType = {
@@ -129,4 +150,5 @@ PyTypeObject PyMoveType = {
     .tp_str = PyMove_Str,
     .tp_repr = PyMove_Str,
     .tp_getset = pymove_getset,
+    .tp_new = move_new,
 };

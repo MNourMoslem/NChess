@@ -2,6 +2,7 @@
 #include "nchess/nchess.h"
 #include "pyboard.h"
 #include "pybb.h"
+#include "common.h"
 
 #define BOARD(obj) ((PyBoard*)obj)->board
 
@@ -82,7 +83,7 @@ board_get_all_occ(PyObject* self, void* something){
 
 PyObject*
 board_castles(PyObject* self, void* something){
-    return (PyObject*)PyBitBoard_FromUnsignedLongLong(Board_CASTLES(BOARD(self)));
+    return (PyObject*)PyLong_FromUnsignedLong(Board_CASTLES(BOARD(self)));
 }
 
 PyObject*
@@ -125,31 +126,86 @@ PyObject*
 board_en_passant_square(PyObject* self, void* something){
     Board* b = BOARD(self);
     if (!Board_ENP_IDX(b))
-        Py_RETURN_NONE;
+        return PyLong_FromLong(-1);
 
     return PyLong_FromLong(NCH_SQRIDX(Board_ENP_TRG(b)));
 }
 
+PyObject*
+board_side(PyObject* self, void* something){
+    return PyLong_FromLong(Board_SIDE(BOARD(self)));
+}
+
+PyObject*
+board_captured_piece(PyObject* self, void* something){
+    return piece_to_pyobject(Board_CAP_PIECE(BOARD(self)));
+}
+
+PyObject*
+board_is_check(PyObject* self, void* something){
+    if(Board_IS_CHECK(BOARD(self))) Py_RETURN_TRUE; Py_RETURN_FALSE;
+}
+
+PyObject*
+board_is_double_check(PyObject* self, void* something){
+    if(Board_IS_DOUBLECHECK(BOARD(self))) Py_RETURN_TRUE; Py_RETURN_FALSE;
+}
+
+PyObject*
+board_is_pawn_moved(PyObject* self, void* something){
+    if(Board_IS_PAWNMOVED(BOARD(self))) Py_RETURN_TRUE; Py_RETURN_FALSE;
+}
+
+PyObject*
+board_is_capture(PyObject* self, void* something){
+    if(Board_IS_CAPTURE(BOARD(self))) Py_RETURN_TRUE; Py_RETURN_FALSE;
+}
+
+PyObject*
+board_is_insufficient_material(PyObject* self, PyObject* args){
+    return PyBool_FromLong(Board_IsInsufficientMaterial(BOARD(self)));
+}
+
+PyObject*
+board_is_threefold(PyObject* self, PyObject* args){
+    return PyBool_FromLong(Board_IsThreeFold(BOARD(self)));
+}
+
+PyObject*
+board_is_fifty_moves(PyObject* self, PyObject* args){
+    return PyBool_FromLong(Board_IsFiftyMoves(BOARD(self)));
+}
+
 PyGetSetDef pyboard_getset[] = {
-    {"white_pawns"   , (getter)board_get_white_pawns  , NULL, NULL, NULL},
-    {"black_pawns"   , (getter)board_get_black_pawns  , NULL, NULL, NULL},
-    {"white_knights" , (getter)board_get_white_knights, NULL, NULL, NULL},
-    {"black_knights" , (getter)board_get_black_knights, NULL, NULL, NULL},
-    {"white_bishops" , (getter)board_get_white_bishops, NULL, NULL, NULL},
-    {"black_bishops" , (getter)board_get_black_bishops, NULL, NULL, NULL},
-    {"white_rooks"   , (getter)board_get_white_rooks  , NULL, NULL, NULL},
-    {"black_rooks"   , (getter)board_get_black_rooks  , NULL, NULL, NULL},
-    {"white_queens"  , (getter)board_get_white_queens , NULL, NULL, NULL},
-    {"black_queens"  , (getter)board_get_black_queens , NULL, NULL, NULL},
-    {"white_king"    , (getter)board_get_white_king   , NULL, NULL, NULL},
-    {"black_king"    , (getter)board_get_black_king   , NULL, NULL, NULL},
-    {"white_occ"     , (getter)board_get_white_occ    , NULL, NULL, NULL},
-    {"black_occ"     , (getter)board_get_black_occ    , NULL, NULL, NULL},
-    {"all_occ"       , (getter)board_get_all_occ      , NULL, NULL, NULL},
-    {"castles"       , (getter)board_castles          , NULL, NULL, NULL},
-    {"castles_str"   , (getter)board_castles_str      , NULL, NULL, NULL},
-    {"nmoves"        , (getter)board_nmoves           , NULL, NULL, NULL},
-    {"fifty_counter" , (getter)board_fifty_counter    , NULL, NULL, NULL},
-    {"en_passant_sqr", (getter)board_en_passant_square, NULL, NULL, NULL},
-    {NULL            , NULL                           , NULL, NULL, NULL},
+    {"white_pawns"             ,(getter)board_get_white_pawns          ,NULL ,NULL, NULL},
+    {"black_pawns"             ,(getter)board_get_black_pawns          ,NULL ,NULL, NULL},
+    {"white_knights"           ,(getter)board_get_white_knights        ,NULL ,NULL, NULL},
+    {"black_knights"           ,(getter)board_get_black_knights        ,NULL ,NULL, NULL},
+    {"white_bishops"           ,(getter)board_get_white_bishops        ,NULL ,NULL, NULL},
+    {"black_bishops"           ,(getter)board_get_black_bishops        ,NULL ,NULL, NULL},
+    {"white_rooks"             ,(getter)board_get_white_rooks          ,NULL ,NULL, NULL},
+    {"black_rooks"             ,(getter)board_get_black_rooks          ,NULL ,NULL, NULL},
+    {"white_queens"            ,(getter)board_get_white_queens         ,NULL ,NULL, NULL},
+    {"black_queens"            ,(getter)board_get_black_queens         ,NULL ,NULL, NULL},
+    {"white_king"              ,(getter)board_get_white_king           ,NULL ,NULL, NULL},
+    {"black_king"              ,(getter)board_get_black_king           ,NULL ,NULL, NULL},
+    {"white_occ"               ,(getter)board_get_white_occ            ,NULL ,NULL, NULL},
+    {"black_occ"               ,(getter)board_get_black_occ            ,NULL ,NULL, NULL},
+    {"all_occ"                 ,(getter)board_get_all_occ              ,NULL ,NULL, NULL},
+    {"castles"                 ,(getter)board_castles                  ,NULL ,NULL, NULL},
+    {"castles_str"             ,(getter)board_castles_str              ,NULL ,NULL, NULL},
+    {"nmoves"                  ,(getter)board_nmoves                   ,NULL ,NULL, NULL},
+    {"fifty_counter"           ,(getter)board_fifty_counter            ,NULL ,NULL, NULL},
+    {"en_passant_sqr"          ,(getter)board_en_passant_square        ,NULL ,NULL, NULL},
+    {"side"                    ,(getter)board_side                     ,NULL ,NULL, NULL},
+    {"captured_piece"          ,(getter)board_captured_piece           ,NULL ,NULL, NULL},
+    
+    {"is_check"                ,(getter)board_is_check                 ,NULL ,NULL, NULL},
+    {"is_double_check"         ,(getter)board_is_double_check          ,NULL ,NULL, NULL},
+    {"is_pawn_moved"           ,(getter)board_is_pawn_moved            ,NULL ,NULL, NULL},
+    {"is_capture"              ,(getter)board_is_capture               ,NULL ,NULL, NULL},
+    {"is_insufficient_material",(getter)board_is_insufficient_material ,NULL ,NULL, NULL},
+    {"is_threefold"            ,(getter)board_is_threefold             ,NULL ,NULL, NULL},
+    {"is_fifty_moves"          ,(getter)board_is_fifty_moves           ,NULL ,NULL, NULL},
+    {NULL                      ,NULL                                   ,NULL ,NULL, NULL},
 };

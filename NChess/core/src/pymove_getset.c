@@ -2,61 +2,54 @@
 #include "pymove_getset.h"
 #include "nchess/move.h"
 #include "nchess/utils.h"
+#include "pymove.h"
 
 PyObject*
 get_from_sqr(PyObject* self, void* something){
-    Move move = (Move)PyLong_AsUnsignedLong(self);
+    Move move = PyMove_AsMove(self);
     return PyLong_FromUnsignedLong(Move_FROM(move));
 }
 
 PyObject*
 get_to_sqr(PyObject* self, void* something){
-    Move move = (Move)PyLong_AsUnsignedLong(self);
+    Move move = PyMove_AsMove(self);
     return PyLong_FromUnsignedLong(Move_TO(move));
 }
 
 PyObject*
 get_pro_piece(PyObject* self, void* something){
-    Move move = (Move)PyLong_AsUnsignedLong(self);
+    Move move = PyMove_AsMove(self);
     return PyLong_FromUnsignedLong(Move_PRO_PIECE(move));
 }
 
 PyObject*
 get_move_type(PyObject* self, void* something){
-    Move move = (Move)PyLong_AsUnsignedLong(self);
+    Move move = PyMove_AsMove(self);
     return PyLong_FromUnsignedLong(Move_TYPE(move));
 }
 
 PyObject*
 get_is_normal(PyObject* self, void* something){
-    Move move = (Move)PyLong_AsUnsignedLong(self);
+    Move move = PyMove_AsMove(self);
     return PyBool_FromLong(Move_IsNormal(move));
 }
 
 PyObject*
 get_is_enpassant(PyObject* self, void* something){
-    Move move = (Move)PyLong_AsUnsignedLong(self);
+    Move move = PyMove_AsMove(self);
     return PyBool_FromLong(Move_IsEnPassant(move));
 }
 
 PyObject*
 get_is_castle(PyObject* self, void* something){
-    Move move = (Move)PyLong_AsUnsignedLong(self);
+    Move move = PyMove_AsMove(self);
     return PyBool_FromLong(Move_IsCastle(move));
 }
 
 PyObject*
 get_is_promotion(PyObject* self, void* something){
-    Move move = (Move)PyLong_AsUnsignedLong(self);
+    Move move = PyMove_AsMove(self);
     return PyBool_FromLong(Move_IsPromotion(move));
-}
-
-PyObject*
-get_is_valid(PyObject* self, void* something){
-    Move move = (Move)PyLong_AsUnsignedLong(self);
-    if (Move_IsValidSquares(move))
-        Py_RETURN_FALSE;
-    Py_RETURN_TRUE;
 }
 
 PyGetSetDef pymove_getset[] = {
@@ -68,6 +61,5 @@ PyGetSetDef pymove_getset[] = {
     {"is_enpassant", (getter)get_is_enpassant , NULL, NULL, NULL},
     {"is_castle"   , (getter)get_is_castle    , NULL, NULL, NULL},
     {"is_promotion", (getter)get_is_promotion , NULL, NULL, NULL},
-    {"is_valid"    , (getter)get_is_valid     , NULL, NULL, NULL},
     {NULL          , NULL                     , NULL, NULL, NULL},
 };

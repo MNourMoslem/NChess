@@ -120,8 +120,7 @@ int
 pyobject_as_move(PyObject* obj, Move* dst_move){
     if (PyUnicode_Check(obj)) {
         const char* move_str = PyUnicode_AsUTF8(obj);
-        if (move_str == NULL) {
-            PyErr_SetString(PyExc_ValueError, "failed to read the string");
+        if (PyErr_Occurred()){
             return 0;
         }
 

@@ -27,10 +27,10 @@ typedef enum {
 
 typedef uint16 Move;
 
-#define Move_ASSIGN_FROM(from_) (Move)(((from_)))
-#define Move_ASSIGN_TO(to_) (Move)(((to_)) << 6)
-#define Move_ASSIGN_PRO_PIECE(pro_piece) (Move)(((pro_piece)) << 12)
-#define Move_ASSIGN_TYPE(type) (Move)(((type)) << 14)
+#define Move_ASSIGN_FROM(from_) ((Move)(from_))
+#define Move_ASSIGN_TO(to_) ((Move)((to_) << 6))
+#define Move_ASSIGN_PRO_PIECE(pro_piece) ((Move)((pro_piece) << 12))
+#define Move_ASSIGN_TYPE(type) ((Move)((type) << 14))
 
 #define Move_REMOVE_FROM(move) (Move)(move & 0xffc0)
 #define Move_REMOVE_TO(move) (Move)(move & 0xf03f)

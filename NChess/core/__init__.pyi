@@ -170,10 +170,13 @@ class BitBoard(int):
         """
         ...
     
-    def to_squares(self) -> list[int]:
+    def to_squares(self, as_set : bool = False) -> list[int] | set[int]:
         """
         Returns a list of indices representing squares set in the bitboard.
 
+        Parameters:
+            as_set: returns a set of squares if set to True.
+        
         Returns:
             list[int]: A list of square indices.
         """

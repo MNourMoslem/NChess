@@ -68,8 +68,10 @@ board__makemove(PyObject* self, PyObject* args){
         return NULL;
     }
 
-    Move move = pyobject_as_move(step);
-    CHECK_MOVE_NULL_ERR(move, NULL)
+    Move move;
+    if (!pyobject_as_move(step, &move)){
+        return NULL;
+    }
 
     _Board_MakeMove(BOARD(self), move);
 
@@ -88,8 +90,11 @@ board_step(PyObject* self, PyObject* args, PyObject* kwargs){
         return NULL;
     }
 
-    Move move = pyobject_as_move(move_obj);
-    CHECK_MOVE_NULL_ERR(move, NULL)
+    Move move;
+    if (!pyobject_as_move(move_obj, &move)){
+        return NULL;
+    }
+
 
     int out = Board_StepByMove(BOARD(self), move);
     return PyBool_FromLong(out);

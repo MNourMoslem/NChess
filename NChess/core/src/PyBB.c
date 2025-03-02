@@ -25,7 +25,7 @@ PyBitBoard* PyBitBoard_FromUnsignedLongLong(unsigned long long value){
 NCH_STATIC PyObject*
 bb_new(PyTypeObject* type, PyObject* args, PyObject* kwargs) {
     unsigned long long value;    
-    if (!PyArg_ParseTuple(args, "L", &value)) {
+    if (!PyArg_ParseTuple(args, "K", &value)) {
         return NULL;
     }
 
@@ -39,6 +39,7 @@ bb_iter(PyObject* self){
     if (PyErr_Occurred()) {
         return NULL;
     }
+
     PyObject* tuple = PyTuple_New(count_bits(bb));
     if (!tuple){
         return NULL;

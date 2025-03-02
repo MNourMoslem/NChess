@@ -1,5 +1,6 @@
 #include "square_functions.h"
 #include "common.h"
+#include <math.h>
 
 PyObject*
 square_from_uci(PyObject* self, PyObject* args){
@@ -74,22 +75,14 @@ square_distance(PyObject* self, PyObject* args){
     }
 
     Square sqr1 = pyobject_as_square(s1);
-    if (sqr1 == NCH_NO_SQR){
-        if (!PyErr_Occurred()){
-            PyErr_SetString(PyExc_ValueError, "s1 can't be a NO_SQUARE");
-        }
-        return NULL;
-    }
+    CHECK_NO_SQUARE_ERR(sqr1, NULL)
 
     Square sqr2 = pyobject_as_square(s2);
-    if (sqr2 == NCH_NO_SQR){
-        if (!PyErr_Occurred()){
-            PyErr_SetString(PyExc_ValueError, "s2 can't be a NO_SQUARE");
-        }
-        return NULL;
-    }
+    CHECK_NO_SQUARE_ERR(sqr1, NULL)
 
-    int distance = NCH_SQR_DISTANCE(sqr1, sqr2);
+    int dr = abs(NCH_GET_ROWIDX(sqr1) - NCH_GET_ROWIDX(sqr2));
+    int dc = abs(NCH_GET_COLIDX(sqr1) - NCH_GET_COLIDX(sqr2));
+    int distance = dr > dc ? dr : dc;
     return PyLong_FromLong(distance);
 }
 

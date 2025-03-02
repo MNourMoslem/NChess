@@ -503,7 +503,26 @@ board_get_occ(PyObject* self, PyObject* args, PyObject* kwargs){
 
     uint64 bb = Board_OCC(BOARD(self), side);
     return (PyObject*)PyBitBoard_FromUnsignedLongLong(bb);
+}
 
+PyObject*
+board_is_move_legal(PyObject* self, PyObject* args, PyObject* kwargs){
+    PyObject* move_obj;
+    NCH_STATIC char* kwlist[] = {"move", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &move_obj)){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(PyExc_ValueError, "failed to parse the move argument");
+        }
+        return NULL;
+    }
+
+    Move move;
+    if (!pyobject_as_move(move_obj, &move)){
+        return NULL;
+    }
+
+    if (Board_CheckAndMakeMoveLegal(BOARD(self), &move)) {Py_RETURN_TRUE;} Py_RETURN_FALSE;
 }
 
 PyMethodDef pyboard_methods[] = {
@@ -527,6 +546,7 @@ PyMethodDef pyboard_methods[] = {
     {"get_game_state"          , (PyCFunction)board_get_game_state          , METH_VARARGS | METH_KEYWORDS , NULL},
     {"get_occ"                 , (PyCFunction)board_get_occ                 , METH_VARARGS | METH_KEYWORDS , NULL},
     {"find"                    , (PyCFunction)board_find                    , METH_VARARGS | METH_KEYWORDS , NULL},
+    {"is_move_legal"           , (PyCFunction)board_is_move_legal           , METH_VARARGS | METH_KEYWORDS , NULL},
 
     {NULL                      , NULL                                       , 0                            , NULL},
 };

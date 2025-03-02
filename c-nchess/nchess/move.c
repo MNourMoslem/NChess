@@ -24,9 +24,12 @@ static char* squares_char[] = {
 
 Move
 Move_New(Square from_, Square to_, MoveType type, PieceType pro_piece_type){
+    if (pro_piece_type <= NCH_Pawn || pro_piece_type >= NCH_King)
+        pro_piece_type = NCH_Queen;
+
     return _Move_New(from_ & 0x3f,
                      to_ & 0x3f,
-                     pro_piece_type & 0x3,
+                     pro_piece_type,
                      type & 0x3);
 }
 

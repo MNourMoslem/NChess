@@ -158,7 +158,7 @@ bb_from_object(PyObject* obj) {
     uint64 bb = 0;
 
     if (PyLong_Check(obj)){
-        return PyLong_AsUnsignedLongLong(obj);
+        return BB_FromLong(obj);
     }
 
     if (_import_array() < 0) {

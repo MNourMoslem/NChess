@@ -16,7 +16,7 @@ bb_as_array(PyObject* self, PyObject* args, PyObject* kwargs){
     npy_intp dims[NPY_MAXDIMS];
     int reversed, as_list;
     int ndim = parse_array_conversion_function_args(nitems, dims, args, kwargs, &reversed, &as_list);
-    uint64 bb = PyLong_AsUnsignedLongLong(self);
+    uint64 bb = BB_FromLong(self);
     if (PyErr_Occurred()) {
         return NULL;
     }
@@ -57,35 +57,36 @@ bb_as_array(PyObject* self, PyObject* args, PyObject* kwargs){
 
 NCH_STATIC PyObject*
 bb_more_then_one(PyObject* self, PyObject* args){
-    uint64 bb = PyLong_AsUnsignedLongLong(self);
+    uint64 bb = BB_FromLong(self);
     if (PyErr_Occurred()) {
         return NULL;
     }
-    return PyBool_FromLong(more_then_one(bb));
+    if (more_then_one(bb)) {Py_RETURN_TRUE;} Py_RETURN_FALSE;
 }
 
 NCH_STATIC PyObject*
 bb_has_two_bits(PyObject* self, PyObject* args){
-    uint64 bb = PyLong_AsUnsignedLongLong(self);
+    uint64 bb = BB_FromLong(self);
     if (PyErr_Occurred()) {
         return NULL;
     }
-    return PyBool_FromLong(has_two_bits(bb));
+    if (has_two_bits(bb)) {Py_RETURN_TRUE;} Py_RETURN_FALSE;
 }
 
 NCH_STATIC PyObject*
 bb_get_last_bit(PyObject* self, PyObject* args) {
-    uint64_t bb = PyLong_AsUnsignedLongLong(self);
+    uint64 bb = BB_FromLong(self);
     if (PyErr_Occurred()) {
         return NULL;
     }
-    uint64_t last_bit = get_last_bit(bb);
-    return (PyObject*)PyBitBoard_FromUnsignedLongLong(last_bit);
+    uint64 last_bit = get_last_bit(bb);
+    int idx = NCH_SQRIDX(last_bit);
+    return PyLong_FromLong(idx);
 }
 
 NCH_STATIC PyObject*
 bb_count_bits(PyObject* self, PyObject* args){
-    uint64 bb = PyLong_AsUnsignedLongLong(self);
+    uint64 bb = BB_FromLong(self);
     if (PyErr_Occurred()) {
         return NULL;
     }
@@ -108,20 +109,17 @@ bb_is_filled(PyObject* self, PyObject* args, PyObject* kwargs){
     Square s = pyobject_as_square(sqr);
     CHECK_NO_SQUARE_ERR(s, NULL)
     
-    uint64 bb = PyLong_AsUnsignedLongLong(self);
+    uint64 bb = BB_FromLong(self);
     if (PyErr_Occurred()) {
         return NULL;
     }
 
-    if (bb & NCH_SQR(s))
-        Py_RETURN_TRUE;
-
-    Py_RETURN_FALSE;
+    if (bb & NCH_SQR(s)) {Py_RETURN_TRUE;} Py_RETURN_FALSE;
 }
 
 NCH_STATIC PyObject* 
 bb_to_squares(PyObject* self, PyObject* args){
-    uint64 bb = PyLong_AsUnsignedLongLong(self);
+    uint64 bb = BB_FromLong(self);
     if (PyErr_Occurred()) {
         return NULL;
     }
@@ -159,7 +157,7 @@ bb_set_square(PyObject* self, PyObject* args, PyObject* kwargs){
         return NULL;
     }
     
-    uint64 bb = PyLong_AsUnsignedLongLong(self);
+    uint64 bb = BB_FromLong(self);
     if (PyErr_Occurred()) {
         return NULL;
     }
@@ -186,7 +184,7 @@ bb_remove_square(PyObject* self, PyObject* args, PyObject* kwargs){
         return NULL;
     }
     
-    uint64 bb = PyLong_AsUnsignedLongLong(self);
+    uint64 bb = BB_FromLong(self);
     if (PyErr_Occurred()) {
         return NULL;
     }

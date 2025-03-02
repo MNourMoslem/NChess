@@ -35,7 +35,7 @@ bb_new(PyTypeObject* type, PyObject* args, PyObject* kwargs) {
 NCH_STATIC PyObject*
 bb_iter(PyObject* self){
     // just create a tuple and iterate over it
-    uint64 bb = PyLong_AsUnsignedLongLong(self);
+    uint64 bb = BB_FromLong(self);
     if (PyErr_Occurred()) {
         return NULL;
     }
@@ -56,7 +56,7 @@ bb_iter(PyObject* self){
 
 static PyObject*
 bb_str(PyBitBoard* self) {
-    unsigned long long value = PyLong_AsUnsignedLongLong((PyObject*)self);
+    unsigned long long value = BB_FromLong((PyObject*)self);
     if (PyErr_Occurred()) {
         return NULL;
     }

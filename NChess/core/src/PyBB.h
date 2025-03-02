@@ -12,4 +12,6 @@ extern PyTypeObject PyBitBoardType;
 
 PyBitBoard* PyBitBoard_FromUnsignedLongLong(unsigned long long value);
 
+#define BB_FromLong(obj) ((unsigned long long)PyLong_AsLongLong(obj))
+
 #endif

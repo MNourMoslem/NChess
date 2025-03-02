@@ -19,26 +19,35 @@
 void
 _Board_MakeMove(Board* board, Move move);
 
+
 // Makes a move only if it is legal; otherwise, the move won't be played.
 // Returns 1 if the move has been played and 0 if not.
 int
 Board_StepByMove(Board* board, Move move);
 
+
 // Makes a move from UCI only if the move is legal; otherwise, the move won't be played.
 // Returns 1 if the move has been played and 0 if not.
 int
-Board_Step(Board* board, char* move);
+Board_Step(Board* board, char* move_str);
+
 
 // Undoes the last move played. If there is no move, it does nothing.
 void
 Board_Undo(Board* board);
 
-// Checks if a move is legal to be played or not. Move does not require
-// MoveType information.
-// Returns a new move that contains MoveType information if the input move
-// is legal and 0 if not.
-Move 
-Board_IsMoveLegal(Board* board, Move move);
+
+// Checks whether a move is legal to be played.  
+// The move does not require MoveType information.  
+// If the move is valid, it resets the MoveType of the given Move object.  
+//  
+// For example if the move is a castle type and the type is not specified,  
+// this function sets its type before returning the result.  
+//  
+// Returns 1 if the move is legal and 0 otherwise.  
+int  
+Board_CheckAndMakeMoveLegal(Board* board, Move* move_ptr);  
+
 
 // Declares all legal moves of a square to a moves array.
 // Returns the number of moves.

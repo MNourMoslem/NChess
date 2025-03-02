@@ -23,26 +23,26 @@ static char* squares_char[] = {
 };
 
 Move
-Move_New(Square from_, Square to_, MoveType type, PieceType pro_type){
-    if (pro_type <= NCH_Pawn || pro_type >= NCH_King)
-        pro_type = NCH_Knight;
-
-    if (!MoveType_IsValid(type))
-        type = MoveType_Normal;
-
-    if (!is_valid_square(from_) || !is_valid_square(to_))
-        return Move_NULL;
-
-    return _Move_New(from_, to_, pro_type, type);
+Move_New(Square from_, Square to_, MoveType type, PieceType pro_piece_type){
+    return _Move_New(from_ & 0x3f,
+                     to_ & 0x3f,
+                     pro_piece_type & 0x3,
+                     type & 0x3);
 }
 
-Move
-Move_FromString(const char* move_str){
+int
+Move_FromString(const char* move_str, Move* dst_move){
     if (strlen(move_str) > 5)
-        return Move_NULL;
+        return 0;
 
     Square from_ = str_to_square(move_str);
+    if (!is_valid_square(from_))
+        return 0;
+
     Square to_ = str_to_square(move_str + 2);
+    if (!is_valid_square(to_))
+        return 0;
+
     PieceType pro_type;
     MoveType type;
 
@@ -70,19 +70,20 @@ Move_FromString(const char* move_str){
         type = MoveType_Normal;
     }
 
-    return Move_New(from_, to_, type, pro_type);
+    *dst_move = Move_New(from_, to_, type, pro_type);
+    return 1;
 }
 
-Move
-Move_FromStringAndType(const char* move_str, MoveType type){
-    Move move = Move_FromString(move_str);
-    if (move != Move_NULL){
+int
+Move_FromStringAndType(const char* move_str, Move* dst_move, MoveType type){
+    if (!Move_FromString(move_str, dst_move)){
         if (!MoveType_IsValid(type))
-            return Move_NULL;
+            return 0;
 
-        move = Move_REASSAGIN_TYPE(move, type);
+        *dst_move = Move_REASSAGIN_TYPE(*dst_move, type);
+        return 1;
     }
-    return move;
+    return 0;
 }
 
 int

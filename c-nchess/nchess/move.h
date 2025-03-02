@@ -26,12 +26,11 @@ typedef enum {
 #define MoveType_IsValid(type) (type >= MoveType_Normal && type <= MoveType_Castle)
 
 typedef uint16 Move;
-#define Move_NULL 0xffff
 
-#define Move_ASSIGN_FROM(from_) (Move)((from_))
-#define Move_ASSIGN_TO(to_) (Move)((to_) << 6)
-#define Move_ASSIGN_PRO_PIECE(pro_piece) (Move)((pro_piece) << 12)
-#define Move_ASSIGN_TYPE(type) (Move)((type) << 14)
+#define Move_ASSIGN_FROM(from_) (Move)(((from_)))
+#define Move_ASSIGN_TO(to_) (Move)(((to_)) << 6)
+#define Move_ASSIGN_PRO_PIECE(pro_piece) (Move)(((pro_piece)) << 12)
+#define Move_ASSIGN_TYPE(type) (Move)(((type)) << 14)
 
 #define Move_REMOVE_FROM(move) (Move)(move & 0xffc0)
 #define Move_REMOVE_TO(move) (Move)(move & 0xf03f)
@@ -54,10 +53,10 @@ typedef uint16 Move;
 
 // A macro to create a Move. It is faster but not safe
 // if the given parameters are incorrect. Use Move_New for safer usage.
-#define _Move_New(from_, to_, promotion_piece, move_type) \
+#define _Move_New(from_, to_, pro_type, move_type) \
     (Move)(Move_ASSIGN_FROM(from_) | \
            Move_ASSIGN_TO(to_) | \
-           Move_ASSIGN_PRO_PIECE(promotion_piece - NCH_Knight) | \
+           Move_ASSIGN_PRO_PIECE((pro_type) - NCH_Knight) | \
            Move_ASSIGN_TYPE(move_type))
 
 #define Move_IsValid(move) ((move) != Move_NULL)
@@ -66,42 +65,60 @@ typedef uint16 Move;
 #define Move_IsEnPassant(move) (Move_TYPE(move) == MoveType_EnPassant)
 #define Move_IsCastle(move) (Move_TYPE(move) == MoveType_Castle)
 
-// Returns a new move if it is valid, and 0 if not.
-Move 
-Move_New(Square from_, Square to_, MoveType type, PieceType promotion_piece);
+// Returns a new move based on the given parameters.  
+// from_ : Source square (0-63).  
+// to_ : Target square (0-63).  
+// type : Move type (Normal, Promotion, EnPassant, Castle).  
+// pro_piece_type : Promotion piece type (Queen, Rook, Bishop, Knight).  
+//  
+// All given parameters will be masked inside the function, ensuring that  
+// the function always returns a valid object, though not necessarily a valid move.  
+// For example, 'from_' will be processed as 'from_ & 0x3F'  
+// because squares from 0 to 63 only require 6 bits.  
+//  
+// If the user inputs an invalid square, such as 70, it will be masked  
+// (70 & 0x3F), resulting in 6 as the new from_ square.  
+// However, if the input is already within the valid range (0-63),  
+// masking will have no effect.
+Move  
+Move_New(Square from_, Square to_, MoveType type, PieceType pro_piece_type);  
 
-// Converts a UCI string into a Move object. The move type defaults to 
-// MoveType_Normal unless it is a promotion move. 
-// 
-// Note: This function does not detect MoveType_Castle or MoveType_EnPassant;
-// it is not responsible for determining these special move types.
-//
-// If the promotion piece is not a valid character ('q', 'r', 'b', 'k'), 
-// it defaults to NCH_Queen.
-//
-// Returns: 
-// - A valid Move object if the input string represents a valid move.
-// - Move_NULL if the move is invalid.
-Move 
-Move_FromString(const char* move_str);
 
-// Converts a UCI string into a Move object while explicitly specifying its type.
-//
-// Returns: 
-// - A Move object constructed from the given UCI string and MoveType.
-Move
-Move_FromStringAndType(const char* move_str, MoveType type);
+// Converts a UCI string into the given destination Move object.  
+// The move type defaults to MoveType_Normal unless it is a promotion move.  
+//  
+// Note: This function does not detect MoveType_Castle or MoveType_EnPassant;  
+// it is not responsible for determining these special move types.  
+// Use Move_FromStringAndType if you want to set the type manually.  
+//  
+// If the promotion piece is not a valid character ('q', 'r', 'b', 'k'),  
+// it defaults to NCH_Queen.  
+//  
+// Returns 1 if the move is valid and 0 otherwise.  
+int  
+Move_FromString(const char* move_str, Move* dst_move);  
 
-// Prints a move to the console.
-void 
-Move_Print(Move move);
+
+// Converts a UCI string into the given destination Move object with the  
+// move type specified by the function.  
+//  
+// Returns 1 if the move is valid and 0 otherwise.  
+int  
+Move_FromStringAndType(const char* move_str, Move* dst_move, MoveType type);  
+
 
 // Converts a Move to a UCI string.
 // Returns 0 on success and -1 on failure.
 int 
 Move_AsString(Move move, char* dst);
 
-// Prints all moves in a given buffer.
+
+// Prints a move to the console.
+void 
+Move_Print(Move move);
+
+
+// Prints all moves in a given buffer without new line between each move.
 void 
 Move_PrintAll(const Move* move, int nmoves);
 

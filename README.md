@@ -28,13 +28,16 @@ The makefile is written for GCC. If you wish to use another compiler, you may ne
 There is no formal documentation for NChess, but all classes and functions are described in Python comments within their respective files.
 Here’s an example usage in a Python:
 
+### The Board Object
+
+The `Board` object represents a chessboard and provides methods to play moves, retrieve game state information, and generate legal moves. It acts as the core of the nchess library, managing the game flow and enforcing chess rules.
+
 ```python
 import nchess as nc
 
+# Let's create a new board
 board = nc.Board()
 print(board)
-
-# out:
 # rnbqkbnr
 # pppppppp
 # ........
@@ -44,6 +47,434 @@ print(board)
 # PPPPPPPP
 # RNBQKBNR
 
+board.step("e2e4")
+board.step("d7d5")
+board.step("e4d5")
+
+print(board)
+# rnbqkbnr
+# ppp.pppp
+# ........
+# ...P....
+# ........
+# ........
+# PPPP.PPP
+# RNBQKBNR
+
+# The step function returns True if the move has been played, and False otherwise.
+is_played = board.step("g8f6")
+print(is_played)
+# True
+
+is_played = board.step("f1g2")  # The move is not legal, so it won't be played.
+print(is_played)
+# False
+
+board.undo()  # Undo the last move ("g8f6").
+print(board)  # Will print the same board as before.
+# rnbqkbnr
+# ppp.pppp
+# ........
+# ...P....
+# ........
+# ........
+# PPPP.PPP
+# RNBQKBNR
+
+b2 = board.copy()  # Copies the board.
+print(b2)
+# rnbqkbnr
+# ppp.pppp
+# ........
+# ...P....
+# ........
+# ........
+# PPPP.PPP
+# RNBQKBNR
+
+board.reset()  # Resets the board, equivalent to undoing all played moves.
+print(board)
+# rnbqkbnr
+# pppppppp
+# ........
+# ........
+# ........
+# ........
+# PPPPPPPP
+# RNBQKBNR
+
+# We can create a board from a specific FEN string by passing it to the Board class.
+new_board = nc.Board("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ")
+print(new_board)
+# r...k..r
+# p.ppqpb.
+# bn..pnp.
+# ...PN...
+# .p..P...
+# ..N..Q.p
+# PPPBBPPP
+# R...K..R
+
+# We can also retrieve the FEN of any given state:
+fen = new_board.fen()
+print(fen)
+# r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1
+
+# You might notice a difference between the input FEN and the generated FEN.
+# This is because the input FEN did not contain information about the fifty-move rule
+# and the move count, whereas the generated one does.
+```
+
+### The Move Object
+
+The `Move` object represents a chess move.  
+- In C, it is an `int16` or `short` type.  
+- In Python, it is a subclass of `int`:  
+```python
+class Move(int):
+    pass
+
+```
+
+Move Representation
+Any function in nchess that takes a move as a parameter accepts it in three forms:
+
+Move or int objects – These need to be created or decoded beforehand.
+UCI string format – A standard string representation like "e2e4" or "b7b8q".
+
+Usage Examples:
+```python
+import nchess as nc
+
+board = nc.Board()
+
+# Creating a move from the Move object
+move = nc.Move("e2e4")
+
+# Another way to declare a move using nc.move function
+# where you set source and destination squares separately
+move2 = nc.move("e2", "e4")
+
+print(move == move2)
+# True
+
+# Playing a move
+is_played = board.step(move)  # Same as board.step("e2e4")
+print(is_played)
+# True
+
+# Move object has multiple methods to obtain information about the move
+src_sqr = move.from_        # Source square
+dst_sqr = move.to_          # Destination square
+pro_piece = move.pro_piece  # Promotion piece type (0 if not a promotion)
+move_type = move.move_type  # Move type (normal, castling, etc.)
+
+print("Move info:")
+print(f"Source square: {src_sqr}")          # 11
+print(f"Destination square: {dst_sqr}")     # 27
+print(f"Promotion piece type: {pro_piece}") # 0
+print(f"Move type: {move_type}")            # 0
+
+# Let's play some additional moves
+board.step("d7d5")
+board.step("e4d5")
+board.step("d8d5")
+board.step("b1c3")
+board.step("d5a5")
+
+# Get all played moves as a list
+played_moves = board.get_played_moves()
+print(played_moves)
+# [Move("e2e4"), Move("d7d5"), Move("e4d5"), Move("d8d5"), Move("b1c3"), Move("d5a5")]
+
+# Generate a list of legal moves in the current position
+legal_moves = board.generate_legal_moves()
+print(legal_moves)
+# [Move("g1e2"), Move("g1h3"), Move("g1f3"), ..., Move("c3b5"), Move("e1e2")]
+
+# Generate all possible moves from a specific square
+legal_moves_g1 = board.get_moves_of("g1")
+print(legal_moves_g1)
+# [Move("g1e2"), Move("g1h3"), Move("g1f3")]
+
+# Check if a move is legal without playing it
+is_legal1 = board.is_move_legal("g1f3")
+is_legal2 = board.is_move_legal("d1d2")
+
+print(is_legal1) # True
+print(is_legal2) # False
+```
+
+### The BitBoard Object
+A BitBoard is an integer-based representation of a chessboard, where each bit corresponds to a specific square. It is inherited from int, just like the Move object, and is used for efficient bitwise operations to manipulate and analyze board positions. The BitBoard class provides various methods for bit manipulation, such as counting bits, checking occupancy, and retrieving attacking squares.
+
+```python
+import nchess as nc
+from nchess import const
+
+# Let's create a BitBoard and explore its functionalities
+val = 1234  # 0x4d2 in hex and 0b10011010010 in binary
+bb = nc.BitBoard(val)
+print(bb)
+# BitBoard(0x4d2)
+
+# BitBoard comes with several bit manipulation functions
+
+# Returns the number of set bits in the BitBoard
+count = bb.bit_count()  # 5
+
+# Checks if there is more than one bit set in the BitBoard
+mt1 = bb.more_than_one()  # True
+
+# Checks if the BitBoard contains exactly two bits
+has2bit = bb.has_two_bits()  # False
+
+# Checks if a specific square is contained in the BitBoard
+has_g1 = bb.is_filled("g1")
+has_b4 = bb.is_filled("b4")
+print(has_g1)  # True  
+print(has_b4)  # False
+
+# Retrieves all occupied squares in a list format
+bb_squares = bb.to_squares()
+print(bb_squares)
+# [1, 4, 6, 7, 10]
+
+# You can also iterate through the occupied squares
+for sqr in bb:
+    # Process each occupied square
+    continue
+
+# Now, let's see how the BitBoard object is used within the Board class
+board = nc.Board()
+
+# Retrieve BitBoard representations of different piece types
+wp = board.white_pawns  # Returns a BitBoard representing white pawns
+print(wp)
+# BitBoard(0xff00)
+
+# Retrieve occupancy BitBoards:
+white_occ = board.white_occ  # White pieces
+black_occ = board.black_occ  # Black pieces
+all_occ   = board.all_occ    # All pieces on the board
+
+print(white_occ)  # BitBoard(0xffff)
+print(black_occ)  # BitBoard(0xffff000000000000)
+print(all_occ)    # BitBoard(0xffff00000000ffff)
+
+# Checking if a square is attacked
+# This function returns a BitBoard representing all squares attacking a given square
+# Squares can be passed as strings ("f3") or numbers (e.g., 18)
+attackers_bb = board.get_attackers_map(const.F3)
+attacking_squares = attackers_bb.to_squares()
+print(attacking_squares)
+# []
+
+# The list is empty because it's White's turn, and no Black piece is attacking f3 in the starting position.
+# Let's check for f6 instead:
+attackers_bb = board.get_attackers_map("f6")
+attacking_squares = attackers_bb.to_squares(as_set=True)  # Returns a set this time
+print(attacking_squares)
+# {49, 51, 57}
+
+# A set might be useful for quick lookups
+print(const.C5 in attacking_squares)  # False
+print(const.G7 in attacking_squares)  # True
+```
+
+### Array Conversions
+
+One of the most efficient features of `nchess` is its ability to convert chess boards (`Board`) and bitboards (`BitBoard`) into NumPy arrays with minimal performance overhead. This allows for seamless integration with machine learning models, reinforcement learning algorithms, and other computational tasks requiring matrix operations.
+
+### Converting a Board to a NumPy Array
+
+A `Board` object can be converted into a NumPy array using the `as_array` method. This method returns a binary representation of the board, where each piece type is represented on its respective plane.
+
+```python
+import nchess as nc
+import numpy as np
+
+board = nc.Board("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ")
+print(board)
+
+arr = board.as_array()
+print(arr.shape)  # (12, 64)
+print(arr)
+```
+
+The default shape of the returned array is `(12, 64)`, representing 12 different piece types over a flattened 64-square board.
+
+You can reshape the output into `(12, 8, 8)` to get a more intuitive 2D representation:
+
+```python
+arr2 = board.as_array((12, 8, 8))
+print(arr2.shape)  # (12, 8, 8)
+```
+
+To return the board as a nested list instead of a NumPy array, set `as_list=True`:
+
+```python
+arr2 = board.as_array((12, 8, 8), as_list=True)
+print(type(arr2))  # <class 'list'>
+```
+
+### Reversing the BitBoard Representation
+
+For applications where the perspective of the bitboard matters (e.g., training a chess model from both player perspectives), as_array supports a reversed flag:
+
+```python
+arr3 = board.as_array(reversed=True)
+print(arr3)
+```
+
+Reversing the bitboard flips the perspective, meaning bits would be read from right to left instead of left to right. For example, the bit representation 1001110 would become 0111001. However, this operation does not alter the order of the piece planes in the (12, 8, 8) array. The first plane will always represent white pawns, followed by white knights, bishops, rooks, queens, and kings, then their black counterparts in the same order.
+
+### Converting a BitBoard to a NumPy Array
+
+Bitboards in `nchess` also support direct conversion to NumPy arrays. For example, to get the white pawns' bitboard as an 8x8 matrix:
+
+```python
+bb = board.white_pawns
+bb_arr = bb.as_array((8, 8))  # Default shape is (64,)
+print(bb_arr)
+```
+
+Output:
+```
+[[0 0 0 0 0 0 0 0]
+ [1 1 1 0 0 1 1 1]
+ [0 0 0 0 0 0 0 0]
+ [0 0 0 1 0 0 0 0]
+ [0 0 0 0 1 0 0 0]
+ [0 0 0 0 0 0 0 0]
+ [0 0 0 0 0 0 0 0]
+ [0 0 0 0 0 0 0 0]]
+```
+
+### Creating a BitBoard from an Array
+
+We can also create a bitboard from a NumPy array using `bb_from_array`:
+
+```python
+our_bb = nc.bb_from_array(bb_arr)
+print(bb == our_bb)  # True
+```
+
+### Using `as_table` for Piece Representation
+
+If you need a representation of the board where each square contains an integer representing the piece type, use `as_table`:
+
+```python
+table = board.as_table(shape=(8, 8))  # Default shape is (64,)
+print(table)
+```
+
+Example output:
+```
+[[ 4  0  0  6  0  0  0  4]
+ [ 1  1  1  3  3  1  1  1]
+ [ 7  0  5  0  0  2  0  0]
+ [ 0  0  0  1  0  0  7  0]
+ [ 0  0  0  2  1  0  0  0]
+ [ 0  7  8  7  0  0  8  9]
+ [ 0  9  7 11  7  7  0  7]
+ [10  0  0 12  0  0  0 10]]
+```
+
+### Additional Functions And nchess.Const
+nchess has additional functions outside it main classes (Board, BitBoard, Move)
+here are they:
+
+Square Functions
+```python
+import nchess as nc
+
+sqr = "d3"
+row = nc.square_row(sqr) # Retrieves the row index of a given square.
+col = nc.square_column(sqr) # Retrieves the column index of a given square.
+
+# Mirrors a square either horizontally or vertically.
+m_v = nc.square_mirror(sqr, vertical=True) 
+m_h = nc.square_mirror(sqr, vertical=False)
+
+# Converts a UCI square notation (e.g., "e4") to its corresponding index (0-63).
+sqr2 = nc.square_from_uci("b7")
+print(sqr2) # 54
+
+dist = nc.square_distance(sqr, sqr2) # Computes the Manhattan distance between two squares.
+print(dist) # 4
+```
+
+BitBoard Functions
+```python
+import nchess as nc
+from nchess import const
+import numpy as np
+
+# Initialize square and bitboard
+sqr = "d4"
+occ = nc.BitBoard(1234567910)
+arr = occ.as_array((8, 8))
+print(arr)
+# [[0 1 1 0 0 1 1 1]
+#  [0 1 0 0 0 0 0 0]
+#  [0 1 1 0 1 0 0 1]
+#  [1 0 0 1 0 0 1 0]
+#  [0 0 0 0 0 0 0 0]
+#  [0 0 0 0 0 0 0 0]
+#  [0 0 0 0 0 0 0 0]
+#  [0 0 0 0 0 0 0 0]]
+
+# Create a bitboard from an array. The array can be a NumPy array
+# or any Python sequence (list, tuple, etc.). The shape does not matter,
+# but it must contain 64 elements.
+our_bb = nc.bb_from_array(arr)
+print(our_bb == occ)  # True
+
+# We can also create a bitboard from a list of squares.
+squares = our_bb.to_squares()
+our_bb_from_squares = nc.bb_from_squares(squares)
+print(our_bb_from_squares == our_bb)  # True
+
+
+# Calculate the attack positions of a queen from a given square.
+# Similar functions exist for bishop and rook.
+queen_attack = nc.bb_queen_attacks(sqr, occ)
+print(queen_attack.as_array((8, 8)))
+# [[0 1 0 0 0 0 0 1]
+#  [0 0 1 0 0 0 1 0]
+#  [0 0 0 1 1 1 0 0]
+#  [0 0 0 1 0 1 1 0]
+#  [0 0 0 1 1 1 0 0]
+#  [0 0 1 0 1 0 1 0]
+#  [0 1 0 0 1 0 0 1]
+#  [1 0 0 0 1 0 0 0]]
+
+# The same applies for other pieces. Note that the attacks happen
+# on empty boards, unlike sliding pieces where you must set an empty
+# bitboard as the occupancy (e.g., nc.bb_queen_attacks(sqr, 0)).
+
+king_attacks = nc.bb_king_attacks(sqr)
+knight_attacks = nc.bb_knight_attacks(sqr)
+pawn_attacks = nc.bb_pawn_attacks(sqr, const.WHITE)
+
+# Mask functions return the attacking squares of sliding pieces
+# on an empty board, without including the edges.
+rook_mask = nc.bb_rook_mask(sqr)
+bishop_mask = nc.bb_bishop_mask(sqr)
+
+# Note that these functions don't return a BitBoard directly,
+# but they are related to move generation techniques. They could be
+# useful for programmers who want to explore such methods.
+
+# Retrieve the magic number for a given square.
+magic_rook = nc.bb_rook_magic(sqr)
+magic_bishop = nc.bb_bishop_magic(sqr)
+
+# Calculate the relevant index for rook and bishop magic bitboards
+# from a given square.
+relevant_rook = nc.bb_rook_relevant(sqr)
+relevant_bishop = nc.bb_bishop_relevant(sqr)
 ```
 
 ## License

@@ -18,8 +18,6 @@
 #include "types.h"
 #include "bit_operations.h"
 
-#include <math.h>
-
 typedef enum{
     NCH_NO_SIDE = -1,
     NCH_White,
@@ -196,9 +194,6 @@ extern Diractions NCH_DIRACTION_TABLE[NCH_SQUARE_NB][NCH_SQUARE_NB];
 #define NCH_SAME_ROW(idx1, idx2) (NCH_GET_ROWIDX(idx1) == NCH_GET_ROWIDX(idx2))
 #define NCH_SAME_MAIN_DG(idx1, idx2) (NCH_DIAGONAL_MAIN_IDX[idx1] == NCH_DIAGONAL_MAIN_IDX[idx2])
 #define NCH_SAME_ANTI_DG(idx1, idx2) (NCH_DIAGONAL_ANTI_IDX[idx1] == NCH_DIAGONAL_ANTI_IDX[idx2])
-
-#define NCH_SQR_DISTANCE(idx1, idx2) (abs(NCH_GET_COLIDX(idx1) - NCH_GET_COLIDX(idx2)) +\
-                                      abs(NCH_GET_ROWIDX(idx1) - NCH_GET_ROWIDX(idx2)))
 
 #define NCH_SQR_MIRROR_V(idx) (idx ^ 0x38)
 #define NCH_SQR_MIRROR_H(idx) (idx ^ 0x07)

@@ -118,23 +118,57 @@ bb_is_filled(PyObject* self, PyObject* args, PyObject* kwargs){
 }
 
 NCH_STATIC PyObject* 
-bb_to_squares(PyObject* self, PyObject* args){
+bb_to_squares(PyObject* self, PyObject* args, PyObject* kwargs){
+    int as_set = 0;
+    NCH_STATIC char* kwlist[] = {"as_set", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|p", kwlist, &as_set)){
+        return NULL;
+    }
+
     uint64 bb = BB_FromLong(self);
     if (PyErr_Occurred()) {
         return NULL;
     }
 
-    PyObject* list = PyList_New(count_bits(bb));
-    if (!list)
-        return NULL;
-
     int idx;
     Py_ssize_t i = 0;
-    LOOP_U64_T(bb){
-        PyList_SetItem(list, i++, PyLong_FromLong(idx));
+    PyObject* item;
+    if (as_set){
+        PyObject* set = PySet_New(NULL);
+        if (!set){
+            if (!PyErr_Occurred()){
+                PyErr_NoMemory();
+            }
+            return NULL;
+        }
+
+        LOOP_U64_T(bb){
+            item = PyLong_FromLong(idx);
+            PySet_Add(set, item);
+            Py_DECREF(item);
+        }
+
+        return set;
+    }
+    else{
+        PyObject* list = PyList_New(count_bits(bb));
+        if (!list){
+            if (!PyErr_Occurred()){
+                PyErr_NoMemory();
+            }
+            return NULL;
+        }
+
+        LOOP_U64_T(bb){
+            item = PyLong_FromLong(idx);
+            PyList_SetItem(list, i++, item);
+        }
+
+        return list;
     }
 
-    return list;
+
 }
 
 NCH_STATIC PyObject*
@@ -192,13 +226,13 @@ bb_remove_square(PyObject* self, PyObject* args, PyObject* kwargs){
 }
 
 PyMethodDef pybb_methods[] = {
-    {"as_array"     , (PyCFunction)bb_as_array     , METH_VARARGS | METH_KEYWORDS, NULL},
     {"more_than_one", (PyCFunction)bb_more_than_one, METH_NOARGS                 , NULL},
     {"has_two_bits" , (PyCFunction)bb_has_two_bits , METH_NOARGS                 , NULL},
     {"get_last_bit" , (PyCFunction)bb_get_last_bit , METH_NOARGS                 , NULL},
     {"count_bits"   , (PyCFunction)bb_count_bits   , METH_NOARGS                 , NULL},
+    {"as_array"     , (PyCFunction)bb_as_array     , METH_VARARGS | METH_KEYWORDS, NULL},
     {"is_filled"    , (PyCFunction)bb_is_filled    , METH_VARARGS | METH_KEYWORDS, NULL},
-    {"to_squares"   , (PyCFunction)bb_to_squares   , METH_NOARGS                 , NULL},
+    {"to_squares"   , (PyCFunction)bb_to_squares   , METH_VARARGS | METH_KEYWORDS, NULL},
     {"set_square"   , (PyCFunction)bb_set_square   , METH_VARARGS | METH_KEYWORDS, NULL},
     {"remove_square", (PyCFunction)bb_remove_square, METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL           , NULL                         , 0                           , NULL},

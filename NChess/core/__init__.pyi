@@ -163,7 +163,7 @@ class BitBoard(int):
         Checks whether the bitboard contains a specific square.
 
         Parameters:
-            square (Square): The square to check.
+            square (str | int): The target square, given as a UCI string (e.g., "e4") or an index (0-63).
 
         Returns:
             bool: True if the square is in the bitboard, False otherwise.
@@ -184,7 +184,7 @@ class BitBoard(int):
         Sets a specific square in the bitboard to 1.
 
         Parameters:
-            square (Square): The square to set.
+            square (str | int): The target square, given as a UCI string (e.g., "e4") or an index (0-63).
 
         Returns:
             BitBoard: The updated bitboard with the square set.
@@ -196,19 +196,19 @@ class BitBoard(int):
         Removes a specific square from the bitboard (sets it to 0).
 
         Parameters:
-            square (Square): The square to remove.
+            square (str | int): The target square, given as a UCI string (e.g., "e4") or an index (0-63).
 
         Returns:
             BitBoard: The updated bitboard with the square removed.
         """
         ...
     
-    def __iter__(self) -> Iterable[Tuple[Square]]:
+    def __iter__(self) -> Iterable[Tuple[int]]:
         """
         Allows iteration over the squares set in the bitboard.
 
         Returns:
-            Iterable[Tuple[Square]]: An iterable of square tuples.
+            Iterable[Tuple[int]]: An iterable of square tuples.
         """
         ...
 
@@ -447,7 +447,12 @@ class Board:
     def captured_piece(self) -> int:
         """
         Returns the piece has been captured within the last move. if no piece
-        has been captured returns 0;
+        has been captured returns 0.
+        Note:
+            A pawn caputred with an en passant is not stored in board as captured
+            piece but the flag is_captured would be turn on.
+            in other words if last move was en passant the function will
+            return 0 but if you call is_capture it will return True.
 
         Returns:
             int: piece has been captured
@@ -524,14 +529,23 @@ class Board:
         """
         ...
 
+    @property
+    def can_move(self) -> bool:
+        """
+        Checks the player who has to play has any legal moves or not.
+
+        Returns:
+            bool: True if there is legal moves in the position and False if not.
+        """
+        ...
 
 
-    def step(self, step: Move | str | int) -> bool:
+    def step(self, move: Move | str | int) -> bool:
         """
         Executes a move on the board.
 
         Parameters:
-            step (Move | str | int): The move to be played.
+            move (Move | str | int): The move to be played.
                 - If `Move`, it represents a move object.
                 - If `str`, it is the UCI (Universal Chess Interface) representation of the move.
                 - If `int`, it represents a move encoded as an integer.
@@ -547,6 +561,21 @@ class Board:
         """
         ...
 
+    def is_move_legal(self, move: Move | str | int) -> bool:
+        """
+        Check whether a move is legal or not. MoveType does not matter.
+
+        Parameters:
+            move (Move | str | int): The move to be played.
+                - If `Move`, it represents a move object.
+                - If `str`, it is the UCI (Universal Chess Interface) representation of the move.
+                - If `int`, it represents a move encoded as an integer.
+        
+        Returns:
+            bool: True if the move is legal and False if not.
+        """
+        ...
+
     def perft(self, deep: int, pretty: bool = False, no_print: bool = False) -> int:
         """
         Performs a performance test (perft) by counting all legal moves up to a given depth.
@@ -555,6 +584,9 @@ class Board:
             deep (int): The depth of the perft search.
             pretty (bool, optional): If True, numbers printed to the console will include commas (e.g., 1,000,000).
             no_print (bool, optional): If True, the function will not print results to the console.
+
+        Note:
+            on Jupyter Notebook it prints nothing.
 
         Returns:
             int: The total number of legal moves at the given depth.
@@ -638,16 +670,20 @@ class Board:
 
     def reset(self) -> None:
         """
-        Resets the board to the starting position.
+        Resets the board to the starting position. Similar to undoing all played moves.
         """
         ...
 
-    def get_attackers_map(self, square: str | int) -> BitBoard:
+    def get_attackers_map(self, square: str | int, attacker_side : int = None) -> BitBoard:
         """
-        Returns a bitboard representing all pieces attacking the given square.
+        Returns a bitboard representing all pieces by the attacker_side attacking the given square.
+        attacker_side is the side how does have the turn to play if the paramater is not set to anything.
+        otherwise it will be the set given by the parameter attacker_side.
 
         Parameters:
             square (str | int): The target square, given as a UCI string (e.g., "e4") or an index (0-63).
+            attacker_side: The side how is attacking the square. if None it will be the side how does not
+                            have the turn to play.
 
         Returns:
             BitBoard: A bitboard where set bits indicate attacking pieces.
@@ -664,6 +700,18 @@ class Board:
 
         Returns:
             list[Move]: A list of legal moves for the piece on the given square.
+        """
+        ...
+
+    def get_occ(self, side : int) -> BitBoard:
+        """
+        Returns an occupancy by the side.
+
+        Parameters:
+            side (int) : 0 for white or 1 for black.
+
+        Returns:
+            BitBoard: given side occupancy as BitBoard object
         """
         ...
 
@@ -833,7 +881,7 @@ def move_from_uci(uci: str, move_type: int = None) -> Move:
         destination squares.
 
         ## Example:
-        ```
+        ```python
         move1 = move_from_uci("e5d6", move_type=MOVE_ENPASSANT)
         move2 = move_from_uci("e5d6")
 

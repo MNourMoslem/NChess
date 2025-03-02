@@ -19,7 +19,10 @@ get_to_sqr(PyObject* self, void* something){
 PyObject*
 get_pro_piece(PyObject* self, void* something){
     Move move = PyMove_AsMove(self);
-    return PyLong_FromUnsignedLong(Move_PRO_PIECE(move));
+    if (Move_IsPromotion(move)){
+        return PyLong_FromUnsignedLong(Move_PRO_PIECE(move));
+    }
+    return PyLong_FromLong(0);
 }
 
 PyObject*

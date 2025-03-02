@@ -31,10 +31,15 @@ PyMove_FromUCI(PyObject* self, PyObject* args, PyObject* kwargs){
         return NULL;
     }
 
-    Move move = Move_FromString(uci);                        
-    if (PyErr_Occurred())
+    Move move;
+    if (!Move_FromString(uci, &move)){
+        PyErr_SetString(
+            PyExc_ValueError,
+            "uci string was invalid to create a move"
+        );
         return NULL;
-    
+    }
+
     if (move_type){
         MoveType mt = pyobject_as_move_type(move_type);
         if (mt == MoveType_Null)
@@ -102,11 +107,6 @@ PyMove_FromArgs(PyObject* self, PyObject* args, PyObject* kwargs){
     }
 
     Move move = Move_New(f, t, pt, mt);
-    if (move == Move_NULL){
-        PyErr_SetString(PyExc_ValueError, "invalid move");
-        return NULL;
-    }
-
     return (PyObject*)PyMove_FromMove(move);
 }
 
@@ -133,9 +133,10 @@ move_new(PyTypeObject* type, PyObject* args, PyObject* kwargs){
         return NULL;
     }
 
-    Move move = pyobject_as_move(obj);
-    if (PyErr_Occurred())
+    Move move;
+    if (!pyobject_as_move(obj, &move)){
         return NULL;
+    }
 
     return (PyObject*)PyMove_FromMove(move);
 }

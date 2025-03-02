@@ -14,18 +14,7 @@ if (sqr == NCH_NO_SQR){\
     if (!PyErr_Occurred()){\
         PyErr_SetString(\
             PyExc_ValueError,\
-            "NO_SQURE is invalid for this function"\
-        );\
-    }\
-    return return_type;\
-}
-
-#define CHECK_MOVE_NULL_ERR(move, return_type)\
-if (move == Move_NULL){\
-    if (!PyErr_Occurred()){\
-        PyErr_SetString(\
-            PyExc_ValueError,\
-            "Move_NULL is invalid for this function"\
+            "NO_SQUARE is invalid for this function"\
         );\
     }\
     return return_type;\
@@ -57,8 +46,8 @@ pyobject_as_square(PyObject* s);
 Piece
 pyobject_as_piece(PyObject* obj);
 
-Move
-pyobject_as_move(PyObject* m);
+int
+pyobject_as_move(PyObject* obj, Move* dst_move);
 
 MoveType
 pyobject_as_move_type(PyObject* obj);

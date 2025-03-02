@@ -116,49 +116,37 @@ pyobject_as_piece(PyObject* obj){
         return NCH_NO_PIECE;
 }
 
-Move
-pyobject_as_move(PyObject* m){
-    Move move;
-    if (PyUnicode_Check(m)) {
-        const char* move_str = PyUnicode_AsUTF8(m);
+int
+pyobject_as_move(PyObject* obj, Move* dst_move){
+    if (PyUnicode_Check(obj)) {
+        const char* move_str = PyUnicode_AsUTF8(obj);
         if (move_str == NULL) {
             PyErr_SetString(PyExc_ValueError, "failed to read the string");
             return 0;
         }
 
-        move = Move_FromString(move_str);
-
-        if (move == Move_NULL){
+        if (!Move_FromString(move_str, dst_move)){
             PyErr_SetString(PyExc_ValueError, "invalid string to create a move");
-            return Move_NULL;
+            return 0;
         }
     
     } 
-    else if (PyMove_Check(m) || PyLong_Check(m)){
-        move = PyMove_AsMove(m);
+    else if (PyMove_Check(obj) || PyLong_Check(obj)){
+        *dst_move = PyMove_AsMove(obj);
         if (PyErr_Occurred()){
-            return Move_NULL;
-        }
-
-        if (!Move_IsValidSquares(move)){
-            PyErr_Format(
-                PyExc_ValueError,
-                "squares in the move are invalid",
-                Py_TYPE(m)->tp_name
-            );
-            return Move_NULL;
+            return 0;
         }
     } 
     else {
         PyErr_Format(
             PyExc_TypeError,
             "step must be a Move object, string or int, got %s",
-            Py_TYPE(m)->tp_name
+            Py_TYPE(obj)->tp_name
         );
-        return Move_NULL;
+        return 0;
     }
 
-    return move;
+    return 1;
 }
 
 MoveType

@@ -63,7 +63,7 @@ update_check(Board* board){
     );
 
     if (check_map)
-        NCH_SETFLG(Board_FLAGS(board), more_then_one(check_map) ? Board_CHECK | Board_DOUBLECHECK : Board_CHECK);
+        NCH_SETFLG(Board_FLAGS(board), more_than_one(check_map) ? Board_CHECK | Board_DOUBLECHECK : Board_CHECK);
 }
 
 #endif

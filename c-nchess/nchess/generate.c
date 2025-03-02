@@ -33,7 +33,7 @@ get_allowed_squares(const Board* board){
     if (!attackers_map)
         return NCH_UINT64_MAX;
 
-    if (more_then_one(attackers_map))
+    if (more_than_one(attackers_map))
         return 0ULL;
     return bb_between(king_idx, NCH_SQRIDX(attackers_map));
 }

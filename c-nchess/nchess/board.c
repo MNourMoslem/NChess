@@ -192,7 +192,7 @@ Board_IsInsufficientMaterial(const Board* board){
         // other ways we need to check if there is only two bishops on the board
         // and those bishop are on different sides of the board. if so the result is insufficient
         // material if bishops are on the same color. other ways it is not. 
-        if (more_then_one(bishops)){
+        if (more_than_one(bishops)){
             if (has_two_bits(bishops) && Board_WHITE_BISHOPS(board) && Board_BLACK_BISHOPS(board)){
                 int b1 =  NCH_SQRIDX(Board_WHITE_BISHOPS(board));
                 int b2 =  NCH_SQRIDX(Board_BLACK_BISHOPS(board));

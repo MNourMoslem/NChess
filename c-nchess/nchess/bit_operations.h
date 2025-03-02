@@ -57,7 +57,7 @@ get_last_bit(uint64 x) {
 }
 
 NCH_STATIC_INLINE int
-more_then_one(uint64 x){
+more_than_one(uint64 x){
     return (x & (x - 1)) != 0;
 }
 
@@ -70,7 +70,7 @@ more_then_two(uint64 x){
 
 NCH_STATIC_INLINE int
 has_two_bits(uint64 x){
-    return !more_then_one(x & (x-1));
+    return !more_than_one(x & (x-1));
 }
 
 #endif // NCHESS_SRC_BIT_OPERATIONS_H

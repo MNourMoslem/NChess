@@ -56,12 +56,12 @@ bb_as_array(PyObject* self, PyObject* args, PyObject* kwargs){
 }
 
 NCH_STATIC PyObject*
-bb_more_then_one(PyObject* self, PyObject* args){
+bb_more_than_one(PyObject* self, PyObject* args){
     uint64 bb = BB_FromLong(self);
     if (PyErr_Occurred()) {
         return NULL;
     }
-    if (more_then_one(bb)) {Py_RETURN_TRUE;} Py_RETURN_FALSE;
+    if (more_than_one(bb)) {Py_RETURN_TRUE;} Py_RETURN_FALSE;
 }
 
 NCH_STATIC PyObject*
@@ -193,7 +193,7 @@ bb_remove_square(PyObject* self, PyObject* args, PyObject* kwargs){
 
 PyMethodDef pybb_methods[] = {
     {"as_array"     , (PyCFunction)bb_as_array     , METH_VARARGS | METH_KEYWORDS, NULL},
-    {"more_then_one", (PyCFunction)bb_more_then_one, METH_NOARGS                 , NULL},
+    {"more_than_one", (PyCFunction)bb_more_than_one, METH_NOARGS                 , NULL},
     {"has_two_bits" , (PyCFunction)bb_has_two_bits , METH_NOARGS                 , NULL},
     {"get_last_bit" , (PyCFunction)bb_get_last_bit , METH_NOARGS                 , NULL},
     {"count_bits"   , (PyCFunction)bb_count_bits   , METH_NOARGS                 , NULL},

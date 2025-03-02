@@ -158,14 +158,12 @@ MOVE_NORMAL = 0
 MOVE_CASTLE = 1
 MOVE_EN_PASSANT = 2
 MOVE_PROMOTION = 3
-MOVE_NULL = 0xffff
 
 MOVE_NAMES = {
     MOVE_NORMAL : "normal",
     MOVE_CASTLE : "castle",
     MOVE_EN_PASSANT : "en_passant",
     MOVE_PROMOTION : "promotion",
-    MOVE_NULL : "null"
 }
 
 def move_name(move : int) -> str:

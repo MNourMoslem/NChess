@@ -34,7 +34,7 @@ nchess_module = Extension(
 
 setup(
     name='nchess',
-    version='1.2',
+    version='1.2.1',
     ext_modules=[nchess_module],
     packages=find_packages(),
     include_package_data=True,

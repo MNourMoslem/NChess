@@ -19,7 +19,7 @@
 
 NCH_STATIC_FINLINE void
 _init_board_flags_and_states(Board* board){
-    Board_CASTLES(board) = Board_CASTLE_WK | Board_CASTLE_WQ | Board_CASTLE_BK | Board_CASTLE_WQ;
+    Board_CASTLES(board) = Board_CASTLE_WK | Board_CASTLE_WQ | Board_CASTLE_BK | Board_CASTLE_BQ;
     Board_ENP_IDX(board) = 0;
     Board_ENP_MAP(board) = 0ULL;
     Board_ENP_TRG(board) = 0ULL;

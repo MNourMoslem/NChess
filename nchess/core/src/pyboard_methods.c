@@ -136,6 +136,58 @@ board_perft(PyObject* self, PyObject* args, PyObject* kwargs){
 }
 
 PyObject*
+board_perft_moves(PyObject* self, PyObject* args, PyObject* kwargs){
+    int deep;
+    static char* kwlist[] = {"deep", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "i", kwlist, &deep)){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(PyExc_ValueError, "failed to parse the arguments");
+        }
+        return NULL;
+    }
+
+    Move moves[256];
+    long long counts[256];
+    
+    int nmoves = Board_PerftAndGetMoves(BOARD(self), deep, moves, counts, 256);
+    
+    // Create dictionary
+    PyObject* dict = PyDict_New();
+    if (!dict){
+        PyErr_NoMemory();
+        return NULL;
+    }
+    
+    for (int i = 0; i < nmoves; i++){
+        PyMove* pymove = PyMove_FromMove(moves[i]);
+        if (!pymove){
+            Py_DECREF(dict);
+            return NULL;
+        }
+        
+        PyObject* count = PyLong_FromLongLong(counts[i]);
+        if (!count){
+            Py_DECREF(pymove);
+            Py_DECREF(dict);
+            return NULL;
+        }
+        
+        if (PyDict_SetItem(dict, (PyObject*)pymove, count) < 0){
+            Py_DECREF(pymove);
+            Py_DECREF(count);
+            Py_DECREF(dict);
+            return NULL;
+        }
+        
+        Py_DECREF(pymove);
+        Py_DECREF(count);
+    }
+    
+    return dict;
+}
+
+PyObject*
 board_generate_legal_moves(PyObject* self, PyObject* args, PyObject* kwargs){
     int as_set = 0;
     NCH_STATIC char* kwlist[] = {"as_set", NULL};
@@ -541,6 +593,7 @@ PyMethodDef pyboard_methods[] = {
     
     {"step"                    , (PyCFunction)board_step                    , METH_VARARGS | METH_KEYWORDS , NULL},
     {"perft"                   , (PyCFunction)board_perft                   , METH_VARARGS | METH_KEYWORDS , NULL},
+    {"perft_moves"             , (PyCFunction)board_perft_moves             , METH_VARARGS | METH_KEYWORDS , NULL},
     {"generate_legal_moves"    , (PyCFunction)board_generate_legal_moves    , METH_VARARGS | METH_KEYWORDS , NULL},
     {"as_array"                , (PyCFunction)board_as_array                , METH_VARARGS | METH_KEYWORDS , NULL},
     {"as_table"                , (PyCFunction)board_as_table                , METH_VARARGS | METH_KEYWORDS , NULL},

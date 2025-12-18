@@ -596,6 +596,20 @@ class Board:
         """
         ...
 
+    def perft_moves(self, deep: int) -> dict[Move, int]:
+        """
+        Performs a performance test (perft) and returns a dictionary mapping each legal move
+        to the number of positions reachable from that move at the given depth.
+
+        Parameters:
+            deep (int): The depth of the perft search.
+
+        Returns:
+            dict[Move, int]: A dictionary where keys are Move objects and values are the
+                            number of legal positions reachable from each move.
+        """
+        ...
+
     def generate_legal_moves(self, as_set : bool = False) -> list[Move] | set[Move]:
         """
         Generates all legal moves for the current position.

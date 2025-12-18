@@ -14,7 +14,7 @@
 #include "loops.h"
 #include "bitboard.h"
 
-#define TARGET_SIDE(side) (side == NCH_White ? NCH_Black : NCH_White)
+#define TARGET_SIDE(side) (side ^ 1)
 
 NCH_STATIC_INLINE uint64
 get_checkmap(const Board* board, Side side, int king_idx, uint64 all_occ){

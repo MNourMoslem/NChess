@@ -374,13 +374,13 @@ def build_and_run_tests(debug_mode=False):
     print(f"\n--- Building tests in {'DEBUG' if debug_mode else 'RELEASE'} mode ---")
     print(f"Compiler: {CC_CONFIG.name}")
     
-    # Only compile main.c (it includes the other test files)
-    main_test_file = os.path.join(TEST_DIR, "main.c")
-    if not os.path.exists(main_test_file):
-        print(f"Error: main.c not found in {TEST_DIR}")
+    # Find all test source files
+    test_files = glob.glob(os.path.join(TEST_DIR, "*.c"))
+    if not test_files:
+        print(f"Error: No .c files found in {TEST_DIR}")
         return False
     
-    print("Compiling test main.c (includes all test files)...")
+    print(f"Found {len(test_files)} test files")
     
     # Add include path for nchess headers
     if CC_CONFIG.name == "msvc":
@@ -388,14 +388,22 @@ def build_and_run_tests(debug_mode=False):
     else:
         test_cflags = cflags + [f"-I{SRC_DIR}"]
     
-    # Compile only main.c
+    # Compile all test files
     obj_ext = ".obj" if CC_CONFIG.name == "msvc" else ".o"
-    main_obj = os.path.join(TEST_OBJ_DIR, f"main{obj_ext}")
-    if not compile_source(main_test_file, main_obj, test_cflags):
-        return False
+    test_obj_files = []
+    
+    for test_file in test_files:
+        test_name = os.path.basename(test_file)
+        obj_name = test_name.replace(".c", obj_ext)
+        obj_file = os.path.join(TEST_OBJ_DIR, obj_name)
+        
+        if not compile_source(test_file, obj_file, test_cflags):
+            return False
+        
+        test_obj_files.append(obj_file)
     
     # Link test executable with library
-    if not link_executable([main_obj], [TARGET], TEST_TARGET, test_cflags):
+    if not link_executable(test_obj_files, [TARGET], TEST_TARGET, test_cflags):
         return False
     
     print(f"Test executable created: {TEST_TARGET}")

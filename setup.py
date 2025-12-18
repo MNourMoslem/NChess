@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 import numpy
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
@@ -7,6 +8,16 @@ from setuptools.command.build_ext import build_ext
 # Paths
 PYTHON_SRC = "nchess/core/src"
 C_SRC = "c-nchess/nchess"
+
+def get_version():
+    """Read version from nchess/__init__.py"""
+    init_file = os.path.join('nchess', '__init__.py')
+    with open(init_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+    match = re.search(r"__version__\s*=\s*['\"]([^'\"]+)['\"]", content)
+    if match:
+        return match.group(1)
+    raise RuntimeError("Unable to find version string in nchess/__init__.py")
 
 def find_c_files(directory):
     """Find all .c files in a directory."""
@@ -67,7 +78,7 @@ class CustomBuildExt(build_ext):
 
 setup(
     name='nchess',
-    version='1.2.1',
+    version=get_version(),
     packages=find_packages(include=['nchess', 'nchess.*']),
     ext_modules=[nchess_core],
     cmdclass={'build_ext': CustomBuildExt},

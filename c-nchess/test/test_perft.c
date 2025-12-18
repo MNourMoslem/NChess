@@ -16,7 +16,7 @@ void test_all_perft(char* testing_header, perfttest* funcs, int num_funcs, int t
         printf(" ");
     }
 
-    printf(testing_header);
+    printf("%s", testing_header);
     printf("\n==============================\n");
 
     int out;

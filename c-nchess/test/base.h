@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "nchess.h"
 
 typedef int (*testfunc) ();
 
@@ -18,7 +19,7 @@ void test_all(char* testing_header, testfunc* funcs, int num_funcs){
         printf(" ");
     }
 
-    printf(testing_header);
+    printf("%s", testing_header);
     printf("\n==============================\n");
 
     int out;

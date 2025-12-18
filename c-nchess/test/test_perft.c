@@ -56,8 +56,8 @@ perft_test(char* fen, long long* expected, int len){
 int
 test_perft_1(int tiny){
     char fen[] = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    long long perft_results[] = {20, 400, 8902, 197281, 4865609, 119060324};
-    int len = tiny ? 5 : 6;
+    long long perft_results[] = {20, 400, 8902, 197281, 4865609, 119060324, 3195901860};
+    int len = tiny ? 5 : 7;
     return perft_test(fen, perft_results, len);
 }
 

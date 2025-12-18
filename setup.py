@@ -60,8 +60,6 @@ class CustomBuildExt(build_ext):
         print("="*60)
         print("\nTo test the extension:")
         print("  python -c \"from nchess.core import nchess_core; print('Success!')\"")
-        print("\nOr run a test script:")
-        print("  python test_import.py")
         print("="*60 + "\n")
 
 setup(

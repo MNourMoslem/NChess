@@ -167,3 +167,26 @@ long long
 Board_PerftAsString(Board* board, int depth, char* buffer, size_t buffer_size, int pretty) {
     return perft_core(board, depth, buffer, buffer_size, pretty, 0);
 }
+
+int
+Board_PerftAndGetMoves(Board* board, int depth, Move* moves_out, long long* counts_out, int array_size){
+    if (depth < 1){
+        return 0;
+    }
+
+    Move moves[256];
+    int nmoves = Board_GenerateLegalMoves(board, moves);
+    
+    // Limit to array_size
+    int result_count = nmoves < array_size ? nmoves : array_size;
+    
+    for (int i = 0; i < result_count; i++){
+        moves_out[i] = moves[i];
+        
+        _Board_MakeMove(board, moves[i]);
+        counts_out[i] = preft_recursive(board, depth - 1);
+        Board_Undo(board);
+    }
+
+    return result_count;
+}

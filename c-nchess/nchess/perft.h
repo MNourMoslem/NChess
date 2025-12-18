@@ -39,4 +39,13 @@ Board_PerftNoPrint(Board* board, int depth);
 long long
 Board_PerftAsString(Board* board, int depth, char* buffer, size_t buffer_size, int pretty);
 
+
+// Computes perft and returns move/count pairs instead of printing.
+// moves: pointer to array where moves will be stored
+// counts: pointer to array where corresponding move counts will be stored
+// array_size: maximum size of the arrays
+// Returns the number of moves (and counts) stored in the arrays.
+int
+Board_PerftAndGetMoves(Board* board, int depth, Move* moves, long long* counts, int array_size);
+
 #endif // NCHESS_SRC_PERFT_H

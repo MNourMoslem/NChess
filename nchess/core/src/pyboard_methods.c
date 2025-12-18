@@ -123,10 +123,13 @@ board_perft(PyObject* self, PyObject* args, PyObject* kwargs){
     long long nmoves;
     if (no_print) {
         nmoves = Board_PerftNoPrint(BOARD(self), deep);
-    } else if (pretty) {
-        nmoves = Board_PerftPretty(BOARD(self), deep);
     } else {
-        nmoves = Board_Perft(BOARD(self), deep);
+        // Use Board_PerftAsString to get the output as a string
+        char buffer[65536];  // 64KB buffer for perft output
+        nmoves = Board_PerftAsString(BOARD(self), deep, buffer, sizeof(buffer), pretty);
+        
+        // Print using Python's stdout
+        PySys_WriteStdout("%s", buffer);
     }
 
     return PyLong_FromLongLong(nmoves);

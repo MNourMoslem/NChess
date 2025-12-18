@@ -15,7 +15,7 @@
 #include <string.h>
 #include <time.h>
 
-// Function to format number with commas
+// Format number with commas (e.g., 1000000 -> "1,000,000")
 NCH_STATIC_INLINE void 
 format_number_with_commas(long long num, char* output) {
     char buffer[30];
@@ -36,18 +36,25 @@ format_number_with_commas(long long num, char* output) {
     }
 }
 
+// Format count based on pretty flag
+NCH_STATIC_INLINE void
+format_count(long long count, char* output, int pretty) {
+    if (pretty) {
+        format_number_with_commas(count, output);
+    } else {
+        sprintf(output, "%lld", count);
+    }
+}
+
+// Recursive perft calculation
 long long
 preft_recursive(Board* board, int depth){
-    if (depth < 1){
-        return 1;
-    }
+    if (depth < 1) return 1;
 
     Move moves[256];
     int nmoves = Board_GenerateLegalMoves(board, moves);
     
-    if (depth == 1){
-        return nmoves;
-    }
+    if (depth == 1) return nmoves;
     
     long long count = 0;
     for (int i = 0; i < nmoves; i++){
@@ -59,86 +66,104 @@ preft_recursive(Board* board, int depth){
     return count;
 }
 
-long long
-Board_Perft(Board* board, int depth){
-    if (depth < 1){
+// Core perft implementation
+NCH_STATIC_INLINE long long
+perft_core(Board* board, int depth, char* buffer, size_t buffer_size, int pretty, int print_output) {
+    if (depth < 1) {
+        if (buffer) snprintf(buffer, buffer_size, "Depth must be at least 1\n");
         return 0;
     }
 
     clock_t start_time = clock();
-
-    long long total = 0, count;
+    
     Move moves[256];
     int nmoves = Board_GenerateLegalMoves(board, moves);
-
-    char move_str[6];
-    for (int i = 0; i < nmoves; i++){
-        _Board_MakeMove(board, moves[i]);
-        count = preft_recursive(board, depth - 1);
-        Board_Undo(board);
-        Move_AsString(moves[i], move_str);
-        printf("%s: %lld\n", move_str, count);
-        total += count;
-    }
-
-    clock_t end_time = clock();
-    double time_spent = (double)(end_time - start_time) / CLOCKS_PER_SEC;
-
-    printf("Total: %lld | Time spent: %f seconds\n", total, time_spent);
-
-    return total;
-}
-
-long long
-Board_PerftPretty(Board* board, int depth){
-    if (depth < 1){
-        return 0;
-    }
-
-    clock_t start_time = clock(); // Start the timer
-
-    long long total = 0, count;
-    Move moves[256];
-    int nmoves = Board_GenerateLegalMoves(board, moves);
-
-    char move_str[6];
-    char formatted_total[30];
-    for (int i = 0; i < nmoves; i++){
-        _Board_MakeMove(board, moves[i]);
-        
-        count = preft_recursive(board, depth - 1);
-
-        Board_Undo(board);
-        format_number_with_commas(count, formatted_total);
-
-        Move_AsString(moves[i], move_str);
-        printf("%s: %s\n", move_str, formatted_total);
-        total += count;
-    }
-
-    clock_t end_time = clock();
-    double time_spent = (double)(end_time - start_time) / CLOCKS_PER_SEC;
-
-    format_number_with_commas(total, formatted_total);
-    printf("Total: %s | Time spent: %f seconds\n", formatted_total, time_spent);
-
-    return total;
-}
-
-long long
-Board_PerftNoPrint(Board* board, int depth){
-    if (depth < 1){
-        return 0;
-    }
-
+    
     long long total = 0;
+    char move_str[6];
+    char formatted_count[30];
+    char line_buffer[100];
+    size_t current_pos = 0;
+
+    if (buffer) buffer[0] = '\0';
+
+    // Process each move
+    for (int i = 0; i < nmoves; i++){
+        _Board_MakeMove(board, moves[i]);
+        long long count = preft_recursive(board, depth - 1);
+        Board_Undo(board);
+        
+        total += count;
+
+        if (print_output || buffer) {
+            Move_AsString(moves[i], move_str);
+            format_count(count, formatted_count, pretty);
+            snprintf(line_buffer, sizeof(line_buffer), "%s: %s\n", move_str, formatted_count);
+            
+            if (print_output) {
+                printf("%s", line_buffer);
+            }
+            if (buffer) {
+                size_t line_len = strlen(line_buffer);
+                if (current_pos + line_len < buffer_size - 1) {
+                    strcat(buffer, line_buffer);
+                    current_pos += line_len;
+                }
+            }
+        }
+    }
+
+    // Format and output summary
+    clock_t end_time = clock();
+    double time_spent = (double)(end_time - start_time) / CLOCKS_PER_SEC;
+
+    if (print_output || buffer) {
+        format_count(total, formatted_count, pretty);
+        snprintf(line_buffer, sizeof(line_buffer), "Total: %s | Time spent: %f seconds\n", 
+                 formatted_count, time_spent);
+        
+        if (print_output) {
+            printf("%s", line_buffer);
+        }
+        if (buffer) {
+            size_t line_len = strlen(line_buffer);
+            if (current_pos + line_len < buffer_size - 1) {
+                strcat(buffer, line_buffer);
+            }
+        }
+    }
+
+    return total;
+}
+
+long long
+Board_Perft(Board* board, int depth) {
+    return perft_core(board, depth, NULL, 0, 0, 1);
+}
+
+long long
+Board_PerftPretty(Board* board, int depth) {
+    return perft_core(board, depth, NULL, 0, 1, 1);
+}
+
+long long
+Board_PerftNoPrint(Board* board, int depth) {
+    if (depth < 1) return 0;
+    
     Move moves[256];
     int nmoves = Board_GenerateLegalMoves(board, moves);
+    
+    long long total = 0;
     for (int i = 0; i < nmoves; i++){
         _Board_MakeMove(board, moves[i]);
         total += preft_recursive(board, depth - 1);
         Board_Undo(board);
     }
-
+    
     return total;
+}
+
+long long
+Board_PerftAsString(Board* board, int depth, char* buffer, size_t buffer_size, int pretty) {
+    return perft_core(board, depth, buffer, buffer_size, pretty, 0);
 }

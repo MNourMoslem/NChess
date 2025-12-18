@@ -1,10 +1,11 @@
 import os
 import sys
+import numpy
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
 
 # Paths
-PYTHON_SRC = "NChess/core/src"
+PYTHON_SRC = "nchess/core/src"
 C_SRC = "c-nchess/nchess"
 
 def find_c_files(directory):
@@ -37,11 +38,13 @@ else:  # Linux/macOS (GCC/Clang)
 
 # Define the extension module
 nchess_core = Extension(
-    'NChess.core.nchess_core',  # Module path
+    'nchess.core.nchess_core',  # Module path
     sources=find_c_files(PYTHON_SRC) + find_c_files(C_SRC),
     include_dirs=[
         PYTHON_SRC,
         C_SRC,
+        "c-nchess",  # Add parent directory so "nchess/types.h" resolves correctly
+        numpy.get_include(),  # Add numpy headers
     ],
     extra_compile_args=extra_compile_args,
     extra_link_args=extra_link_args,

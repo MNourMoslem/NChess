@@ -30,9 +30,13 @@ void print_final_results(TestResults* results);
 
 // External test suite declarations
 void test_bitboard_suite(TestResults* results);
+void test_board_suite(TestResults* results);
 void test_copy_suite(TestResults* results);
 void test_fen_suite(TestResults* results);
+void test_generate_suite(TestResults* results);
+void test_hash_suite(TestResults* results);
 void test_io_suite(TestResults* results);
+void test_move_suite(TestResults* results);
 void test_perft_suite(TestResults* results);
 
 #endif // NCHESS_TEST_MAIN_H

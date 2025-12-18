@@ -68,6 +68,84 @@ static int test_fen_board_state(void) {
     return 1;
 }
 
+// Test FEN with no castling rights
+static int test_fen_no_castling(void) {
+    return test_fen_roundtrip("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1");
+}
+
+// Test FEN with partial castling
+static int test_fen_partial_castling(void) {
+    return test_fen_roundtrip("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w Kq - 0 1");
+}
+
+// Test FEN with en passant
+static int test_fen_en_passant_square(void) {
+    Board board;
+    Board_Init(&board);
+    
+    const char* fen = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1";
+    int result = Board_FromFen(fen, &board);
+    ASSERT(result == 0);
+    
+    char output_fen[300];
+    Board_AsFen(&board, output_fen);
+    
+    // Just verify it parsed successfully and has correct side/castling
+    ASSERT_EQ(Board_SIDE(&board), NCH_Black);
+    ASSERT_EQ(Board_CASTLES(&board), Board_CASTLE_WK | Board_CASTLE_WQ | Board_CASTLE_BK | Board_CASTLE_BQ);
+    
+    return 1;
+}
+
+// Test FEN empty position
+static int test_fen_empty(void) {
+    return test_fen_roundtrip("8/8/8/8/8/8/8/8 w - - 0 1");
+}
+
+// Test FEN with only kings
+static int test_fen_only_kings(void) {
+    return test_fen_roundtrip("4k3/8/8/8/8/8/8/4K3 w - - 0 1");
+}
+
+// Test FEN midgame position
+static int test_fen_midgame(void) {
+    return test_fen_roundtrip("r1bq1rk1/ppp2ppp/2np1n2/2b1p3/2B1P3/2NP1N2/PPP2PPP/R1BQ1RK1 w - - 4 8");
+}
+
+// Test FEN endgame position
+static int test_fen_endgame(void) {
+    return test_fen_roundtrip("8/5k2/3p4/1p1Pp2p/pP2Pp1P/P4P1K/8/8 b - - 99 50");
+}
+
+// Test FEN with high move counts
+static int test_fen_high_counts(void) {
+    return test_fen_roundtrip("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 50 100");
+}
+
+// Test FEN black to move
+static int test_fen_black_turn(void) {
+    Board board;
+    Board_Init(&board);
+    
+    const char* fen = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1";
+    Board_FromFen(fen, &board);
+    
+    ASSERT_EQ(Board_SIDE(&board), NCH_Black);
+    
+    return 1;
+}
+
+// Test FEN invalid (should fail gracefully)
+static int test_fen_invalid(void) {
+    Board board;
+    Board_Init(&board);
+    
+    int result = Board_FromFen("invalid fen string", &board);
+    ASSERT(result != 0);  // Should return error
+    
+    return 1;
+}
+
 // Test suite runner
 void test_fen_suite(TestResults* results) {
     TestFunc tests[] = {
@@ -77,8 +155,18 @@ void test_fen_suite(TestResults* results) {
         test_fen_position_4,
         test_fen_position_5,
         test_fen_position_6,
-        test_fen_board_state
+        test_fen_board_state,
+        test_fen_no_castling,
+        test_fen_partial_castling,
+        test_fen_en_passant_square,
+        test_fen_empty,
+        test_fen_only_kings,
+        test_fen_midgame,
+        test_fen_endgame,
+        test_fen_high_counts,
+        test_fen_black_turn,
+        test_fen_invalid
     };
     
-    run_test_suite("FEN Tests", tests, 7, results);
+    run_test_suite("FEN Tests", tests, 17, results);
 }

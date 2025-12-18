@@ -81,6 +81,77 @@ static int test_perft_basic(void) {
     return 1;
 }
 
+// Test perft depth 1 various positions
+static int test_perft_depth1_positions(void) {
+    const char* fens[] = {
+        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+        "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ",
+        "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - ",
+        "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8"
+    };
+    
+    long long expected[] = {20, 48, 14, 44};
+    
+    for (int i = 0; i < 4; i++) {
+        Board* board = Board_NewFen(fens[i]);
+        ASSERT_NOT_NULL(board);
+        
+        long long result = Board_PerftNoPrint(board, 1);
+        ASSERT_EQ(result, expected[i]);
+        
+        Board_Free(board);
+    }
+    
+    return 1;
+}
+
+// Test perft with printing
+static int test_perft_with_print(void) {
+    Board board;
+    Board_Init(&board);
+    
+    printf("\n  Running perft depth 2 with output:\n");
+    long long result = Board_Perft(&board, 2);
+    ASSERT_EQ(result, 400);
+    
+    return 1;
+}
+
+// Test perft consistency
+static int test_perft_consistency(void) {
+    Board board;
+    Board_Init(&board);
+    
+    // Run same perft twice, should get same result
+    long long result1 = Board_PerftNoPrint(&board, 3);
+    Board_Reset(&board);
+    long long result2 = Board_PerftNoPrint(&board, 3);
+    
+    ASSERT_EQ(result1, result2);
+    ASSERT_EQ(result1, 8902);
+    
+    return 1;
+}
+
+// Test perft after undo
+static int test_perft_after_undo(void) {
+    Board board;
+    Board_Init(&board);
+    
+    long long initial = Board_PerftNoPrint(&board, 3);
+    
+    Board_Step(&board, "e2e4");
+    Board_Step(&board, "e7e5");
+    Board_Undo(&board);
+    Board_Undo(&board);
+    
+    long long after_undo = Board_PerftNoPrint(&board, 3);
+    
+    ASSERT_EQ(initial, after_undo);
+    
+    return 1;
+}
+
 // Test suite runner
 void test_perft_suite(TestResults* results) {
     TestFunc tests[] = {
@@ -90,8 +161,12 @@ void test_perft_suite(TestResults* results) {
         test_perft_position_3,
         test_perft_position_4,
         test_perft_position_5,
-        test_perft_position_6
+        test_perft_position_6,
+        test_perft_depth1_positions,
+        test_perft_with_print,
+        test_perft_consistency,
+        test_perft_after_undo
     };
     
-    run_test_suite("Perft Tests", tests, 7, results);
+    run_test_suite("Perft Tests", tests, 11, results);
 }

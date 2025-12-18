@@ -64,13 +64,122 @@ static int test_bitboard_manipulation(void) {
     return 1;
 }
 
+// Test individual piece bitboards
+static int test_bitboard_individual_pieces(void) {
+    Board board;
+    Board_Init(&board);
+    
+    // Test white pieces
+    ASSERT(count_bits(Board_WHITE_PAWNS(&board)) == 8);
+    ASSERT(count_bits(Board_WHITE_KNIGHTS(&board)) == 2);
+    ASSERT(count_bits(Board_WHITE_BISHOPS(&board)) == 2);
+    ASSERT(count_bits(Board_WHITE_ROOKS(&board)) == 2);
+    ASSERT(count_bits(Board_WHITE_QUEENS(&board)) == 1);
+    ASSERT(count_bits(Board_WHITE_KING(&board)) == 1);
+    
+    // Test black pieces
+    ASSERT(count_bits(Board_BLACK_PAWNS(&board)) == 8);
+    ASSERT(count_bits(Board_BLACK_KNIGHTS(&board)) == 2);
+    ASSERT(count_bits(Board_BLACK_BISHOPS(&board)) == 2);
+    ASSERT(count_bits(Board_BLACK_ROOKS(&board)) == 2);
+    ASSERT(count_bits(Board_BLACK_QUEENS(&board)) == 1);
+    ASSERT(count_bits(Board_BLACK_KING(&board)) == 1);
+    
+    return 1;
+}
+
+// Test bitboard operations
+static int test_bitboard_bit_operations(void) {
+    uint64 bb = NCH_SQR(NCH_E4) | NCH_SQR(NCH_D4) | NCH_SQR(NCH_E5);
+    
+    ASSERT(count_bits(bb) == 3);
+    ASSERT(more_than_one(bb));
+    ASSERT(!has_two_bits(bb));
+    
+    uint64 bb2 = NCH_SQR(NCH_A1) | NCH_SQR(NCH_H8);
+    ASSERT(has_two_bits(bb2));
+    
+    return 1;
+}
+
+// Test bitboard clearing
+static int test_bitboard_clearing(void) {
+    Board board;
+    Board_Init(&board);
+    
+    uint64 initial_white = count_bits(Board_WHITE_OCC(&board));
+    
+    // Clear pawns
+    Board_BB(&board, NCH_WPawn) = 0;
+    
+    ASSERT(count_bits(Board_WHITE_PAWNS(&board)) == 0);
+    // Note: Occupancy bitboard needs manual update
+    
+    return 1;
+}
+
+// Test bitboard complex position
+static int test_bitboard_complex_position(void) {
+    Board* board = Board_NewFen("r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 4 5");
+    ASSERT_NOT_NULL(board);
+    
+    uint64 white_occ = Board_WHITE_OCC(board);
+    uint64 black_occ = Board_BLACK_OCC(board);
+    
+    // Both sides should have pieces on board
+    ASSERT(count_bits(white_occ) > 10);
+    ASSERT(count_bits(black_occ) > 10);
+    
+    Board_Free(board);
+    return 1;
+}
+
+// Test bitboard after capture
+static int test_bitboard_after_capture(void) {
+    Board board;
+    Board_Init(&board);
+    
+    uint64 initial_black = count_bits(Board_BLACK_OCC(&board));
+    
+    // Scholar's mate setup
+    Board_Step(&board, "e2e4");
+    Board_Step(&board, "e7e5");
+    Board_Step(&board, "d1h5");
+    Board_Step(&board, "b8c6");
+    Board_Step(&board, "f1c4");
+    Board_Step(&board, "g8f6");
+    Board_Step(&board, "h5f7");  // Checkmate with capture
+    
+    uint64 final_black = count_bits(Board_BLACK_OCC(&board));
+    ASSERT(final_black < initial_black);
+    
+    return 1;
+}
+
+// Test bitboard symmetry
+static int test_bitboard_symmetry(void) {
+    Board board;
+    Board_Init(&board);
+    
+    // White and black should have same number of pieces initially
+    ASSERT_EQ(count_bits(Board_WHITE_OCC(&board)), count_bits(Board_BLACK_OCC(&board)));
+    
+    return 1;
+}
+
 // Test suite runner
 void test_bitboard_suite(TestResults* results) {
     TestFunc tests[] = {
         test_bitboard_creation,
         test_bitboard_occupancy,
-        test_bitboard_manipulation
+        test_bitboard_manipulation,
+        test_bitboard_individual_pieces,
+        test_bitboard_bit_operations,
+        test_bitboard_clearing,
+        test_bitboard_complex_position,
+        test_bitboard_after_capture,
+        test_bitboard_symmetry
     };
     
-    run_test_suite("BitBoard Tests", tests, 3, results);
+    run_test_suite("BitBoard Tests", tests, 9, results);
 }

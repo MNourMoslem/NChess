@@ -60,10 +60,16 @@ int main(void) {
     TestResults results = {0, 0, 0};
     
     // Run all test suites
+    printf("Starting comprehensive test suite...\n");
+    
+    test_board_suite(&results);
     test_bitboard_suite(&results);
+    test_move_suite(&results);
+    test_generate_suite(&results);
     test_perft_suite(&results);
     test_copy_suite(&results);
     test_fen_suite(&results);
+    test_hash_suite(&results);
     test_io_suite(&results);
     
     // Print final results

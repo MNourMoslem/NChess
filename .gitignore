@@ -29,6 +29,7 @@ test.py
 # Temporary or binary files
 bin/
 obj/
+build/
 
 # Python package distribution configuration
 .pypirc

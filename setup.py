@@ -59,7 +59,7 @@ class CustomBuildExt(build_ext):
             print(f"Built at: {self.get_ext_fullpath(ext.name)}")
         print("="*60)
         print("\nTo test the extension:")
-        print("  python -c \"from NChess.core import nchess_core; print('Success!')\"")
+        print("  python -c \"from nchess.core import nchess_core; print('Success!')\"")
         print("\nOr run a test script:")
         print("  python test_import.py")
         print("="*60 + "\n")
@@ -67,7 +67,7 @@ class CustomBuildExt(build_ext):
 setup(
     name='nchess',
     version='1.2.1',
-    packages=find_packages(include=['NChess', 'NChess.*']),
+    packages=find_packages(include=['nchess', 'nchess.*']),
     ext_modules=[nchess_core],
     cmdclass={'build_ext': CustomBuildExt},
     include_package_data=True,

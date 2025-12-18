@@ -12,7 +12,7 @@ int main(){
 
     // test_io_main(0);
     test_bitboard_main(init);
-    test_perft_main(init, 1);
+    test_perft_main(init, 0);
     test_copy_main(init);
     test_fen_main(init);
 

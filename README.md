@@ -14,15 +14,26 @@ To install the Python package, use pip:
 pip install nchess
 ```
 
-For the C-only version, clone the c-nchess folder and use the makefile:
+For the C-only version, clone the c-nchess folder and use the build.py script:
+
 ```bash
-make
+python build.py build
 ```
-To build with debugging:
+
+Available build commands:
 ```bash
-make debug
+python build.py build        # Build library (release mode)
+python build.py build-debug  # Build library (debug mode)
+python build.py test         # Compile and run tests
+python build.py clean        # Remove build directory
 ```
-The makefile is written for GCC. If you wish to use another compiler, you may need to modify it manually.
+
+You can also chain commands together:
+```bash
+python build.py clean build test  # Clean, build, then run tests
+```
+
+**Note:** The old makefile is still available but deprecated. The build.py script provides better flexibility and cross-platform support.
 
 ## Example Usage
 There is no formal documentation for NChess, but all classes and functions are described in Python comments within their respective files.

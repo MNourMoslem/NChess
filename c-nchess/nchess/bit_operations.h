@@ -15,6 +15,10 @@
 #include "config.h"
 #include "types.h"
 
+#if NCH_MSC
+    #include <intrin.h>
+#endif
+
 
 NCH_STATIC_INLINE int
 count_bits(uint64 x){

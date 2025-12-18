@@ -12,11 +12,13 @@ Commands:
 
 Compiler Options:
   --compiler=<gcc|clang|msvc>  - Specify compiler (auto-detected if not provided)
+  --slow-perft                 - Run perft tests in slow mode (default is fast mode)
 
 Examples:
   python build.py build
   python build.py clean build
   python build.py build test
+  python build.py build test --slow-perft
   python build.py clean build-debug test-debug
   python build.py --compiler=msvc build
   python build.py --compiler=gcc clean build test
@@ -85,6 +87,9 @@ COMPILERS = {
 
 # Global compiler config (will be set during initialization)
 CC_CONFIG = None
+
+# Global flags
+SLOW_PERFT_MODE = False
 
 SRC_DIR = "nchess"
 TEST_DIR = "test"
@@ -388,6 +393,13 @@ def build_and_run_tests(debug_mode=False):
     else:
         test_cflags = cflags + [f"-I{SRC_DIR}"]
     
+    # Add PERFT_SLOW_MODE flag if requested
+    if SLOW_PERFT_MODE:
+        if CC_CONFIG.name == "msvc":
+            test_cflags.append("/DPERFT_SLOW_MODE")
+        else:
+            test_cflags.append("-DPERFT_SLOW_MODE")
+    
     # Compile all test files
     obj_ext = ".obj" if CC_CONFIG.name == "msvc" else ".o"
     test_obj_files = []
@@ -422,6 +434,8 @@ def build_and_run_tests(debug_mode=False):
 
 def main():
     """Main entry point"""
+    global SLOW_PERFT_MODE
+    
     if len(sys.argv) < 2:
         print("No command specified.")
         print(__doc__)
@@ -434,6 +448,8 @@ def main():
     for arg in sys.argv[1:]:
         if arg.startswith("--compiler="):
             compiler_name = arg.split("=", 1)[1].lower()
+        elif arg == "--slow-perft":
+            SLOW_PERFT_MODE = True
         else:
             commands.append(arg)
     

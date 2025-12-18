@@ -1,8 +1,12 @@
 #include "main.h"
 #include "helpers.h"
 
-// Use fast tests by default (depth 5), set to 0 for full depth tests
+// Use fast tests by default (depth 5), unless PERFT_SLOW_MODE is defined
+#ifndef PERFT_SLOW_MODE
 #define PERFT_FAST_MODE 1
+#else
+#define PERFT_FAST_MODE 0
+#endif
 
 // Helper function to test perft results
 static int perft_test_helper(const char* fen, long long* expected, int depth) {

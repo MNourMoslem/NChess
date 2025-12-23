@@ -60,14 +60,24 @@ discover_sequence_shape(PyObject* seq, npy_intp* dims, int dim){
         Py_DECREF(first);
         return res;
     }
+
+    Py_DECREF(first);
     return dim;
 }
 
 NCH_STATIC int
-seq2bb(PyObject* seq, uint64* bb, Py_ssize_t* idx){
+seq2bb_internal(PyObject* seq, uint64* bb, Py_ssize_t* idx, npy_intp* dims, int depth, int max_depth){
     Py_ssize_t len = PySequence_Size(seq);
     if (len < 0){
-        PyErr_SetString(PyExc_ValueError, "falid to get the length of the sequence object");
+        PyErr_SetString(PyExc_ValueError, "failed to get the length of the sequence object");
+        return -1;
+    }
+
+    // Validate shape at current depth
+    if (len != dims[depth]){
+        PyErr_Format(PyExc_ValueError,
+            "sequence shape mismatch at depth %d: expected %ld elements but got %ld",
+            depth, (long)dims[depth], (long)len);
         return -1;
     }
 
@@ -80,18 +90,36 @@ seq2bb(PyObject* seq, uint64* bb, Py_ssize_t* idx){
         }
 
         if (PyLong_Check(item)){
+            // Should be at the deepest level
+            if (depth != max_depth){
+                PyErr_Format(PyExc_ValueError,
+                    "found integer at depth %d but expected sequence (max depth is %d)",
+                    depth, max_depth);
+                Py_DECREF(item);
+                return -1;
+            }
+            
             if (*idx < 64){
                 *bb |= PyLong_AsLong(item) ? NCH_SQR(*idx) : 0;
             }
             else{
-                PyErr_SetString(PyExc_ValueError, "bitboard sequence should have 64 nitems. got more");
+                PyErr_SetString(PyExc_ValueError, "bitboard sequence should have 64 items, got more");
                 Py_DECREF(item);
                 return -1;
             }
             (*idx)++;
         }
         else if (PySequence_Check(item)){
-            res = seq2bb(item, bb, idx);
+            // Should not be at the deepest level
+            if (depth == max_depth){
+                PyErr_Format(PyExc_ValueError,
+                    "found sequence at depth %d but expected integer (max depth is %d)",
+                    depth, max_depth);
+                Py_DECREF(item);
+                return -1;
+            }
+            
+            res = seq2bb_internal(item, bb, idx, dims, depth + 1, max_depth);
             if (res < 0){
                 Py_DECREF(item);
                 return -1;
@@ -99,7 +127,7 @@ seq2bb(PyObject* seq, uint64* bb, Py_ssize_t* idx){
         }
         else{
             PyErr_Format(PyExc_ValueError,
-            "bitboard sequence should contain int or sqeunece type objects (list, tuple, ...), got %s",
+            "bitboard sequence should contain int or sequence type objects (list, tuple, ...), got %s",
             Py_TYPE(item)->tp_name);
             
             Py_DECREF(item);
@@ -109,6 +137,36 @@ seq2bb(PyObject* seq, uint64* bb, Py_ssize_t* idx){
     }
 
     return 0;
+}
+
+NCH_STATIC int
+seq2bb(PyObject* seq, uint64* bb, Py_ssize_t* idx){
+    // Discover the shape of the sequence
+    npy_intp dims[NPY_MAXDIMS];
+    int max_depth = discover_sequence_shape(seq, dims, 0);
+    
+    if (max_depth < 0){
+        if (!PyErr_Occurred()){
+            PyErr_SetString(PyExc_ValueError, "failed to discover sequence shape");
+        }
+        return -1;
+    }
+
+    // Calculate total elements
+    npy_intp total_elements = 1;
+    for (int i = 0; i <= max_depth; i++){
+        total_elements *= dims[i];
+    }
+
+    if (total_elements != 64){
+        PyErr_Format(PyExc_ValueError,
+            "bitboard sequence must contain exactly 64 elements, got %ld",
+            (long)total_elements);
+        return -1;
+    }
+
+    // Call internal function with shape validation
+    return seq2bb_internal(seq, bb, idx, dims, 0, max_depth);
 }
 
 NCH_STATIC int

@@ -67,31 +67,15 @@ PyMove_FromArgs(PyObject* self, PyObject* args, PyObject* kwargs){
     }
 
     Square f = pyobject_as_square(from_);
-    if (f == NCH_NO_SQR){
-        if (!PyErr_Occurred()){
-            PyErr_SetString(
-                PyExc_ValueError,
-                "from_ square must be a valid square from 0 to 63 and can't be None"
-            );
-        }
-        return NULL;
-    }
+    CHECK_NO_SQUARE_ERR(f, NULL);
 
     Square t = pyobject_as_square(to_);
-    if (t == NCH_NO_SQR){
-        if (!PyErr_Occurred()){
-            PyErr_SetString(
-                PyExc_ValueError,
-                "to_ square must be a valid square from 0 to 63 and can't be None"
-            );
-        }
-        return NULL;
-    }
+    CHECK_NO_SQUARE_ERR(t, NULL);
 
     PieceType pt;
     if (promote){
         pt = pyobject_as_piece_type(promote);
-        if (PyErr_Occurred())
+        if (pt == NCH_NO_PIECE_TYPE)
             return NULL;
     }
     else{

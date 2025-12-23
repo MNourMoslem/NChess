@@ -10,32 +10,31 @@
 #define PY_SSIZE_CLEAN_T
 #include <Python.h>
 
+#define BB_SIZE NCH_SQUARE_NB
+
 NCH_STATIC PyObject*
 bb_as_array(PyObject* self, PyObject* args, PyObject* kwargs){
-    npy_intp nitems = NCH_SQUARE_NB;
     npy_intp dims[NPY_MAXDIMS];
     int reversed, as_list;
-    int ndim = parse_array_conversion_function_args(nitems, dims, args, kwargs, &reversed, &as_list);
-    uint64 bb = BB_FromLong(self);
-    if (PyErr_Occurred()) {
+    int ndim = parse_array_conversion_function_args(BB_SIZE, dims, args, kwargs, &reversed, &as_list);
+    if (ndim < 0 || PyErr_Occurred()) {
         return NULL;
     }
-
-    if (ndim < 0)
-        return NULL;
-
+    
+    uint64 bb = BB_FromLong(self);
+    
     if (!ndim){
         ndim = 1;
-        dims[0] = nitems;
+        dims[0] = BB_SIZE;
     }
-
+    
     if (as_list){
-        int data[NCH_SQUARE_NB];
+        int data[BB_SIZE];
         bb2array(bb, data, reversed);
         return create_list_array(data, dims, ndim);
     }
 
-    int* data = (int*)malloc(nitems * sizeof(int));
+    int* data = (int*)malloc(BB_SIZE * sizeof(int));
     if (!data){
         PyErr_NoMemory();
         return NULL;

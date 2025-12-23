@@ -6,12 +6,14 @@
 PyMove*
 PyMove_FromMove(Move move)
 {
-    PyObject* obj = PyLong_Type.tp_new(
-        &PyMoveType,
-        Py_BuildValue("(k)", (unsigned long)move),
-        NULL
-    );
-
+    PyObject* args = Py_BuildValue("(k)", (unsigned long)move);
+    if (!args) {
+        return NULL;
+    }
+    
+    PyObject* obj = PyLong_Type.tp_new(&PyMoveType, args, NULL);
+    Py_DECREF(args);  // tp_new doesn't steal the reference
+    
     if (!obj) {
         return NULL;
     }

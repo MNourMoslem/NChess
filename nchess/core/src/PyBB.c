@@ -27,7 +27,14 @@ PyBitBoard* PyBitBoard_FromArrayLike(PyObject* array_like){
 }
 
 PyBitBoard* PyBitBoard_FromUnsignedLongLong(unsigned long long value){
-    return pybitboard_new(&PyBitBoardType, Py_BuildValue("(K)", value), NULL);
+    PyObject* args = Py_BuildValue("(K)", value);
+    if (!args) {
+        return NULL;
+    }
+    
+    PyBitBoard* result = pybitboard_new(&PyBitBoardType, args, NULL);
+    Py_DECREF(args);  // tp_new doesn't steal the reference
+    return result;
 }
 
 NCH_STATIC PyObject*
@@ -77,11 +84,18 @@ bb_iter(PyObject* self){
     Py_ssize_t i = 0;
     Square idx;
     LOOP_U64_T(bb){
-        PyTuple_SetItem(tuple, i++, square_to_pyobject(idx));
+        PyObject* sqr_obj = square_to_pyobject(idx);
+        if (!sqr_obj) {
+            Py_DECREF(tuple);
+            return NULL;
+        }
+        PyTuple_SetItem(tuple, i++, sqr_obj);
     }
 
     // iterate the tuple
-    return PyObject_GetIter(tuple);
+    PyObject* iter = PyObject_GetIter(tuple);
+    Py_DECREF(tuple);  // Iterator takes its own reference
+    return iter;
 }
 
 static PyObject*

@@ -86,6 +86,7 @@ PyTypeObject PyBoardType = {
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
     .tp_new = (newfunc)board_new,
     .tp_str = (reprfunc)board_str,
+    .tp_repr = (reprfunc)board_str,
     .tp_methods = pyboard_methods,
     .tp_getset = pyboard_getset,
 };

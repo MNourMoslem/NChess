@@ -2,6 +2,7 @@ import numpy as np
 from typing import Sequence, overload, TypeAlias, Iterable, Tuple, Optional
 
 Square : TypeAlias = int | str
+BitBoardLike : TypeAlias = int | Sequence | np.ndarray | BitBoard
 
 class Move(int):
     """
@@ -106,6 +107,17 @@ class BitBoard(int):
     manipulation and querying of board states. The class provides various methods to convert the 
     bitboard to different representations (e.g., arrays).
     """
+
+    def __init__(self, bitboard: BitBoardLike = 0):
+        """
+        Initializes a BitBoard instance.
+
+        Parameters:
+            bitboard (BitBoardLike, optional): The initial value for the bitboard.
+                                               It can be an integer, a sequence, or a NumPy array.
+                                               Defaults to 0 (empty board).
+        """
+        ...
     
     def as_array(self, shape: Sequence[int] = None, reversed: bool = False, as_list: bool = False) -> np.ndarray | list:
         """

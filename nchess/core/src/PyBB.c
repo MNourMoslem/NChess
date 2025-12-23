@@ -17,13 +17,48 @@ pybitboard_new(PyTypeObject* type, PyObject* args, PyObject* kwargs){
     return PyLong_Type.tp_new(type, args, kwargs);
 }
 
+PyBitBoard* PyBitBoard_FromArrayLike(PyObject* array_like){
+    uint64 bb = bb_from_object(array_like);
+    if (PyErr_Occurred()){
+        return NULL;
+    }
+
+    return PyBitBoard_FromUnsignedLongLong(bb);
+}
+
 PyBitBoard* PyBitBoard_FromUnsignedLongLong(unsigned long long value){
     return pybitboard_new(&PyBitBoardType, Py_BuildValue("(K)", value), NULL);
 }
 
 NCH_STATIC PyObject*
 bb_new(PyTypeObject* type, PyObject* args, PyObject* kwargs) {
-    return pybitboard_new(type, args, kwargs);
+    PyObject* obj = NULL;
+    if (!PyArg_ParseTuple(args, "|O", &obj)) {
+        return NULL;
+    }
+
+    if (!obj){
+        return PyBitBoard_FromUnsignedLongLong(0); 
+    }
+
+    if (PyLong_Check(obj)) {
+        unsigned long long value = PyLong_AsUnsignedLongLong(obj);
+        if (PyErr_Occurred()) {
+            return NULL;
+        }
+        return PyBitBoard_FromUnsignedLongLong(value);
+    }
+    else if (PySequence_Check(obj)) {
+        return (PyObject*)PyBitBoard_FromArrayLike(obj);
+    }
+    else {
+        PyErr_Format(
+            PyExc_TypeError,
+            "BitBoard constructor expects an int, got %s",
+            Py_TYPE(obj)->tp_name
+        );
+        return NULL;
+    }
 }
 
 NCH_STATIC PyObject*

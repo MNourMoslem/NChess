@@ -4,18 +4,18 @@
 #include "pymove_getset.h"
 
 PyMove*
-PyMove_FromMove(Move move){
-    PyObject* obj = PyLong_FromUnsignedLong(move);
-    if (!obj){
-        if (!PyErr_Occurred()){
-            PyErr_SetString(
-                PyExc_ValueError,
-                "Falied to create a move object"
-            );
-        }
+PyMove_FromMove(Move move)
+{
+    PyObject* obj = PyLong_Type.tp_new(
+        &PyMoveType,
+        Py_BuildValue("(k)", (unsigned long)move),
+        NULL
+    );
+
+    if (!obj) {
         return NULL;
     }
-    obj->ob_type = &PyMoveType;
+
     return (PyMove*)obj;
 }
 
@@ -128,18 +128,20 @@ PyMove_Str(PyObject* self){
 PyObject*
 move_new(PyTypeObject* type, PyObject* args, PyObject* kwargs){
     PyObject* obj;
-    NCH_STATIC char* kwlist[] = {"move", NULL};
+    static char* kwlist[] = {"move", NULL};
+
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &obj)) {
         return NULL;
     }
 
     Move move;
-    if (!pyobject_as_move(obj, &move)){
+    if (!pyobject_as_move(obj, &move)) {
         return NULL;
     }
 
     return (PyObject*)PyMove_FromMove(move);
 }
+
 
 PyTypeObject PyMoveType = {
     PyVarObject_HEAD_INIT(NULL, 0)

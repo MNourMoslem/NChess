@@ -7,29 +7,23 @@
 #define PY_SSIZE_CLEAN_T
 #include <Python.h>
 
-PyBitBoard* PyBitBoard_FromUnsignedLongLong(unsigned long long value){
-    PyObject* obj = PyLong_FromUnsignedLongLong(value);
-    if (!obj){
-        if (!PyErr_Occurred()){
-            PyErr_SetString(
-                PyExc_ValueError,
-                "Falied to create a bitboard object"
-            );
-        }
-        return NULL;
-    }
-    obj->ob_type = &PyBitBoardType;
-    return (PyBitBoard*)obj;
-}
-
-NCH_STATIC PyObject*
-bb_new(PyTypeObject* type, PyObject* args, PyObject* kwargs) {
+PyObject*
+pybitboard_new(PyTypeObject* type, PyObject* args, PyObject* kwargs){
     unsigned long long value;    
     if (!PyArg_ParseTuple(args, "K", &value)) {
         return NULL;
     }
 
     return PyLong_Type.tp_new(type, args, kwargs);
+}
+
+PyBitBoard* PyBitBoard_FromUnsignedLongLong(unsigned long long value){
+    return pybitboard_new(&PyBitBoardType, Py_BuildValue("(K)", value), NULL);
+}
+
+NCH_STATIC PyObject*
+bb_new(PyTypeObject* type, PyObject* args, PyObject* kwargs) {
+    return pybitboard_new(type, args, kwargs);
 }
 
 NCH_STATIC PyObject*

@@ -9,6 +9,9 @@
 void
 bb2array(uint64 bb, int* arr, int reverse);
 
+uint64
+bb_from_object(PyObject* obj);
+
 PyObject* BB_FromArray(PyObject* self, PyObject* args, PyObject* kwargs);
 PyObject* BB_FromSquares(PyObject* self, PyObject* args, PyObject* kwargs);
 PyObject* BB_RookAttacks(PyObject* self, PyObject* args, PyObject* kwargs);

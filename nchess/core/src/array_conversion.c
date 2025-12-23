@@ -45,9 +45,17 @@ check_shape(PyObject* shape, npy_intp nitems, npy_intp* dims){
             return -1;
         }
 
-        dims[i] = PyLong_AsLong(PyNumber_Long(item));
-        total *= dims[i];
+
+        PyObject* long_item = PyNumber_Long(item);
         Py_DECREF(item);
+        if (!long_item){
+            PyErr_SetString(PyExc_ValueError, "failed to convert dimension to long");
+            return -1;
+        }
+
+        dims[i] = PyLong_AsLongLong(long_item);
+        Py_DECREF(long_item);
+        total *= dims[i];
     }
 
     if (total != nitems){
@@ -83,7 +91,12 @@ _create_list_array_recursive(int** data, npy_intp* dims, int dim, int roof){
 
     if (dim >= roof){
         for (npy_intp i = 0; i < size; i++){
-            PyList_SetItem(list, i, PyLong_FromLong(*(*data)++));
+            PyObject* long_obj = PyLong_FromLong(*(*data)++);
+            if (!long_obj) {
+                Py_DECREF(list);
+                return NULL;
+            }
+            PyList_SetItem(list, i, long_obj);
         }
     }
     else{

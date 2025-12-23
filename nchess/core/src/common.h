@@ -58,6 +58,9 @@ pyobject_as_side(PyObject* obj);
 NCH_STATIC_INLINE PieceType
 pyobject_as_piece_type(PyObject* obj){
     Piece p = pyobject_as_piece(obj);
+    if (p == NCH_NO_PIECE)
+        return NCH_NO_PIECE_TYPE;
+
     return Piece_TYPE(p);
 }
 

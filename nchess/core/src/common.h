@@ -20,7 +20,7 @@ if (sqr == NCH_NO_SQR){\
     return return_type;\
 }
 
-extern const char* Str2MoveType[];
+extern const char* MoveType2Str[];
 
 NCH_STATIC_INLINE PyObject*
 piece_to_pyobject(Piece p){

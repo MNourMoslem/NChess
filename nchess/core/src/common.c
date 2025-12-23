@@ -1,6 +1,6 @@
 #include "common.h"
 
-const char* Str2MoveType[] = {
+const char* MoveType2Str[] = {
     "normal", "promotion", "enpassant", "castle",
 };
 
@@ -174,17 +174,17 @@ pyobject_as_move_type(PyObject* obj){
         }
 
         for (type = MoveType_Normal; type < MoveType_NB; type++){
-            if (strcmp(str, Str2MoveType[type]) == 0)
+            if (strcmp(str, MoveType2Str[type]) == 0)
                 return type;
         }
 
         PyErr_Format(
             PyExc_ValueError,
             "invalid string for move type. expected one of these (%s, %s, %s, %s) got %s",
-            Str2MoveType[MoveType_Normal],
-            Str2MoveType[MoveType_Promotion],
-            Str2MoveType[MoveType_EnPassant],
-            Str2MoveType[MoveType_Castle],
+            MoveType2Str[MoveType_Normal],
+            MoveType2Str[MoveType_Promotion],
+            MoveType2Str[MoveType_EnPassant],
+            MoveType2Str[MoveType_Castle],
             str
         );
 
@@ -194,10 +194,10 @@ pyobject_as_move_type(PyObject* obj){
         PyErr_Format(
             PyExc_ValueError,
             "move type expeted to be int or string of these (%s, %s, %s, %s) got %s",
-            Str2MoveType[MoveType_Normal],
-            Str2MoveType[MoveType_Promotion],
-            Str2MoveType[MoveType_EnPassant],
-            Str2MoveType[MoveType_Castle],
+            MoveType2Str[MoveType_Normal],
+            MoveType2Str[MoveType_Promotion],
+            MoveType2Str[MoveType_EnPassant],
+            MoveType2Str[MoveType_Castle],
             Py_TYPE(obj)->tp_name
         );
 

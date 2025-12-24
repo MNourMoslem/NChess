@@ -712,7 +712,8 @@ class Board:
         Parameters:
             square (str | int): The target square, given as a UCI string (e.g., "e4") or an index (0-63).
             attacker_side: The side how is attacking the square. if None it will be the side how does not
-                            have the turn to play.
+                           have the turn to play. if set to 0 it will be white and if set to 1 it will be black.
+                           if set to 2 it will consider both sides.
 
         Returns:
             BitBoard: A bitboard where set bits indicate attacking pieces.
@@ -737,7 +738,7 @@ class Board:
         Returns an occupancy by the side.
 
         Parameters:
-            side (int) : 0 for white or 1 for black.
+            side (int) : 0 for white or 1 for black, 2 for both sides.
 
         Returns:
             BitBoard: given side occupancy as BitBoard object

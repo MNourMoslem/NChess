@@ -207,7 +207,7 @@ pyobject_as_move_type(PyObject* obj){
 }
 
 Side
-pyobject_as_side(PyObject* obj){
+pyobject_as_side(PyObject* obj, int support_both_sides){
     if (Py_IsNone(obj)){
         return NCH_NO_SIDE;
     }
@@ -216,7 +216,7 @@ pyobject_as_side(PyObject* obj){
         if (PyErr_Occurred())
             return NCH_NO_SIDE;
         
-        if (!is_valid_side(side)){
+        if (!is_valid_side(side) && !(support_both_sides && side == NCH_SIDES_NB)){
             PyErr_Format(
                 PyExc_ValueError,
                 "side must be 0 or 1 (white or black). got %d",

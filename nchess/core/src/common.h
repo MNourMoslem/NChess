@@ -53,7 +53,7 @@ MoveType
 pyobject_as_move_type(PyObject* obj);
 
 Side
-pyobject_as_side(PyObject* obj);
+pyobject_as_side(PyObject* obj, int support_both_sides);
 
 NCH_STATIC_INLINE PieceType
 pyobject_as_piece_type(PyObject* obj){

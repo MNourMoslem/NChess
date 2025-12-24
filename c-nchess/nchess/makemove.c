@@ -242,11 +242,7 @@ Board_Step(Board* board, char* move_str){
     if (!Move_FromString(move_str, &move))
         return 0;
 
-    if (!Board_CheckAndMakeMoveLegal(board, &move))
-        return 0;
-    
-    _Board_MakeMove(board, move);
-    return 1;
+    return Board_StepByMove(board, move);
 }
 
 void

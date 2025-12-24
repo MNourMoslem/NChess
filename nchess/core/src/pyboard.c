@@ -9,6 +9,23 @@
 #include <Python.h>
 
 PyObject*
+PyBoard_FromBoardWithType(PyTypeObject *self, Board* board){
+    PyBoard* pyb = (PyBoard*)self->tp_alloc(self, 0);
+    if (pyb == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    pyb->board = board;
+    return (PyObject*)pyb;
+}
+
+PyObject*
+PyBoard_FromBoard(Board* board){
+    return PyBoard_FromBoardWithType(&PyBoardType, board);
+}
+
+PyObject*
 board_new(PyTypeObject *self, PyObject *args, PyObject *kwargs){
     PyObject* fen_obj = NULL;
     static char* kwlist[] = {"fen", NULL};
@@ -20,12 +37,7 @@ board_new(PyTypeObject *self, PyObject *args, PyObject *kwargs){
         return NULL;
     }
 
-    PyBoard* pyb = (PyBoard*)self->tp_alloc(self, 0);
-    if (pyb == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-
+    Board* board = NULL;
     if (fen_obj && !Py_IsNone(fen_obj)){
         if (!PyUnicode_Check(fen_obj)){
             PyErr_Format(
@@ -33,31 +45,29 @@ board_new(PyTypeObject *self, PyObject *args, PyObject *kwargs){
                 "fen must be string. got %s",
                 Py_TYPE(fen_obj)->tp_name
             );
-            Py_DECREF(pyb);
             return NULL;
         }
+        
         const char* fen = PyUnicode_AsUTF8(fen_obj);
         if (PyErr_Occurred()){
-            Py_DECREF(pyb);
             return NULL;
         }
 
-        pyb->board = Board_NewFen(fen);
-        if (!pyb->board){
-            Py_DECREF(pyb);
+        board = Board_NewFen(fen);
+        if (!board){
             PyErr_SetString(PyExc_ValueError ,"could not read the fen");
             return NULL;
         }
     }
     else{
-        pyb->board = Board_New();    
-        if (!pyb->board){
-            Py_DECREF(pyb);
+        board = Board_New();    
+        if (!board){
+            PyErr_NoMemory();
             return NULL;
         }
     }
 
-    return (PyObject*)pyb;
+    return PyBoard_FromBoardWithType(self, board);
 }
 
 void

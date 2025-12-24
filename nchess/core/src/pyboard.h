@@ -14,4 +14,10 @@ typedef struct
 
 extern PyTypeObject PyBoardType;
 
+PyObject*
+PyBoard_FromBoardWithType(PyTypeObject *self, Board* board);
+
+PyObject*
+PyBoard_FromBoard(Board* board);
+
 #endif

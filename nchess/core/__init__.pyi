@@ -591,6 +591,21 @@ class Board:
         """
         ...
 
+    def make_move_legal(self, move: Move | str | int) -> Tuple[bool, Move]:
+        """
+        Converts an illegal move to a legal one if possible.
+
+        Parameters:
+            move (Move | str | int): The move to be converted.
+                - If `Move`, it represents a move object.
+                - If `str`, it is the UCI (Universal Chess Interface) representation of the move.
+                - If `int`, it represents a move encoded as an integer.
+        Returns:
+            None | Move: A legal Move object if the conversion is possible, otherwise None.
+        """
+        ...
+
+
     def perft(self, deep: int, pretty: bool = False, no_print: bool = False) -> int:
         """
         Performs a performance test (perft) by counting all legal moves up to a given depth.

@@ -37,6 +37,13 @@ void
 Board_Undo(Board* board);
 
 
+// Checks whether a move is legal to be played.
+// The move does not require MoveType information.
+// 
+// Returns 1 if the move is legal and 0 otherwise.
+int
+Board_IsMoveLegal(Board* board, Move move);
+
 // Checks whether a move is legal to be played.  
 // The move does not require MoveType information.  
 // If the move is valid, it resets the MoveType of the given Move object.  

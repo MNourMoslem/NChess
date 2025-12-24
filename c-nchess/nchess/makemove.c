@@ -171,25 +171,37 @@ is_move_legal(Board* board, Move move){
     return !is_check;
 }
 
-int 
-Board_CheckAndMakeMoveLegal(Board* board, Move* move_ptr){
+int
+check_move_legality(Board* board, Move* move_ptr, int update_move_type){
     Move move = *move_ptr;
     Move pseudo_moves[30];
     int n = Board_GeneratePseudoMovesOf(board, pseudo_moves, Move_FROM(move));
-
+    
     Move ps;
     while(n > 0){
         ps = pseudo_moves[--n];
         if (Move_SAME_SQUARES(ps, move)){
             move = Move_REASSAGIN_TYPE(move, Move_TYPE(ps));
             if (is_move_legal(board, move)){
-                *move_ptr = move;
+                if (update_move_type){
+                    *move_ptr = move;
+                }
                 return 1;
             }
         }
     }
     
-    return 0;
+    return 0;    
+}
+
+int 
+Board_CheckAndMakeMoveLegal(Board* board, Move* move_ptr){
+    return check_move_legality(board, move_ptr, 1);
+}
+
+int
+Board_IsMoveLegal(Board* board, Move move){
+    return check_move_legality(board, &move, 0);
 }
 
 void

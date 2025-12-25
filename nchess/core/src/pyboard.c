@@ -1,6 +1,7 @@
 #include "pyboard.h"
 #include "pyboard_getset.h"
 #include "pyboard_methods.h"
+#include "common.h"
 
 #include "nchess/fen.h"
 #include "nchess/io.h"

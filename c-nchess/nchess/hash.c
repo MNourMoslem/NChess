@@ -191,6 +191,7 @@ BoardDict_CopyExtra(const BoardDict* src, BoardDict* dst){
     return 0;
 
     fail:
+        ; // Empty statement required for C99 compliance
         BoardNode* temp;
         for (int i = 0; i < last + 1; i++){
             dn = dst->nodes + i;

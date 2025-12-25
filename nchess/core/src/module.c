@@ -2,7 +2,7 @@
 #include "pyboard.h"
 #include "pymove.h"
 #include "bb_functions.h"
-#include "pybb.h"
+#include "PyBB.h"
 #include "array_conversion.h"
 #include "square_functions.h"
 

@@ -1,7 +1,7 @@
 #include "pyboard_getset.h"
 #include "nchess/nchess.h"
 #include "pyboard.h"
-#include "pybb.h"
+#include "PyBB.h"
 #include "common.h"
 
 #define BOARD(obj) ((PyBoard*)obj)->board

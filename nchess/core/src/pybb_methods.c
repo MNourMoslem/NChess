@@ -1,6 +1,6 @@
 #include "bb_functions.h"
 #include "pybb_methods.h"
-#include "pybb.h"
+#include "PyBB.h"
 #include "array_conversion.h"
 #include "common.h"
 

@@ -1,7 +1,7 @@
 #include "pyboard_methods.h"
 #include "nchess/nchess.h"
 #include "pymove.h"
-#include "pybb.h"
+#include "PyBB.h"
 #include "common.h"
 #include "array_conversion.h"
 #include "pyboard.h"

@@ -9,6 +9,11 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+// Compatibility for Python < 3.10
+#ifndef Py_IsNone
+#define Py_IsNone(x) ((x) == Py_None)
+#endif
+
 #define CHECK_NO_SQUARE_ERR(sqr, return_type)\
 if (sqr == NCH_NO_SQR){\
     if (!PyErr_Occurred()){\

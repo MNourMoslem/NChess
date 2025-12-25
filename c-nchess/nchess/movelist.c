@@ -143,6 +143,7 @@ MoveList_CopyExtra(const MoveList* src, MoveList* dst){
     return 0;
 
     fail:
+        ; // Empty statement required for C99 compliance
         MoveNode *temp;
         dn = dst->extra;
         while (dn)

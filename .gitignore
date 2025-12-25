@@ -33,3 +33,7 @@ build/
 
 # Python package distribution configuration
 .pypirc
+
+
+# Environment variables file
+.env

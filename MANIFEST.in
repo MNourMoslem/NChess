@@ -1,4 +1,7 @@
-recursive-include nchess/core/src *.h
-recursive-include c-nchess/nchess *.h
-
+# MANIFEST.in is for source distributions only
+# C source files are needed to compile from source
+recursive-include nchess/core/src *.c *.h
+recursive-include c-nchess/nchess *.c *.h
 recursive-include nchess/core *.pyi
+include README.md
+include LICENSE

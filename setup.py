@@ -2,7 +2,7 @@ import os
 import sys
 import re
 import numpy
-from setuptools import setup, find_packages, Extension
+from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 
 # Paths
@@ -79,10 +79,14 @@ class CustomBuildExt(build_ext):
 setup(
     name='nchess',
     version=get_version(),
-    packages=find_packages(include=['nchess', 'nchess.*']),
+    # Explicitly list packages to exclude nchess.core.src
+    packages=['nchess', 'nchess.const', 'nchess.core'],
     ext_modules=[nchess_core],
     cmdclass={'build_ext': CustomBuildExt},
-    include_package_data=True,
+    # Only include .pyi stub files in nchess.core
+    package_data={
+        'nchess.core': ['*.pyi'],
+    },
     install_requires=[
         'numpy>=1.18.0',
     ],

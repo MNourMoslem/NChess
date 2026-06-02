@@ -10,7 +10,8 @@ static int test_generate_starting_position(void) {
     int nmoves = Board_GenerateLegalMoves(&board, moves);
     
     ASSERT_EQ(nmoves, 20);  // 20 legal moves in starting position
-    
+
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 
@@ -25,7 +26,8 @@ static int test_generate_after_e4(void) {
     int nmoves = Board_GenerateLegalMoves(&board, moves);
     
     ASSERT_EQ(nmoves, 20);  // Black also has 20 legal moves
-    
+
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 
@@ -66,7 +68,8 @@ static int test_generate_knight_moves(void) {
     int nmoves = Board_GeneratePseudoMovesOf(&board, moves, NCH_G1);
     
     ASSERT(nmoves >= 2);  // Knight on g1 has at least 2 pseudo moves
-    
+
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 
@@ -79,7 +82,8 @@ static int test_get_moves_of_square(void) {
     int nmoves = Board_GetMovesOf(&board, NCH_E2, moves);
     
     ASSERT_EQ(nmoves, 2);  // Pawn on e2 can move to e3 or e4
-    
+
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 
@@ -147,7 +151,8 @@ static int test_generate_en_passant(void) {
     }
     
     ASSERT(found_enpassant);
-    
+
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 

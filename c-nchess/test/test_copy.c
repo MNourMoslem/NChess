@@ -143,6 +143,8 @@ static int test_copy_castle_rights(void) {
     ASSERT(!Board_IS_CASTLE_WK(copy));
     
     Board_Free(copy);
+    // Clean up dynamic extras on stack board
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 
@@ -161,6 +163,7 @@ static int test_copy_simple_verification(void) {
     ASSERT_EQ(Board_ON_SQUARE(&board, NCH_E4), Board_ON_SQUARE(copy, NCH_E4));
     
     Board_Free(copy);
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 
@@ -178,6 +181,7 @@ static int test_copy_nmoves(void) {
     ASSERT_EQ(board.nmoves, copy->nmoves);
     
     Board_Free(copy);
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 
@@ -199,6 +203,7 @@ static int test_copy_diverge(void) {
     ASSERT(!boards_are_equal(&board, copy));
     
     Board_Free(copy);
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 
@@ -223,6 +228,7 @@ static int test_copy_multiple(void) {
     Board_Free(copy1);
     Board_Free(copy2);
     Board_Free(copy3);
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 

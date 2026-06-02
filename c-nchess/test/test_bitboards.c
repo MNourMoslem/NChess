@@ -30,7 +30,8 @@ static int test_bitboard_occupancy(void) {
     ASSERT(count_bits(white_occ) == 16);
     ASSERT(count_bits(black_occ) == 16);
     ASSERT(count_bits(all_occ) == 32);
-    
+
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 
@@ -60,7 +61,8 @@ static int test_bitboard_manipulation(void) {
     // Verify pawn bitboard changed
     uint64 new_pawns = Board_BB(&board, NCH_WPawn);
     ASSERT(new_pawns != original_pawns);
-    
+
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 
@@ -84,7 +86,8 @@ static int test_bitboard_individual_pieces(void) {
     ASSERT(count_bits(Board_BLACK_ROOKS(&board)) == 2);
     ASSERT(count_bits(Board_BLACK_QUEENS(&board)) == 1);
     ASSERT(count_bits(Board_BLACK_KING(&board)) == 1);
-    
+
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 
@@ -114,7 +117,8 @@ static int test_bitboard_clearing(void) {
     
     ASSERT(count_bits(Board_WHITE_PAWNS(&board)) == 0);
     // Note: Occupancy bitboard needs manual update
-    
+
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 
@@ -152,7 +156,8 @@ static int test_bitboard_after_capture(void) {
     
     uint64 final_black = count_bits(Board_BLACK_OCC(&board));
     ASSERT(final_black < initial_black);
-    
+
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 
@@ -163,7 +168,8 @@ static int test_bitboard_symmetry(void) {
     
     // White and black should have same number of pieces initially
     ASSERT_EQ(count_bits(Board_WHITE_OCC(&board)), count_bits(Board_BLACK_OCC(&board)));
-    
+
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 

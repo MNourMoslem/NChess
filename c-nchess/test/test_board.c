@@ -19,6 +19,7 @@ static int test_board_init(void) {
     uint8 all_castles = Board_CASTLE_WK | Board_CASTLE_WQ | Board_CASTLE_BK | Board_CASTLE_BQ;
     ASSERT_EQ(Board_CASTLES(&board), all_castles);
     
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 
@@ -32,6 +33,7 @@ static int test_board_init_empty(void) {
     ASSERT(Board_BLACK_PAWNS(&board) == 0);
     ASSERT(Board_ALL_OCC(&board) == 0);
     
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 
@@ -59,7 +61,8 @@ static int test_board_after_moves(void) {
     
     ASSERT(board.nmoves > 0);
     ASSERT_EQ(Board_SIDE(&board), NCH_Black);  // Black's turn after 3 moves
-    
+
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 
@@ -80,7 +83,8 @@ static int test_board_not_check(void) {
     Board_Init(&board);
     
     ASSERT(!Board_IsCheck(&board));
-    
+
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 
@@ -93,7 +97,8 @@ static int test_board_piece_on_square(void) {
     ASSERT_EQ(Board_ON_SQUARE(&board, NCH_G1), NCH_WKnight);
     ASSERT_EQ(Board_ON_SQUARE(&board, NCH_E8), NCH_BKing);
     ASSERT_EQ(Board_ON_SQUARE(&board, NCH_E4), NCH_NO_PIECE);
-    
+
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 
@@ -109,7 +114,8 @@ static int test_board_state_after_moves(void) {
     
     Board_Step(&board, "c7c5");
     ASSERT_EQ(Board_SIDE(&board), NCH_White);
-    
+
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 
@@ -126,7 +132,8 @@ static int test_board_castle_rights(void) {
     // White should lose both castle rights
     ASSERT(!Board_IS_CASTLE_WK(&board));
     ASSERT(!Board_IS_CASTLE_WQ(&board));
-    
+
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 
@@ -145,7 +152,8 @@ static int test_board_fifty_counter(void) {
     Board_Step(&board, "g8f6");
     Board_Step(&board, "g1f3");
     ASSERT(Board_FIFTY_COUNTER(&board) > 0);
-    
+
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 

@@ -91,7 +91,9 @@ static int test_hash_threefold_repetition(void) {
     // But the actual count may vary depending on implementation
     int count = BoardDict_GetCount(&board.dict, board.bitboards);
     ASSERT(count >= 1);  // At least appeared once
-    
+
+    // Clean up dynamic extras attached to stack board
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 

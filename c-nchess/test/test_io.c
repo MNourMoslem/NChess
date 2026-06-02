@@ -8,7 +8,8 @@ static int test_io_board_print(void) {
     
     printf("\n  Printing board:\n");
     Board_Print(&board);
-    
+
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 
@@ -22,7 +23,8 @@ static int test_io_fen_output(void) {
     
     ASSERT(strlen(fen) > 0);
     ASSERT_STR_EQ(fen, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    
+
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 
@@ -41,7 +43,8 @@ static int test_io_move_to_string(void) {
     ASSERT(result == 0);
     
     ASSERT(strlen(move_str) >= 4);  // At minimum "e2e4" format
-    
+
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 
@@ -56,7 +59,8 @@ static int test_io_board_after_moves(void) {
     
     printf("\n  Printing board after moves:\n");
     Board_Print(&board);
-    
+
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 
@@ -82,7 +86,8 @@ static int test_io_print_all_moves(void) {
     printf("\n  Printing all legal moves:\n  ");
     Move_PrintAll(moves, nmoves);
     printf("\n");
-    
+
+    Board_FreeExtraOnly(&board);
     return 1;
 }
 

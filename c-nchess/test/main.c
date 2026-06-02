@@ -1,5 +1,6 @@
 #include "main.h"
 #include "helpers.h"
+#include "memory.h"
 
 // Run a test suite and update results
 void run_test_suite(const char* suite_name, TestFunc* tests, int test_count, TestResults* results) {
@@ -56,6 +57,10 @@ void print_final_results(TestResults* results) {
 int main(void) {
     // Initialize NChess library
     NCH_Init();
+    // For debug builds, enable fail-on-leaks mode
+#ifndef NDEBUG
+    NCH_MemoryTracker_EnableFailOnLeaks(1);
+#endif
     
     TestResults results = {0, 0, 0};
     
@@ -74,7 +79,13 @@ int main(void) {
     
     // Print final results
     print_final_results(&results);
-    
+
+#ifndef NDEBUG
+    // Fail if any leaks are outstanding
+    if (NCH_MemoryTracker_GetOutstandingBytes() > 0) {
+        return 1;
+    }
+#endif
     return (results.failed == 0) ? 0 : 1;
 }
 

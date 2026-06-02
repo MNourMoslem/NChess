@@ -8,6 +8,7 @@
 #include "hash.h"
 #include <stdlib.h>
 #include <string.h>
+#include "memory.h"
 
 // Computes a hash key for a given board position using bitwise operations.
 // This function combines the bitboards for all pieces and sides into a single value.
@@ -55,9 +56,10 @@ BoardDict_FreeExtra(BoardDict* dict){
                 while (node)
                 {
                     temp = node->next;
-                    free(node);
+                    NCH_FREE(node);
                     node = temp;
                 }
+                dict->nodes[i].next = NULL;
             }
         }
     }
@@ -87,30 +89,45 @@ BoardDict_GetCount(const BoardDict* dict, const uint64 bitboards[NCH_PIECE_NB]){
 int
 BoardDict_Add(BoardDict* dict, const uint64 bitboards[NCH_PIECE_NB]){
     int idx = board_to_key(bitboards);
-    BoardNode* node = dict->nodes + idx;
-    if (!node->empty){
-        while (!is_same_board(bitboards, node))
-        {
-            node = node->next;
-            if (!node)
-                break;
-        }
+    BoardNode* head = dict->nodes + idx;
 
-        if (node){
-            node->count++;
-            return 0;
-        }
-
-        node = malloc(sizeof(BoardNode));
-        if (!node)
-            return -1;
+    // If bucket is empty, initialize in-place without allocation
+    if (head->empty) {
+        memcpy(head->bitboards, bitboards, sizeof(head->bitboards));
+        head->count = 1;
+        head->empty = 0;
+        head->next = NULL;
+        return 0;
     }
 
-    memcpy(node->bitboards, bitboards, sizeof(node->bitboards));
-    node->count = 1;
-    node->empty = 0;
-    node->next = NULL;
+    // Traverse chain to find existing node or reach tail
+    BoardNode* prev = NULL;
+    BoardNode* node = head;
+    while (!is_same_board(bitboards, node)) {
+        prev = node;
+        if (!node->next) {
+            node = NULL; // will append new node after prev
+            break;
+        }
+        node = node->next;
+    }
 
+    // If found, increment count
+    if (node) {
+        node->count++;
+        return 0;
+    }
+
+    // Not found: append new node to the chain
+    BoardNode* new_node = (BoardNode*)NCH_MALLOC(sizeof(BoardNode));
+    if (!new_node)
+        return -1;
+
+    memcpy(new_node->bitboards, bitboards, sizeof(new_node->bitboards));
+    new_node->count = 1;
+    new_node->empty = 0;
+    new_node->next = NULL;
+    prev->next = new_node;
     return 0;
 }
 
@@ -138,7 +155,7 @@ BoardDict_Remove(BoardDict* dict, const uint64 bitboards[NCH_PIECE_NB]){
     }
     else if (prev){
         prev->next = node->next;
-        free(node);
+        NCH_FREE(node);
     }
     else{
         node->empty = 1;
@@ -156,9 +173,11 @@ BoardDict_Reset(BoardDict* dict){
             while (node)
             {
                 temp = node->next;
-                free(node);
+                NCH_FREE(node);
                 node = temp;
             }
+            dict->nodes[i].next = NULL;
+            dict->nodes[i].count = 0;
             dict->nodes[i].empty = 1;
         }
     }
@@ -174,7 +193,7 @@ BoardDict_CopyExtra(const BoardDict* src, BoardDict* dst){
             dn = dst->nodes + i;
             while (sn->next)
             {
-                dn->next = (BoardNode*)malloc(sizeof(BoardNode));
+                dn->next = (BoardNode*)NCH_MALLOC(sizeof(BoardNode));
                 if (!dn->next){
                     last = i;
                     goto fail;
@@ -201,7 +220,7 @@ BoardDict_CopyExtra(const BoardDict* src, BoardDict* dst){
                 {
                     temp = dn;
                     dn = dn->next;
-                    free(temp);
+                    NCH_FREE(temp);
                 }
             }
         }

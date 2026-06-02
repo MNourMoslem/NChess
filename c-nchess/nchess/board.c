@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include "memory.h"
 
 NCH_STATIC_FINLINE void
 _init_board_flags_and_states(Board* board){
@@ -53,7 +54,7 @@ _init_board(Board* board){
 
 Board*
 Board_New(){
-    Board* board = malloc(sizeof(Board));
+    Board* board = NCH_MALLOC(sizeof(Board));
     if (!board)
         return NULL;
     
@@ -63,7 +64,7 @@ Board_New(){
 
 Board*
 Board_NewEmpty(){
-    Board* board = malloc(sizeof(Board));
+    Board* board = NCH_MALLOC(sizeof(Board));
     if (!board)
         return NULL;
     
@@ -83,7 +84,7 @@ void
 Board_Free(Board* board){
     if (board){
         Board_FreeExtraOnly(board);
-        free(board);
+        NCH_FREE(board);
     }
 }
 
@@ -237,7 +238,7 @@ Board_Copy(const Board* src_board, Board* dst_board){
 
 Board*
 Board_NewCopy(const Board* src_board){
-    Board* dst_board = malloc(sizeof(Board));
+    Board* dst_board = NCH_MALLOC(sizeof(Board));
     if (!dst_board)
         return NULL;
 

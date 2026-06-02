@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include "types.h"
 #include <stdio.h>
+#include "memory.h"
 
 void
 MoveList_Init(MoveList* movelist){
@@ -22,7 +23,7 @@ int MoveList_Append(MoveList* movelist, Move move, PositionInfo pos_info){
         node = movelist->nodes + movelist->len;
     }
     else{
-        node = (MoveNode*)malloc(sizeof(MoveNode));
+        node = (MoveNode*)NCH_MALLOC(sizeof(MoveNode));
         if (!node) {
             return -1;
         }
@@ -63,7 +64,7 @@ void MoveList_Pop(MoveList* movelist) {
         movelist->last_extra->next = NULL;
     }
 
-    free(node);
+    NCH_FREE(node);
 }
 
 MoveNode*
@@ -98,7 +99,7 @@ MoveList_Free(MoveList* movelist){
         {
             node = movelist->last_extra;
             movelist->last_extra = node->prev;
-            free(node);
+            NCH_FREE(node);
         }
     }
 }
@@ -114,7 +115,7 @@ MoveList_CopyExtra(const MoveList* src, MoveList* dst){
     if (!src->extra)
         return 0;
 
-    dst->extra = (MoveNode*)malloc(sizeof(MoveNode));
+    dst->extra = (MoveNode*)NCH_MALLOC(sizeof(MoveNode));
     if (!dst->extra)
         return -1;
 
@@ -125,9 +126,8 @@ MoveList_CopyExtra(const MoveList* src, MoveList* dst){
 
     while (sn->next)
     {
-        dn->next = (MoveNode*)malloc(sizeof(MoveNode));
-        if (dn->next){
-            dn->next = NULL;
+        dn->next = (MoveNode*)NCH_MALLOC(sizeof(MoveNode));
+        if (!dn->next){
             goto fail;
         }
 
@@ -150,7 +150,7 @@ MoveList_CopyExtra(const MoveList* src, MoveList* dst){
         {
             temp = dn;
             dn = dn->next;
-            free(temp);
+            NCH_FREE(temp);
         }
         
         return -1;

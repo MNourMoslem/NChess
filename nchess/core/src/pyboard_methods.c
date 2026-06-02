@@ -15,6 +15,10 @@
 #define BOARD_ARRAY_SIZE (NCH_PIECE_NB - 1) * NCH_SQUARE_NB
 #define BOARD_TABLE_SIZE NCH_SQUARE_NB
 
+void pyp(const char* s){
+    PySys_WriteStdout("%s", s);
+}
+
 PyObject*
 moves_to_list(Move* moves, int nmoves){
     PyObject* list = PyList_New(nmoves);
@@ -131,12 +135,7 @@ board_perft(PyObject* self, PyObject* args, PyObject* kwargs){
     if (no_print) {
         nmoves = Board_PerftNoPrint(BOARD(self), deep);
     } else {
-        // Use Board_PerftAsString to get the output as a string
-        char buffer[65536];  // 64KB buffer for perft output
-        nmoves = Board_PerftAsString(BOARD(self), deep, buffer, sizeof(buffer), pretty);
-        
-        // Print using Python's stdout
-        PySys_WriteStdout("%s", buffer);
+        nmoves = Board_PerftWithOptions(BOARD(self), deep, pretty, pyp);
     }
 
     return PyLong_FromLongLong(nmoves);

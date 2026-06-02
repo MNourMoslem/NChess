@@ -40,6 +40,14 @@ long long
 Board_PerftAsString(Board* board, int depth, char* buffer, size_t buffer_size, int pretty);
 
 
+// Computes the number of legal moves up to a given depth and logges the results to the given logger.
+// if pretty set non zero the results would be in a formatted style, where commas are added for every three digits.
+// If the logger is NULL, no logging will be done.
+// returns the total number of legal moves up to the given depth.
+long long
+Board_PerftWithOptions(Board* board, int depth, int pretty, void(*logger)(const char*));
+
+
 // Computes perft and returns move/count pairs instead of printing.
 // moves: pointer to array where moves will be stored
 // counts: pointer to array where corresponding move counts will be stored

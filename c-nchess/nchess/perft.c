@@ -68,9 +68,8 @@ preft_recursive(Board* board, int depth){
 
 // Core perft implementation
 NCH_STATIC_INLINE long long
-perft_core(Board* board, int depth, char* buffer, size_t buffer_size, int pretty, int print_output) {
+perft_core(Board* board, int depth, char* buffer, size_t buffer_size, int pretty, void(*logger)(const char*)) {
     if (depth < 1) {
-        if (buffer) snprintf(buffer, buffer_size, "Depth must be at least 1\n");
         return 0;
     }
 
@@ -95,13 +94,13 @@ perft_core(Board* board, int depth, char* buffer, size_t buffer_size, int pretty
         
         total += count;
 
-        if (print_output || buffer) {
+        if (logger || buffer) {
             Move_AsString(moves[i], move_str);
             format_count(count, formatted_count, pretty);
             snprintf(line_buffer, sizeof(line_buffer), "%s: %s\n", move_str, formatted_count);
             
-            if (print_output) {
-                printf("%s", line_buffer);
+            if (logger) {
+                logger(line_buffer);
             }
             if (buffer) {
                 size_t line_len = strlen(line_buffer);
@@ -117,13 +116,13 @@ perft_core(Board* board, int depth, char* buffer, size_t buffer_size, int pretty
     clock_t end_time = clock();
     double time_spent = (double)(end_time - start_time) / CLOCKS_PER_SEC;
 
-    if (print_output || buffer) {
+    if (logger || buffer) {
         format_count(total, formatted_count, pretty);
         snprintf(line_buffer, sizeof(line_buffer), "Total: %s | Time spent: %f seconds\n", 
                  formatted_count, time_spent);
         
-        if (print_output) {
-            printf("%s", line_buffer);
+        if (logger) {
+            logger(line_buffer);
         }
         if (buffer) {
             size_t line_len = strlen(line_buffer);
@@ -136,36 +135,33 @@ perft_core(Board* board, int depth, char* buffer, size_t buffer_size, int pretty
     return total;
 }
 
+void p(const char* s){
+    printf("%s", s);
+}
+
 long long
 Board_Perft(Board* board, int depth) {
-    return perft_core(board, depth, NULL, 0, 0, 1);
+    return perft_core(board, depth, NULL, 0, 0, p);
 }
 
 long long
 Board_PerftPretty(Board* board, int depth) {
-    return perft_core(board, depth, NULL, 0, 1, 1);
+    return perft_core(board, depth, NULL, 0, 1, p);
 }
 
 long long
 Board_PerftNoPrint(Board* board, int depth) {
-    if (depth < 1) return 0;
-    
-    Move moves[256];
-    int nmoves = Board_GenerateLegalMoves(board, moves);
-    
-    long long total = 0;
-    for (int i = 0; i < nmoves; i++){
-        _Board_MakeMove(board, moves[i]);
-        total += preft_recursive(board, depth - 1);
-        Board_Undo(board);
-    }
-    
-    return total;
+    return perft_core(board, depth, NULL, 0, 0, NULL);
 }
 
 long long
 Board_PerftAsString(Board* board, int depth, char* buffer, size_t buffer_size, int pretty) {
-    return perft_core(board, depth, buffer, buffer_size, pretty, 0);
+    return perft_core(board, depth, buffer, buffer_size, pretty, NULL);
+}
+
+long long
+Board_PerftWithOptions(Board* board, int depth, int pretty, void(*logger)(const char*)) {
+    return perft_core(board, depth, NULL, 0, pretty, logger);
 }
 
 int

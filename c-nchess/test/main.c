@@ -48,9 +48,9 @@ void print_final_results(TestResults* results) {
     printf("========================================\n");
     
     if (results->failed == 0) {
-        printf("\n✓ All tests passed!\n\n");
+        printf("\nAll tests passed!\n\n");
     } else {
-        printf("\n✗ Some tests failed.\n\n");
+        printf("\nSome tests failed.\n\n");
     }
 }
 
